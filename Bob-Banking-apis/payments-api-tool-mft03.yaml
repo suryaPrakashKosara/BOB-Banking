@@ -1,0 +1,590 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: payments-api-tool-mft03
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  description: |
+    ## Overview
+    The **Payments API** is the final execution layer of the enterprise Banking platform's
+    loan lifecycle. It is invoked **exclusively after the Loan API approves a loan
+    application** and handles the secure transfer of approved loan funds to the
+    customer's designated account.
+
+    ## Invocation Context
+    This API is **not a general-purpose payment gateway**. It is specifically designed
+    to be called as **Step 8** of the Loan API's eight-step orchestration workflow:
+
+    ```
+    Loan API  �  POST /payments/disbursements       (Step 8  loan disbursement)
+    Loan API  �  POST /payments/transfers           (internal fund movements)
+    ```
+
+    ## Internal Execution Sequence
+    When a disbursement or transfer is initiated, the Payments API executes
+    the following internal pipeline before committing funds:
+
+    ```
+    Stage 1  Account Validation
+              POST /accounts/{accountId}/validate        � Accounts API
+              Confirms: account ACTIVE, currency matches, can receive funds
+
+    Stage 2  Pre-Payment Risk Validation
+              POST /risk/fraud/analyze                   � Risk API
+              Confirms: no fraud flags on the specific payment transaction
+
+    Stage 3  Fund Transfer Execution
+              Internal ledger debit/credit operation
+
+    Stage 4  Transaction Record Creation
+              POST /accounts/{accountId}/transactions    � Accounts API
+              Creates LOAN_DISBURSEMENT or TRANSFER ledger entry
+
+    Stage 5  Receipt Generation
+              Internal: generate and store payment receipt
+    ```
+
+    All five stages must succeed for a payment to reach `COMPLETED` status.
+
+    ## Responsibilities
+    | Responsibility          | Endpoint                                     |
+    |-------------------------|----------------------------------------------|
+    | Validate destination    | Internally calls Accounts API                |
+    | Create payment          | `POST /payments/disbursements`               |
+    | Transfer funds          | Executes after validation and risk check     |
+    | Return payment status   | `GET /payments/{paymentId}/status`           |
+    | Generate payment receipt| `GET /payments/{paymentId}/receipt`          |
+
+    ## Cross-API Relationships
+    | API          | Called By Payments API           | Purpose                                          |
+    |--------------|----------------------------------|--------------------------------------------------|
+    | Loan API     | Invokes Payments API             | Triggers disbursement after loan approval        |
+    | Accounts API | `POST /accounts/{id}/validate`   | Stage 1  destination account validation         |
+    | Accounts API | Ledger transaction creation      | Stage 4  post transaction to account ledger     |
+    | Risk API     | `POST /risk/fraud/analyze`       | Stage 2  payment-level fraud check              |
+
+    ## Business Rules
+    - Payments API is invoked **only** when `loanStatus = APPROVED`.
+    - `loanId` is a mandatory foreign key on every disbursement  it traces
+      each payment back to the approving loan record.
+    - Every payment begins with a destination account validation (Stage 1).
+      A `FROZEN`, `CLOSED`, or currency-mismatched account causes immediate rejection.
+    - The Risk API fraud check (Stage 2) is a gate. A CRITICAL fraud flag
+      returns `422 PAYMENT_BLOCKED_BY_RISK` without executing the transfer.
+    - Payments are **idempotent**  submitting the same `loanId` twice returns
+      the existing payment rather than creating a duplicate.
+    - Reversals are only permitted within the configured reversal window
+      (default 24 hours) and only for `COMPLETED` payments.
+  labels:
+    api-spec: ./payments-api-spec.yml
+spec:
+  tools:
+    - name: initiateLoanDisbursement
+      description: |
+        Creates and executes a loan disbursement payment.
+        **This endpoint is called exclusively by the Loan API after loan approval (Step 8).**
+
+        ### Internal Execution Pipeline
+
+        | Stage | Action                                | API Called       | Gate? |
+        |-------|---------------------------------------|------------------|-------|
+        | 1     | Validate destination account          | Accounts API     | YES   |
+        | 2     | Pre-payment fraud risk check          | Risk API         | YES   |
+        | 3     | Execute fund transfer                 | Internal ledger  | YES   |
+        | 4     | Post transaction to account ledger    | Accounts API     | YES   |
+        | 5     | Generate payment receipt              | Internal         |      |
+
+        **Idempotency:** if a payment for the same `loanId` already exists and is
+        `COMPLETED` or `PROCESSING`, the existing record is returned rather than
+        creating a duplicate. Pass `Idempotency-Key` header to enforce idempotency.
+
+        **Business rule:** `loanId` is mandatory. Every disbursement traces back
+        to exactly one approved loan in the Loan API.
+      inputSchema:
+        type: object
+        properties:
+          Idempotency-Key:
+            description: >
+              Client-generated UUID for idempotent payment submission.
+
+              If a request with the same key was previously accepted, the
+              existing
+
+              payment is returned rather than creating a duplicate.
+            x-parameter-location: header
+            type: string
+            format: uuid
+            example: idem-a1b2-c3d4-e5f6-000000000001
+          loanId:
+            type: string
+            format: uuid
+            description: |
+              Approved loan reference. Foreign key to Loan API.
+              Must correspond to a loan with status `APPROVED`.
+              Used for idempotency  a second call with the same `loanId`
+              returns the existing payment.
+            example: l1a2b3c4-0003-0003-0003-000000000001
+          customerId:
+            type: string
+            format: uuid
+            description: Loan applicant. Foreign key to Customer API.
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          destinationAccountId:
+            type: string
+            format: uuid
+            description: |
+              Account to receive the loan funds. Foreign key to Accounts API.
+              Validated at Stage 1 via `POST /accounts/{accountId}/validate`.
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          amount:
+            type: number
+            format: double
+            description: Approved loan amount to disburse. Must be > 0.
+            minimum: 0.01
+            example: 25000
+          currency:
+            type: string
+            description: ISO 4217 currency code. Must match destination account currency.
+            example: USD
+          loanType:
+            type: string
+            enum:
+              - PERSONAL
+              - MORTGAGE
+              - AUTO
+              - BUSINESS
+              - EDUCATION
+              - OVERDRAFT
+            description: Loan product type  included for audit and ledger narration.
+            example: PERSONAL
+          valueDate:
+            type: string
+            format: date
+            description: Requested value date. Defaults to today if omitted.
+            example: 2024-06-16
+          reference:
+            type: string
+            description: Human-readable payment narrative for the account statement.
+            maxLength: 140
+            example: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+          callbackUrl:
+            type: string
+            format: uri
+            description: |
+              Optional webhook URL. If provided, the Payments API will POST the
+              final payment status to this URL when processing completes.
+            nullable: true
+            example: https://api.bank.com/v1/loan/webhooks/disbursement
+        required:
+          - loanId
+          - customerId
+          - destinationAccountId
+          - amount
+          - currency
+          - loanType
+      title: Initiate a loan disbursement payment
+      x-api-binding:
+        operationPath: /payments/disbursements
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getDisbursementById
+      description: Make a GET request to /payments/disbursements/{paymentId}
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: p1a2b3c4-0004-0004-0004-000000000001
+        required:
+          - paymentId
+      title: Retrieve a loan disbursement payment record
+      x-api-binding:
+        operationPath: /payments/disbursements/{paymentId}
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: initiateTransfer
+      description: >
+        Transfers funds between two accounts within the Banking platform.
+
+
+        Follows the same five-stage internal pipeline as disbursements:
+
+        1. Validate beneficiary account (Accounts API)
+
+        2. Fraud risk check (Risk API)
+
+        3. Execute transfer
+
+        4. Post transactions on both source and destination ledgers (Accounts
+        API)
+
+        5. Generate receipt
+
+
+        **Business rule:** source account must have sufficient
+        `availableBalance`
+
+        to cover the transfer amount. Insufficient funds returns `422`.
+      inputSchema:
+        type: object
+        properties:
+          Idempotency-Key:
+            description: >
+              Client-generated UUID for idempotent payment submission.
+
+              If a request with the same key was previously accepted, the
+              existing
+
+              payment is returned rather than creating a duplicate.
+            x-parameter-location: header
+            type: string
+            format: uuid
+            example: idem-a1b2-c3d4-e5f6-000000000001
+          customerId:
+            type: string
+            format: uuid
+            description: Initiating customer. Foreign key to Customer API.
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          sourceAccountId:
+            type: string
+            format: uuid
+            description: Debit account. Foreign key to Accounts API.
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          destinationAccountId:
+            type: string
+            format: uuid
+            description: |
+              Credit account. Foreign key to Accounts API.
+              Validated at Stage 1 via `POST /accounts/{accountId}/validate`.
+            example: a1b2c3d4-0002-0002-0002-000000000002
+          amount:
+            type: number
+            format: double
+            minimum: 0.01
+            example: 5000
+          currency:
+            type: string
+            example: USD
+          reference:
+            type: string
+            maxLength: 140
+            example: Internal transfer  savings to current
+          valueDate:
+            type: string
+            format: date
+          callbackUrl:
+            type: string
+            format: uri
+            nullable: true
+        required:
+          - customerId
+          - sourceAccountId
+          - destinationAccountId
+          - amount
+          - currency
+      title: Initiate an account-to-account fund transfer
+      x-api-binding:
+        operationPath: /payments/transfers
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getTransferById
+      description: Make a GET request to /payments/transfers/{paymentId}
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: p1a2b3c4-0004-0004-0004-000000000001
+        required:
+          - paymentId
+      title: Retrieve a transfer payment record
+      x-api-binding:
+        operationPath: /payments/transfers/{paymentId}
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: listPayments
+      description: |
+        Returns a paginated list of all payment records. Supports filtering
+        by customer, loan, account, payment type, status, and date range.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Filter by customer (FK to Customer API).
+            x-parameter-location: query
+            type: string
+            format: uuid
+          loanId:
+            description: Filter by loan (FK to Loan API).
+            x-parameter-location: query
+            type: string
+            format: uuid
+          accountId:
+            description: Filter by source or destination account (FK to Accounts API).
+            x-parameter-location: query
+            type: string
+            format: uuid
+          paymentType:
+            description: paymentType parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - LOAN_DISBURSEMENT
+              - INTERNAL_TRANSFER
+              - LOAN_REPAYMENT
+              - REVERSAL
+            example: LOAN_DISBURSEMENT
+          status:
+            description: status parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - PENDING
+              - VALIDATING
+              - RISK_CHECK
+              - PROCESSING
+              - POSTING
+              - COMPLETED
+              - FAILED
+              - REVERSED
+              - BLOCKED
+            example: COMPLETED
+          fromDate:
+            description: fromDate parameter
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-01-01
+          toDate:
+            description: toDate parameter
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-12-31
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      title: List payments with optional filters
+      x-api-binding:
+        operationPath: /payments
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getPaymentById
+      description: |
+        Returns the full payment record including all pipeline stage results,
+        the account validation outcome, and the risk check summary.
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: p1a2b3c4-0004-0004-0004-000000000001
+        required:
+          - paymentId
+      title: Retrieve a payment record by ID
+      x-api-binding:
+        operationPath: /payments/{paymentId}
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getPaymentStatus
+      description: |
+        Returns a lightweight status response. Preferred polling endpoint
+        for the Loan API to check whether disbursement has completed,
+        as it avoids fetching the full payment record on every poll.
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: p1a2b3c4-0004-0004-0004-000000000001
+        required:
+          - paymentId
+      title: Retrieve the processing status of a payment
+      x-api-binding:
+        operationPath: /payments/{paymentId}/status
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: reversePayment
+      description: >
+        Initiates a payment reversal. Reversal is only permitted if:
+
+        - Payment status is `COMPLETED`.
+
+        - The reversal is requested within the configured reversal window
+          (default 24 hours from `processedAt`).
+        - The originating loan is not yet `CLOSED` or `WRITTEN_OFF`.
+
+
+        On success:
+
+        - Funds are returned to the source (bank disbursement account).
+
+        - The Accounts API `LOAN_DISBURSEMENT` ledger entry is reversed.
+
+        - The Loan API loan status is set back to `APPROVED` (pending
+        re-disbursement).
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: p1a2b3c4-0004-0004-0004-000000000001
+          reason:
+            type: string
+            enum:
+              - DUPLICATE_PAYMENT
+              - INCORRECT_AMOUNT
+              - WRONG_ACCOUNT
+              - FRAUD_DETECTED
+              - CUSTOMER_REQUEST
+              - LOAN_CANCELLED
+              - COMPLIANCE_ORDER
+              - OTHER
+            example: DUPLICATE_PAYMENT
+          requestedBy:
+            type: string
+            description: Officer ID or system that requested the reversal.
+            example: compliance-officer-001
+          notes:
+            type: string
+            description: Additional context for the reversal decision.
+            example: Customer confirmed they did not authorise this disbursement.
+        required:
+          - paymentId
+          - reason
+          - requestedBy
+      title: Reverse or recall a completed payment
+      x-api-binding:
+        operationPath: /payments/{paymentId}/reverse
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getPaymentReceipt
+      description: >
+        Returns a structured payment receipt for a `COMPLETED` payment.
+
+        The receipt includes:
+
+        - Full payment details and reference numbers
+
+        - Account validation summary
+
+        - Risk check outcome
+
+        - Transfer confirmation with bank reference
+
+        - Customer-facing disbursement confirmation
+
+
+        Also available as a printable PDF via the `Accept: application/pdf`
+        header.
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: p1a2b3c4-0004-0004-0004-000000000001
+          Accept:
+            description: >
+              Response format. Use `application/json` (default) for the
+              structured
+
+              receipt object or `application/pdf` for a printable PDF document.
+            x-parameter-location: header
+            type: string
+            enum:
+              - application/json
+              - application/pdf
+            default: application/json
+        required:
+          - paymentId
+      title: Retrieve the payment receipt for a completed payment
+      x-api-binding:
+        operationPath: /payments/{paymentId}/receipt
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: validatePaymentAccount
+      description: >
+        Performs Stage 1 of the payment pipeline in isolation  validates the
+
+        destination account without creating a payment record.
+
+
+        Called by the Loan API to pre-validate the disbursement account
+
+        immediately before calling `POST /payments/disbursements`, reducing the
+
+        chance of a `422` rejection at payment creation time.
+
+
+        Internally calls `POST /accounts/{accountId}/validate` on the Accounts
+        API.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            type: string
+            format: uuid
+            description: Account to validate. Foreign key to Accounts API.
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          validationPurpose:
+            type: string
+            enum:
+              - LOAN_DISBURSEMENT
+              - PAYMENT_TRANSFER
+              - BENEFICIARY_CHECK
+            example: LOAN_DISBURSEMENT
+          expectedCurrency:
+            type: string
+            example: USD
+          requestedBy:
+            type: string
+            description: Calling service or officer identifier.
+            example: loan-api
+        required:
+          - accountId
+          - validationPurpose
+          - expectedCurrency
+      title: Pre-validate a destination account before initiating a payment
+      x-api-binding:
+        operationPath: /payments/validate-account
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml

@@ -15,6 +15,34 @@
       "contentHash": "4ede57d40ed5cec8"
     },
     {
+      "id": "16480465-1cf7-47f1-aa3a-d38636ee9049:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/telemetry-mft03.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784799065331,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "telemetry-mft03",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "89d4e30410cdb49f"
+    },
+    {
+      "id": "18f7fcf5-06e7-406d-a9ba-1f53468ea64e:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/payments-api-tool-mft03.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784799068606,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "payments-api-tool-mft03",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "fac36e23e80d4c1f"
+    },
+    {
       "id": "1f0fa3bb-4149-4805-b884-f41909c20d7d:0",
       "projectId": "E98FqKoH",
       "filePath": "Bob-Banking-apis/customer-api-server-smabt.yaml",
@@ -122,6 +150,20 @@
       "contentHash": "3f34dbfb840a5db4"
     },
     {
+      "id": "55f0746c-c6bd-44e4-ad9b-6ae31a3ddffd:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/invoke-mft03.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784799064427,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "invoke-mft03",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "99793bafac4c4af9"
+    },
+    {
       "id": "562023da-47c0-4db1-ad26-fe81a2555412:0",
       "projectId": "E98FqKoH",
       "filePath": "Bob-Banking-apis/risk-compliance-api-server-1r6dm.yaml",
@@ -136,6 +178,20 @@
       "contentHash": "1463662f7f440408"
     },
     {
+      "id": "572aabf0-49f1-4795-a4df-17016eb143b5:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/bob-banking-apis-freeflowpolicysequence-mft03.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784799066523,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "bob-banking-apis-freeflowpolicysequence-mft03",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "16a8f4aefa95e321"
+    },
+    {
       "id": "580bb187-5ac1-4cf3-9ab0-ad90e6b401e6:0",
       "projectId": "E98FqKoH",
       "filePath": "Bob-Banking-apis/telemetry-1r6dm.yaml",
@@ -148,6 +204,15 @@
       "namespace": "Bob-Banking-apis",
       "version": "1.0",
       "contentHash": "134f36df19256a3a"
+    },
+    {
+      "id": "5f18ea24-fb55-4551-a422-957257b2f9ad:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/payments-api-spec.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1784799063466,
+      "schemaVersion": 1
     },
     {
       "id": "69c14ac7-357b-4dba-8708-34f42895a712:0",
@@ -322,6 +387,20 @@
       "contentHash": "bcae3f4f5ace3c8e"
     },
     {
+      "id": "ca5bc044-8bb2-43d6-b436-b8968fa3b994:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/payments-api-server-mft03.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784799069568,
+      "schemaVersion": 1,
+      "kind": "MCPServer",
+      "name": "payments-api-server-mft03",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "730efa45d7f866b0"
+    },
+    {
       "id": "d931760b-64dd-4472-b1da-5d84d8b95ee7:0",
       "projectId": "E98FqKoH",
       "filePath": "Bob-Banking-apis/customer-api-spec.yml",
@@ -371,6 +450,20 @@
       "namespace": "Bob-Banking-apis",
       "version": "1.0",
       "contentHash": "b964d08fec01572d"
+    },
+    {
+      "id": "f60d37a8-3fde-47ff-896d-64a658d07c9f:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/bob-banking-apis-quota-mft03.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784799067496,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "bob-banking-apis-quota-mft03",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "63af2524f39de6a7"
     },
     {
       "id": "f7b16d70-6c13-421e-a511-137e7c9d5e16:0",
@@ -506,6 +599,18 @@
       "lastValidated": 1784792300670
     },
     {
+      "id": "43fa8fda-67ad-420f-b0c8-5965e43f874f",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "18f7fcf5-06e7-406d-a9ba-1f53468ea64e:0",
+      "targetNodeId": "5f18ea24-fb55-4551-a422-957257b2f9ad:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./payments-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1784799068646,
+      "lastValidated": 1784799068646
+    },
+    {
       "id": "491bf19b-2530-49b4-8cf6-9587d3125285",
       "projectId": "E98FqKoH",
       "sourceNodeId": "971ac4ae-490c-41b0-a3ff-6180f4d0dc56:0",
@@ -518,6 +623,18 @@
       "lastValidated": 1784798756416
     },
     {
+      "id": "4ed1a5d1-b8ab-461c-97a4-c1bf71e605e0",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "ca5bc044-8bb2-43d6-b436-b8968fa3b994:0",
+      "targetNodeId": "f60d37a8-3fde-47ff-896d-64a658d07c9f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:bob-banking-apis-quota-mft03:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784799069611,
+      "lastValidated": 1784799069611
+    },
+    {
       "id": "5df4e0b5-aaf5-40b6-9ce4-bc9bd1412a31",
       "projectId": "E98FqKoH",
       "sourceNodeId": "971ac4ae-490c-41b0-a3ff-6180f4d0dc56:0",
@@ -528,6 +645,18 @@
       "isValid": true,
       "createdAt": 1784798756416,
       "lastValidated": 1784798756416
+    },
+    {
+      "id": "617053f8-7f5e-476a-a7f4-1e41de5e0a76",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "ca5bc044-8bb2-43d6-b436-b8968fa3b994:0",
+      "targetNodeId": "18f7fcf5-06e7-406d-a9ba-1f53468ea64e:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:payments-api-tool-mft03:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784799069612,
+      "lastValidated": 1784799069612
     },
     {
       "id": "6442adc3-9c97-4289-8f66-f0cc6f333cf0",
@@ -638,6 +767,30 @@
       "lastValidated": 1784792299049
     },
     {
+      "id": "c42f3724-5611-4cb2-9b71-68b971aaa004",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "572aabf0-49f1-4795-a4df-17016eb143b5:0",
+      "targetNodeId": "55f0746c-c6bd-44e4-ad9b-6ae31a3ddffd:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:invoke-mft03:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784799066544,
+      "lastValidated": 1784799066544
+    },
+    {
+      "id": "ca3584eb-8111-492b-a1d1-5ee6630a6b0d",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "ca5bc044-8bb2-43d6-b436-b8968fa3b994:0",
+      "targetNodeId": "572aabf0-49f1-4795-a4df-17016eb143b5:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:bob-banking-apis-freeflowpolicysequence-mft03:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784799069611,
+      "lastValidated": 1784799069611
+    },
+    {
       "id": "d7308d86-d56a-4f0f-ab52-df1e7e07709f",
       "projectId": "E98FqKoH",
       "sourceNodeId": "1f0fa3bb-4149-4805-b884-f41909c20d7d:0",
@@ -672,6 +825,18 @@
       "isValid": true,
       "createdAt": 1784792301494,
       "lastValidated": 1784792301494
+    },
+    {
+      "id": "f1f3a247-6bbc-4329-a824-ce9911843489",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "572aabf0-49f1-4795-a4df-17016eb143b5:0",
+      "targetNodeId": "16480465-1cf7-47f1-aa3a-d38636ee9049:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:telemetry-mft03:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784799066544,
+      "lastValidated": 1784799066544
     },
     {
       "id": "fa3be0d0-c836-416d-99ae-c2489e7ddf5a",

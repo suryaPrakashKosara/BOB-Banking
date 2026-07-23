@@ -1,0 +1,1827 @@
+openapi: 3.0.3
+info:
+  title: Payments API
+  description: |
+    ## Overview
+    The **Payments API** is the final execution layer of the enterprise Banking platform's
+    loan lifecycle. It is invoked **exclusively after the Loan API approves a loan
+    application** and handles the secure transfer of approved loan funds to the
+    customer's designated account.
+
+    ## Invocation Context
+    This API is **not a general-purpose payment gateway**. It is specifically designed
+    to be called as **Step 8** of the Loan API's eight-step orchestration workflow:
+
+    ```
+    Loan API  �  POST /payments/disbursements       (Step 8  loan disbursement)
+    Loan API  �  POST /payments/transfers           (internal fund movements)
+    ```
+
+    ## Internal Execution Sequence
+    When a disbursement or transfer is initiated, the Payments API executes
+    the following internal pipeline before committing funds:
+
+    ```
+    Stage 1  Account Validation
+              POST /accounts/{accountId}/validate        � Accounts API
+              Confirms: account ACTIVE, currency matches, can receive funds
+
+    Stage 2  Pre-Payment Risk Validation
+              POST /risk/fraud/analyze                   � Risk API
+              Confirms: no fraud flags on the specific payment transaction
+
+    Stage 3  Fund Transfer Execution
+              Internal ledger debit/credit operation
+
+    Stage 4  Transaction Record Creation
+              POST /accounts/{accountId}/transactions    � Accounts API
+              Creates LOAN_DISBURSEMENT or TRANSFER ledger entry
+
+    Stage 5  Receipt Generation
+              Internal: generate and store payment receipt
+    ```
+
+    All five stages must succeed for a payment to reach `COMPLETED` status.
+
+    ## Responsibilities
+    | Responsibility          | Endpoint                                     |
+    |-------------------------|----------------------------------------------|
+    | Validate destination    | Internally calls Accounts API                |
+    | Create payment          | `POST /payments/disbursements`               |
+    | Transfer funds          | Executes after validation and risk check     |
+    | Return payment status   | `GET /payments/{paymentId}/status`           |
+    | Generate payment receipt| `GET /payments/{paymentId}/receipt`          |
+
+    ## Cross-API Relationships
+    | API          | Called By Payments API           | Purpose                                          |
+    |--------------|----------------------------------|--------------------------------------------------|
+    | Loan API     | Invokes Payments API             | Triggers disbursement after loan approval        |
+    | Accounts API | `POST /accounts/{id}/validate`   | Stage 1  destination account validation         |
+    | Accounts API | Ledger transaction creation      | Stage 4  post transaction to account ledger     |
+    | Risk API     | `POST /risk/fraud/analyze`       | Stage 2  payment-level fraud check              |
+
+    ## Business Rules
+    - Payments API is invoked **only** when `loanStatus = APPROVED`.
+    - `loanId` is a mandatory foreign key on every disbursement  it traces
+      each payment back to the approving loan record.
+    - Every payment begins with a destination account validation (Stage 1).
+      A `FROZEN`, `CLOSED`, or currency-mismatched account causes immediate rejection.
+    - The Risk API fraud check (Stage 2) is a gate. A CRITICAL fraud flag
+      returns `422 PAYMENT_BLOCKED_BY_RISK` without executing the transfer.
+    - Payments are **idempotent**  submitting the same `loanId` twice returns
+      the existing payment rather than creating a duplicate.
+    - Reversals are only permitted within the configured reversal window
+      (default 24 hours) and only for `COMPLETED` payments.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+servers:
+  - url: https://payments-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/payments
+    description: Production
+tags:
+  - name: Disbursements
+    description: Loan disbursement payments  initiated by the Loan API after approval.
+  - name: Transfers
+    description: Internal account-to-account fund transfers.
+  - name: Payments
+    description: Payment record retrieval, status tracking, and management.
+  - name: Validation
+    description: Destination account and payment pre-validation.
+  - name: Receipts
+    description: Payment receipt generation and retrieval.
+paths:
+  /payments/disbursements:
+    post:
+      tags:
+        - Disbursements
+      operationId: initiateLoanDisbursement
+      summary: Initiate a loan disbursement payment
+      description: |
+        Creates and executes a loan disbursement payment.
+        **This endpoint is called exclusively by the Loan API after loan approval (Step 8).**
+
+        ### Internal Execution Pipeline
+
+        | Stage | Action                                | API Called       | Gate? |
+        |-------|---------------------------------------|------------------|-------|
+        | 1     | Validate destination account          | Accounts API     | YES   |
+        | 2     | Pre-payment fraud risk check          | Risk API         | YES   |
+        | 3     | Execute fund transfer                 | Internal ledger  | YES   |
+        | 4     | Post transaction to account ledger    | Accounts API     | YES   |
+        | 5     | Generate payment receipt              | Internal         |      |
+
+        **Idempotency:** if a payment for the same `loanId` already exists and is
+        `COMPLETED` or `PROCESSING`, the existing record is returned rather than
+        creating a duplicate. Pass `Idempotency-Key` header to enforce idempotency.
+
+        **Business rule:** `loanId` is mandatory. Every disbursement traces back
+        to exactly one approved loan in the Loan API.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisbursementRequest"
+            examples:
+              personal:
+                $ref: "#/components/examples/DisbursementPersonalExample"
+              mortgage:
+                $ref: "#/components/examples/DisbursementMortgageExample"
+      responses:
+        "200":
+          description: |
+            Idempotent response  a payment for this `loanId` already exists.
+            Returns the existing payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "202":
+          description: |
+            Disbursement accepted. Payment created and pipeline executing.
+            Poll `GET /payments/{paymentId}/status` for completion.
+          headers:
+            Location:
+              description: URL of the created payment resource.
+              schema:
+                type: string
+                example: /payments/p1a2b3c4-0004-0004-0004-000000000001
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                created:
+                  $ref: "#/components/examples/PaymentCreatedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: |
+            Loan or destination account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              examples:
+                loanNotFound:
+                  summary: Loan not found in Loan API
+                  value:
+                    traceId: e3b0c442-0000-0000-0000-000000000404
+                    code: LOAN_NOT_FOUND
+                    message: No approved loan found for the supplied loanId.
+                accountNotFound:
+                  summary: Destination account not found in Accounts API
+                  value:
+                    traceId: e3b0c442-0000-0000-0000-000000000404
+                    code: ACCOUNT_NOT_FOUND
+                    message: Destination account not found in Accounts API.
+        "409":
+          description: Loan is not in APPROVED status  disbursement cannot proceed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000409
+                code: LOAN_NOT_APPROVED
+                message: Loan must be in APPROVED status before disbursement.
+        "422":
+          description: >
+            Payment blocked at Stage 1 or Stage 2:
+
+            - `ACCOUNT_VALIDATION_FAILED`  destination account is FROZEN,
+            CLOSED,
+              or currency does not match.
+            - `PAYMENT_BLOCKED_BY_RISK`  Risk API returned a CRITICAL fraud
+            flag.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentBlockedError"
+              examples:
+                accountFrozen:
+                  $ref: "#/components/examples/AccountValidationFailedExample"
+                riskBlocked:
+                  $ref: "#/components/examples/RiskBlockedExample"
+      security:
+        - BearerAuth:
+            - payment:disburse
+  /payments/disbursements/{paymentId}:
+    get:
+      tags:
+        - Disbursements
+      operationId: getDisbursementById
+      summary: Retrieve a loan disbursement payment record
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+      responses:
+        "200":
+          description: Disbursement payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                completed:
+                  $ref: "#/components/examples/PaymentCompletedExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - payment:read
+  /payments/transfers:
+    post:
+      tags:
+        - Transfers
+      operationId: initiateTransfer
+      summary: Initiate an account-to-account fund transfer
+      description: >
+        Transfers funds between two accounts within the Banking platform.
+
+
+        Follows the same five-stage internal pipeline as disbursements:
+
+        1. Validate beneficiary account (Accounts API)
+
+        2. Fraud risk check (Risk API)
+
+        3. Execute transfer
+
+        4. Post transactions on both source and destination ledgers (Accounts
+        API)
+
+        5. Generate receipt
+
+
+        **Business rule:** source account must have sufficient
+        `availableBalance`
+
+        to cover the transfer amount. Insufficient funds returns `422`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+            examples:
+              internal:
+                $ref: "#/components/examples/TransferRequestExample"
+      responses:
+        "202":
+          description: Transfer accepted and pipeline executing.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /payments/p1a2b3c4-0004-0004-0004-000000000009
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: |
+            Transfer blocked:
+            - `ACCOUNT_VALIDATION_FAILED`  beneficiary account invalid
+            - `PAYMENT_BLOCKED_BY_RISK`  Risk API fraud flag
+            - `INSUFFICIENT_FUNDS`  source account balance too low
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentBlockedError"
+              examples:
+                insufficient:
+                  $ref: "#/components/examples/InsufficientFundsExample"
+      security:
+        - BearerAuth:
+            - payment:transfer
+  /payments/transfers/{paymentId}:
+    get:
+      tags:
+        - Transfers
+      operationId: getTransferById
+      summary: Retrieve a transfer payment record
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+      responses:
+        "200":
+          description: Transfer payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - payment:read
+  /payments:
+    get:
+      tags:
+        - Payments
+      operationId: listPayments
+      summary: List payments with optional filters
+      description: |
+        Returns a paginated list of all payment records. Supports filtering
+        by customer, loan, account, payment type, status, and date range.
+      parameters:
+        - name: customerId
+          in: query
+          description: Filter by customer (FK to Customer API).
+          schema:
+            type: string
+            format: uuid
+        - name: loanId
+          in: query
+          description: Filter by loan (FK to Loan API).
+          schema:
+            type: string
+            format: uuid
+        - name: accountId
+          in: query
+          description: Filter by source or destination account (FK to Accounts API).
+          schema:
+            type: string
+            format: uuid
+        - name: paymentType
+          in: query
+          schema:
+            $ref: "#/components/schemas/PaymentType"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/PaymentStatus"
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: 2024-01-01
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: 2024-12-31
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of payments.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentPage"
+              examples:
+                list:
+                  $ref: "#/components/examples/PaymentListExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - payment:read
+  /payments/{paymentId}:
+    get:
+      tags:
+        - Payments
+      operationId: getPaymentById
+      summary: Retrieve a payment record by ID
+      description: |
+        Returns the full payment record including all pipeline stage results,
+        the account validation outcome, and the risk check summary.
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+      responses:
+        "200":
+          description: Payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                completed:
+                  $ref: "#/components/examples/PaymentCompletedExample"
+                failed:
+                  $ref: "#/components/examples/PaymentFailedExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - payment:read
+  /payments/{paymentId}/status:
+    get:
+      tags:
+        - Payments
+      operationId: getPaymentStatus
+      summary: Retrieve the processing status of a payment
+      description: |
+        Returns a lightweight status response. Preferred polling endpoint
+        for the Loan API to check whether disbursement has completed,
+        as it avoids fetching the full payment record on every poll.
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+      responses:
+        "200":
+          description: Payment status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentStatusResponse"
+              examples:
+                processing:
+                  $ref: "#/components/examples/PaymentStatusProcessingExample"
+                completed:
+                  $ref: "#/components/examples/PaymentStatusCompletedExample"
+                failed:
+                  $ref: "#/components/examples/PaymentStatusFailedExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - payment:read
+  /payments/{paymentId}/reverse:
+    post:
+      tags:
+        - Payments
+      operationId: reversePayment
+      summary: Reverse or recall a completed payment
+      description: >
+        Initiates a payment reversal. Reversal is only permitted if:
+
+        - Payment status is `COMPLETED`.
+
+        - The reversal is requested within the configured reversal window
+          (default 24 hours from `processedAt`).
+        - The originating loan is not yet `CLOSED` or `WRITTEN_OFF`.
+
+
+        On success:
+
+        - Funds are returned to the source (bank disbursement account).
+
+        - The Accounts API `LOAN_DISBURSEMENT` ledger entry is reversed.
+
+        - The Loan API loan status is set back to `APPROVED` (pending
+        re-disbursement).
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentReversalRequest"
+            examples:
+              duplicate:
+                $ref: "#/components/examples/ReversalDuplicateExample"
+              fraud:
+                $ref: "#/components/examples/ReversalFraudExample"
+      responses:
+        "200":
+          description: Reversal accepted. Returns updated payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                reversed:
+                  $ref: "#/components/examples/PaymentReversedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            Reversal not permitted. Possible causes:
+            - Payment is not `COMPLETED`.
+            - Reversal window has elapsed (> 24 hours).
+            - Loan is already CLOSED.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              examples:
+                windowElapsed:
+                  summary: Reversal window has elapsed
+                  value:
+                    traceId: e3b0c442-0000-0000-0000-000000000409
+                    code: REVERSAL_WINDOW_ELAPSED
+                    message: Payment reversal window of 24 hours has elapsed.
+                wrongStatus:
+                  summary: Payment not in COMPLETED status
+                  value:
+                    traceId: e3b0c442-0000-0000-0000-000000000409
+                    code: INVALID_PAYMENT_STATUS
+                    message: Only COMPLETED payments can be reversed.
+      security:
+        - BearerAuth:
+            - payment:reverse
+  /payments/{paymentId}/receipt:
+    get:
+      tags:
+        - Receipts
+      operationId: getPaymentReceipt
+      summary: Retrieve the payment receipt for a completed payment
+      description: >
+        Returns a structured payment receipt for a `COMPLETED` payment.
+
+        The receipt includes:
+
+        - Full payment details and reference numbers
+
+        - Account validation summary
+
+        - Risk check outcome
+
+        - Transfer confirmation with bank reference
+
+        - Customer-facing disbursement confirmation
+
+
+        Also available as a printable PDF via the `Accept: application/pdf`
+        header.
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+        - name: Accept
+          in: header
+          description: |
+            Response format. Use `application/json` (default) for the structured
+            receipt object or `application/pdf` for a printable PDF document.
+          schema:
+            type: string
+            enum:
+              - application/json
+              - application/pdf
+            default: application/json
+      responses:
+        "200":
+          description: Payment receipt.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceipt"
+              examples:
+                receipt:
+                  $ref: "#/components/examples/PaymentReceiptExample"
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                description: Printable PDF receipt document.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Receipt not available  payment is not yet COMPLETED.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000409
+                code: RECEIPT_NOT_AVAILABLE
+                message: Payment receipt is only available for COMPLETED payments.
+      security:
+        - BearerAuth:
+            - payment:read
+  /payments/validate-account:
+    post:
+      tags:
+        - Validation
+      operationId: validatePaymentAccount
+      summary: Pre-validate a destination account before initiating a payment
+      description: >
+        Performs Stage 1 of the payment pipeline in isolation  validates the
+
+        destination account without creating a payment record.
+
+
+        Called by the Loan API to pre-validate the disbursement account
+
+        immediately before calling `POST /payments/disbursements`, reducing the
+
+        chance of a `422` rejection at payment creation time.
+
+
+        Internally calls `POST /accounts/{accountId}/validate` on the Accounts
+        API.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountValidationCheckRequest"
+            examples:
+              disbursement:
+                $ref: "#/components/examples/AccountValidationCheckExample"
+      responses:
+        "200":
+          description: Account validation result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountValidationCheckResult"
+              examples:
+                pass:
+                  $ref: "#/components/examples/AccountValidationPassExample"
+                fail:
+                  $ref: "#/components/examples/AccountValidationCheckFailExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - payment:read
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT Bearer token issued by the IBM API Connect OAuth provider.
+
+        Scopes:
+
+        - `payment:read`       read payment records, status, and receipts
+
+        - `payment:disburse`   initiate loan disbursements (Loan API service
+        identity only)
+
+        - `payment:transfer`   initiate account-to-account transfers
+
+        - `payment:reverse`    reverse completed payments (compliance officers
+        only)
+  parameters:
+    PaymentIdParam:
+      name: paymentId
+      in: path
+      required: true
+      description: Unique payment identifier (UUID v4).
+      schema:
+        type: string
+        format: uuid
+        example: p1a2b3c4-0004-0004-0004-000000000001
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Client-generated UUID for idempotent payment submission.
+        If a request with the same key was previously accepted, the existing
+        payment is returned rather than creating a duplicate.
+      schema:
+        type: string
+        format: uuid
+        example: idem-a1b2-c3d4-e5f6-000000000001
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  schemas:
+    PaymentType:
+      type: string
+      description: Classification of the payment.
+      enum:
+        - LOAN_DISBURSEMENT
+        - INTERNAL_TRANSFER
+        - LOAN_REPAYMENT
+        - REVERSAL
+      example: LOAN_DISBURSEMENT
+    PaymentStatus:
+      type: string
+      description: |
+        Processing status of a payment.
+        - `PENDING`     created; pipeline not yet started
+        - `VALIDATING`  Stage 1 (account validation) in progress
+        - `RISK_CHECK`  Stage 2 (Risk API fraud check) in progress
+        - `PROCESSING`  Stage 3 (fund transfer) in progress
+        - `POSTING`     Stage 4 (ledger posting) in progress
+        - `COMPLETED`   all stages succeeded; funds transferred
+        - `FAILED`      one or more stages failed; no funds moved
+        - `REVERSED`    previously completed; funds recalled
+        - `BLOCKED`     blocked at Stage 1 or Stage 2; not retried
+      enum:
+        - PENDING
+        - VALIDATING
+        - RISK_CHECK
+        - PROCESSING
+        - POSTING
+        - COMPLETED
+        - FAILED
+        - REVERSED
+        - BLOCKED
+      example: COMPLETED
+    PaymentPipelineStage:
+      type: string
+      description: The pipeline stage at which an event or failure occurred.
+      enum:
+        - ACCOUNT_VALIDATION
+        - RISK_CHECK
+        - FUND_TRANSFER
+        - LEDGER_POSTING
+        - RECEIPT_GENERATION
+      example: ACCOUNT_VALIDATION
+    ReversalReason:
+      type: string
+      enum:
+        - DUPLICATE_PAYMENT
+        - INCORRECT_AMOUNT
+        - WRONG_ACCOUNT
+        - FRAUD_DETECTED
+        - CUSTOMER_REQUEST
+        - LOAN_CANCELLED
+        - COMPLIANCE_ORDER
+        - OTHER
+      example: DUPLICATE_PAYMENT
+    DisbursementRequest:
+      type: object
+      required:
+        - loanId
+        - customerId
+        - destinationAccountId
+        - amount
+        - currency
+        - loanType
+      description: |
+        Request body for `POST /payments/disbursements`.
+        Submitted exclusively by the Loan API after loan approval.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+          description: |
+            Approved loan reference. Foreign key to Loan API.
+            Must correspond to a loan with status `APPROVED`.
+            Used for idempotency  a second call with the same `loanId`
+            returns the existing payment.
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        customerId:
+          type: string
+          format: uuid
+          description: Loan applicant. Foreign key to Customer API.
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        destinationAccountId:
+          type: string
+          format: uuid
+          description: |
+            Account to receive the loan funds. Foreign key to Accounts API.
+            Validated at Stage 1 via `POST /accounts/{accountId}/validate`.
+          example: a1b2c3d4-0002-0002-0002-000000000001
+        amount:
+          type: number
+          format: double
+          description: Approved loan amount to disburse. Must be > 0.
+          minimum: 0.01
+          example: 25000
+        currency:
+          type: string
+          description: ISO 4217 currency code. Must match destination account currency.
+          example: USD
+        loanType:
+          type: string
+          enum:
+            - PERSONAL
+            - MORTGAGE
+            - AUTO
+            - BUSINESS
+            - EDUCATION
+            - OVERDRAFT
+          description: Loan product type  included for audit and ledger narration.
+          example: PERSONAL
+        valueDate:
+          type: string
+          format: date
+          description: Requested value date. Defaults to today if omitted.
+          example: 2024-06-16
+        reference:
+          type: string
+          description: Human-readable payment narrative for the account statement.
+          maxLength: 140
+          example: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        callbackUrl:
+          type: string
+          format: uri
+          description: |
+            Optional webhook URL. If provided, the Payments API will POST the
+            final payment status to this URL when processing completes.
+          nullable: true
+          example: https://api.bank.com/v1/loan/webhooks/disbursement
+    TransferRequest:
+      type: object
+      required:
+        - customerId
+        - sourceAccountId
+        - destinationAccountId
+        - amount
+        - currency
+      description: Request body for `POST /payments/transfers`.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          description: Initiating customer. Foreign key to Customer API.
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        sourceAccountId:
+          type: string
+          format: uuid
+          description: Debit account. Foreign key to Accounts API.
+          example: a1b2c3d4-0002-0002-0002-000000000001
+        destinationAccountId:
+          type: string
+          format: uuid
+          description: |
+            Credit account. Foreign key to Accounts API.
+            Validated at Stage 1 via `POST /accounts/{accountId}/validate`.
+          example: a1b2c3d4-0002-0002-0002-000000000002
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 5000
+        currency:
+          type: string
+          example: USD
+        reference:
+          type: string
+          maxLength: 140
+          example: Internal transfer  savings to current
+        valueDate:
+          type: string
+          format: date
+        callbackUrl:
+          type: string
+          format: uri
+          nullable: true
+    PaymentReversalRequest:
+      type: object
+      required:
+        - reason
+        - requestedBy
+      properties:
+        reason:
+          $ref: "#/components/schemas/ReversalReason"
+        requestedBy:
+          type: string
+          description: Officer ID or system that requested the reversal.
+          example: compliance-officer-001
+        notes:
+          type: string
+          description: Additional context for the reversal decision.
+          example: Customer confirmed they did not authorise this disbursement.
+    AccountValidationCheckRequest:
+      type: object
+      required:
+        - accountId
+        - validationPurpose
+        - expectedCurrency
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account to validate. Foreign key to Accounts API.
+          example: a1b2c3d4-0002-0002-0002-000000000001
+        validationPurpose:
+          type: string
+          enum:
+            - LOAN_DISBURSEMENT
+            - PAYMENT_TRANSFER
+            - BENEFICIARY_CHECK
+          example: LOAN_DISBURSEMENT
+        expectedCurrency:
+          type: string
+          example: USD
+        requestedBy:
+          type: string
+          description: Calling service or officer identifier.
+          example: loan-api
+    Payment:
+      type: object
+      description: >
+        Full payment record. Returned by all payment creation and retrieval
+        endpoints.
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+          readOnly: true
+          description: System-generated unique payment identifier.
+          example: p1a2b3c4-0004-0004-0004-000000000001
+        paymentType:
+          $ref: "#/components/schemas/PaymentType"
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        loanId:
+          type: string
+          format: uuid
+          description: |
+            Originating loan. Foreign key to Loan API.
+            Present on LOAN_DISBURSEMENT payments only.
+          nullable: true
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        customerId:
+          type: string
+          format: uuid
+          description: Beneficiary customer. Foreign key to Customer API.
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        sourceAccountId:
+          type: string
+          format: uuid
+          description: |
+            Debit account. For LOAN_DISBURSEMENT, this is the bank's
+            internal funding account. Foreign key to Accounts API.
+          nullable: true
+        destinationAccountId:
+          type: string
+          format: uuid
+          description: Credit account. Foreign key to Accounts API.
+          example: a1b2c3d4-0002-0002-0002-000000000001
+        amount:
+          type: number
+          format: double
+          example: 25000
+        currency:
+          type: string
+          example: USD
+        reference:
+          type: string
+          example: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        bankReference:
+          type: string
+          description: |
+            Bank's internal payment reference number assigned after execution.
+            Populated once status reaches COMPLETED.
+          nullable: true
+          example: BNK-2024-061600123
+        valueDate:
+          type: string
+          format: date
+          example: 2024-06-16
+        pipelineStages:
+          type: array
+          description: Execution result for each stage of the payment pipeline.
+          items:
+            $ref: "#/components/schemas/PipelineStageResult"
+        accountValidationSummary:
+          $ref: "#/components/schemas/AccountValidationSummary"
+          description: Outcome of Stage 1  destination account validation.
+          nullable: true
+        riskCheckSummary:
+          $ref: "#/components/schemas/RiskCheckSummary"
+          description: Outcome of Stage 2  pre-payment fraud check.
+          nullable: true
+        failureReason:
+          type: string
+          description: Populated if status is FAILED or BLOCKED.
+          nullable: true
+          example: Destination account FROZEN  cannot receive funds.
+        reversalDetails:
+          $ref: "#/components/schemas/ReversalDetails"
+          description: Populated when status is REVERSED.
+          nullable: true
+        receiptAvailable:
+          type: boolean
+          description: "`true` when the payment receipt is ready for retrieval."
+          example: true
+        idempotencyKey:
+          type: string
+          format: uuid
+          description: The Idempotency-Key header value used when creating this payment.
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2024-06-16T11:30:00Z
+        processedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the payment reached a terminal status (COMPLETED,
+            FAILED, BLOCKED).
+          nullable: true
+          readOnly: true
+          example: 2024-06-16T11:35:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    PaymentPage:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        totalPages:
+          type: integer
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+    PaymentStatusResponse:
+      type: object
+      description: Lightweight payment status. Preferred for polling by the Loan API.
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        loanId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        currentStage:
+          $ref: "#/components/schemas/PaymentPipelineStage"
+          nullable: true
+          description: The pipeline stage currently executing. Null if terminal.
+        statusMessage:
+          type: string
+          description: Human-readable status description.
+          example: Funds successfully transferred to destination account.
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        bankReference:
+          type: string
+          nullable: true
+        receiptAvailable:
+          type: boolean
+        processedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+    PipelineStageResult:
+      type: object
+      description: Execution result for one stage of the payment pipeline.
+      properties:
+        stage:
+          $ref: "#/components/schemas/PaymentPipelineStage"
+        status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - PASSED
+            - FAILED
+            - SKIPPED
+          example: PASSED
+        message:
+          type: string
+          nullable: true
+          example: Account ACTIVE and currency matches.
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+    AccountValidationSummary:
+      type: object
+      description: |
+        Result of Stage 1  destination account validation.
+        Source: Accounts API `POST /accounts/{accountId}/validate`.
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        valid:
+          type: boolean
+        accountStatus:
+          type: string
+          enum:
+            - ACTIVE
+            - DORMANT
+            - FROZEN
+            - CLOSED
+          example: ACTIVE
+        currency:
+          type: string
+          example: USD
+        currencyMatches:
+          type: boolean
+          example: true
+        validationMessages:
+          type: array
+          items:
+            type: string
+          example: []
+        validatedAt:
+          type: string
+          format: date-time
+    RiskCheckSummary:
+      type: object
+      description: |
+        Result of Stage 2  pre-payment fraud risk check.
+        Source: Risk API `POST /risk/fraud/analyze`.
+      properties:
+        passed:
+          type: boolean
+        fraudProbabilityScore:
+          type: number
+          format: double
+          description: 0.0 = no risk, 1.0 = confirmed fraud.
+          example: 0.04
+        riskLevel:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          example: LOW
+        flags:
+          type: array
+          description: Fraud flags raised. Empty if `passed` is true.
+          items:
+            type: string
+          example: []
+        checkedAt:
+          type: string
+          format: date-time
+    AccountValidationCheckResult:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        valid:
+          type: boolean
+        accountStatus:
+          type: string
+          enum:
+            - ACTIVE
+            - DORMANT
+            - FROZEN
+            - CLOSED
+        currency:
+          type: string
+        accountType:
+          type: string
+          enum:
+            - SAVINGS
+            - CURRENT
+            - FIXED_DEPOSIT
+        customerId:
+          type: string
+          format: uuid
+        validationMessages:
+          type: array
+          items:
+            type: string
+        validatedAt:
+          type: string
+          format: date-time
+    PaymentReceipt:
+      type: object
+      description: |
+        Structured payment receipt for a completed payment.
+        Available as JSON (this schema) or as a printable PDF
+        via `Accept: application/pdf`.
+      properties:
+        receiptId:
+          type: string
+          format: uuid
+          readOnly: true
+          example: rcpt-a1b2-c3d4-e5f6-000000000001
+        paymentId:
+          type: string
+          format: uuid
+          example: p1a2b3c4-0004-0004-0004-000000000001
+        loanId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Originating loan. Populated for LOAN_DISBURSEMENT receipts.
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        customerId:
+          type: string
+          format: uuid
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        paymentType:
+          $ref: "#/components/schemas/PaymentType"
+        status:
+          type: string
+          enum:
+            - COMPLETED
+          example: COMPLETED
+        amount:
+          type: number
+          format: double
+          example: 25000
+        currency:
+          type: string
+          example: USD
+        destinationAccountNumber:
+          type: string
+          description: Masked destination account number for display purposes.
+          example: "****0001"
+        destinationAccountType:
+          type: string
+          enum:
+            - SAVINGS
+            - CURRENT
+            - FIXED_DEPOSIT
+          example: SAVINGS
+        bankReference:
+          type: string
+          description: Bank's unique payment reference for this transaction.
+          example: BNK-2024-061600123
+        reference:
+          type: string
+          description: Payment narrative as it appears on the account statement.
+          example: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        valueDate:
+          type: string
+          format: date
+          example: 2024-06-16
+        processedAt:
+          type: string
+          format: date-time
+          example: 2024-06-16T11:35:00Z
+        generatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when this receipt was generated.
+          example: 2024-06-16T11:36:00Z
+        validationSummary:
+          type: object
+          description: Summary of account validation and risk check for audit.
+          properties:
+            accountValidationPassed:
+              type: boolean
+              example: true
+            riskCheckPassed:
+              type: boolean
+              example: true
+            riskLevel:
+              type: string
+              enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+                - CRITICAL
+              example: LOW
+    ReversalDetails:
+      type: object
+      description: Details of a payment reversal. Populated on the original payment
+        when reversed.
+      properties:
+        reversalPaymentId:
+          type: string
+          format: uuid
+          description: ID of the REVERSAL payment record created.
+        reason:
+          $ref: "#/components/schemas/ReversalReason"
+        requestedBy:
+          type: string
+          example: compliance-officer-001
+        notes:
+          type: string
+        reversedAt:
+          type: string
+          format: date-time
+    ApiError:
+      type: object
+      description: Standard error envelope for all 4xx / 5xx responses.
+      properties:
+        traceId:
+          type: string
+          format: uuid
+          description: Distributed trace ID for log correlation across APIs.
+          example: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: LOAN_NOT_APPROVED
+        message:
+          type: string
+          description: Human-readable description.
+          example: Loan must be in APPROVED status before disbursement.
+        details:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: amount
+        message:
+          type: string
+          example: Must be greater than 0.
+    PaymentBlockedError:
+      type: object
+      description: |
+        Error returned when a payment is blocked at Stage 1 (account validation)
+        or Stage 2 (risk check).
+      properties:
+        traceId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          enum:
+            - ACCOUNT_VALIDATION_FAILED
+            - PAYMENT_BLOCKED_BY_RISK
+            - INSUFFICIENT_FUNDS
+          example: ACCOUNT_VALIDATION_FAILED
+        message:
+          type: string
+          example: Destination account is FROZEN and cannot receive funds.
+        blockedAtStage:
+          $ref: "#/components/schemas/PaymentPipelineStage"
+        accountValidationMessages:
+          type: array
+          description: Account validation failure reasons (present when code is
+            ACCOUNT_VALIDATION_FAILED).
+          nullable: true
+          items:
+            type: string
+          example:
+            - Account is FROZEN and cannot receive funds.
+        riskFlags:
+          type: array
+          description: Risk API fraud flags (present when code is PAYMENT_BLOCKED_BY_RISK).
+          nullable: true
+          items:
+            type: string
+          example: []
+  responses:
+    BadRequest:
+      description: 400 Bad Request  payload failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+            code: VALIDATION_ERROR
+            message: Request payload contains invalid fields.
+            details:
+              - field: amount
+                message: Must be greater than 0.
+              - field: currency
+                message: Must be a valid ISO 4217 currency code.
+    Unauthorized:
+      description: 401 Unauthorized  missing or invalid JWT Bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000401
+            code: UNAUTHORIZED
+            message: A valid Bearer token is required.
+    Forbidden:
+      description: 403 Forbidden  valid token but insufficient scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000403
+            code: INSUFFICIENT_SCOPE
+            message: The token does not have the required scope for this operation.
+    NotFound:
+      description: 404 Not Found  payment not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000404
+            code: PAYMENT_NOT_FOUND
+            message: No payment found with the specified ID.
+  examples:
+    DisbursementPersonalExample:
+      summary: Personal loan disbursement request
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        amount: 25000
+        currency: USD
+        loanType: PERSONAL
+        valueDate: 2024-06-16
+        reference: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        callbackUrl: https://api.bank.com/v1/loan/webhooks/disbursement
+    DisbursementMortgageExample:
+      summary: Mortgage loan disbursement request
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000003
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        amount: 350000
+        currency: USD
+        loanType: MORTGAGE
+        valueDate: 2024-06-16
+        reference: Loan disbursement  MORTGAGE  USD 350,000.00  Ref L003
+    PaymentCreatedExample:
+      summary: Payment accepted  pipeline initiating
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000001
+        paymentType: LOAN_DISBURSEMENT
+        status: VALIDATING
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        sourceAccountId: null
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        amount: 25000
+        currency: USD
+        reference: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        bankReference: null
+        valueDate: 2024-06-16
+        pipelineStages:
+          - stage: ACCOUNT_VALIDATION
+            status: IN_PROGRESS
+            message: Validating destination account via Accounts API.
+            startedAt: 2024-06-16T11:30:01Z
+            completedAt: null
+          - stage: RISK_CHECK
+            status: PENDING
+          - stage: FUND_TRANSFER
+            status: PENDING
+          - stage: LEDGER_POSTING
+            status: PENDING
+          - stage: RECEIPT_GENERATION
+            status: PENDING
+        accountValidationSummary: null
+        riskCheckSummary: null
+        failureReason: null
+        reversalDetails: null
+        receiptAvailable: false
+        createdAt: 2024-06-16T11:30:00Z
+        processedAt: null
+        updatedAt: 2024-06-16T11:30:01Z
+    PaymentCompletedExample:
+      summary: Payment completed successfully
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000001
+        paymentType: LOAN_DISBURSEMENT
+        status: COMPLETED
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        sourceAccountId: null
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        amount: 25000
+        currency: USD
+        reference: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        bankReference: BNK-2024-061600123
+        valueDate: 2024-06-16
+        pipelineStages:
+          - stage: ACCOUNT_VALIDATION
+            status: PASSED
+            message: Account ACTIVE. Currency USD matches.
+            startedAt: 2024-06-16T11:30:01Z
+            completedAt: 2024-06-16T11:30:02Z
+          - stage: RISK_CHECK
+            status: PASSED
+            message: Fraud probability 0.04  LOW risk. No flags raised.
+            startedAt: 2024-06-16T11:30:02Z
+            completedAt: 2024-06-16T11:30:05Z
+          - stage: FUND_TRANSFER
+            status: PASSED
+            message: USD 25,000.00 transferred to account ****0001.
+            startedAt: 2024-06-16T11:30:05Z
+            completedAt: 2024-06-16T11:30:08Z
+          - stage: LEDGER_POSTING
+            status: PASSED
+            message: LOAN_DISBURSEMENT transaction posted to account ledger.
+            startedAt: 2024-06-16T11:30:08Z
+            completedAt: 2024-06-16T11:30:10Z
+          - stage: RECEIPT_GENERATION
+            status: PASSED
+            message: Receipt generated. receiptId = rcpt-a1b2-c3d4-e5f6-000000000001.
+            startedAt: 2024-06-16T11:30:10Z
+            completedAt: 2024-06-16T11:30:11Z
+        accountValidationSummary:
+          accountId: a1b2c3d4-0002-0002-0002-000000000001
+          valid: true
+          accountStatus: ACTIVE
+          currency: USD
+          currencyMatches: true
+          validationMessages: []
+          validatedAt: 2024-06-16T11:30:02Z
+        riskCheckSummary:
+          passed: true
+          fraudProbabilityScore: 0.04
+          riskLevel: LOW
+          flags: []
+          checkedAt: 2024-06-16T11:30:05Z
+        failureReason: null
+        reversalDetails: null
+        receiptAvailable: true
+        createdAt: 2024-06-16T11:30:00Z
+        processedAt: 2024-06-16T11:35:00Z
+        updatedAt: 2024-06-16T11:35:00Z
+    PaymentFailedExample:
+      summary: Payment failed at Stage 3  fund transfer error
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000007
+        paymentType: LOAN_DISBURSEMENT
+        status: FAILED
+        loanId: l1a2b3c4-0003-0003-0003-000000000007
+        customerId: c1a2b3c4-0001-0001-0001-000000000007
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000007
+        amount: 50000
+        currency: USD
+        bankReference: null
+        pipelineStages:
+          - stage: ACCOUNT_VALIDATION
+            status: PASSED
+            message: Account ACTIVE.
+          - stage: RISK_CHECK
+            status: PASSED
+            message: No fraud flags.
+          - stage: FUND_TRANSFER
+            status: FAILED
+            message: Core banking system timeout. Transaction rolled back.
+          - stage: LEDGER_POSTING
+            status: SKIPPED
+          - stage: RECEIPT_GENERATION
+            status: SKIPPED
+        failureReason: Core banking system timeout during fund transfer. Retry via POST
+          /loan/{loanId}/disburse.
+        receiptAvailable: false
+        createdAt: 2024-06-16T14:00:00Z
+        processedAt: 2024-06-16T14:00:15Z
+        updatedAt: 2024-06-16T14:00:15Z
+    PaymentStatusProcessingExample:
+      summary: Payment status  RISK_CHECK in progress
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000001
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        status: RISK_CHECK
+        currentStage: RISK_CHECK
+        statusMessage: Pre-payment fraud check running via Risk API.
+        amount: 25000
+        currency: USD
+        bankReference: null
+        receiptAvailable: false
+        processedAt: null
+        updatedAt: 2024-06-16T11:30:03Z
+    PaymentStatusCompletedExample:
+      summary: Payment status  COMPLETED
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000001
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        status: COMPLETED
+        currentStage: null
+        statusMessage: Funds successfully transferred to destination account.
+        amount: 25000
+        currency: USD
+        bankReference: BNK-2024-061600123
+        receiptAvailable: true
+        processedAt: 2024-06-16T11:35:00Z
+        updatedAt: 2024-06-16T11:35:00Z
+    PaymentStatusFailedExample:
+      summary: Payment status  FAILED
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000007
+        loanId: l1a2b3c4-0003-0003-0003-000000000007
+        status: FAILED
+        currentStage: null
+        statusMessage: Core banking system timeout during fund transfer. Retry via POST
+          /loan/{loanId}/disburse.
+        amount: 50000
+        currency: USD
+        bankReference: null
+        receiptAvailable: false
+        processedAt: 2024-06-16T14:00:15Z
+        updatedAt: 2024-06-16T14:00:15Z
+    TransferRequestExample:
+      summary: Internal account-to-account transfer
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        sourceAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000002
+        amount: 5000
+        currency: USD
+        reference: Transfer from Savings to Current  monthly budget
+        valueDate: 2024-06-16
+    AccountValidationCheckExample:
+      summary: Pre-validate disbursement account before payment
+      value:
+        accountId: a1b2c3d4-0002-0002-0002-000000000001
+        validationPurpose: LOAN_DISBURSEMENT
+        expectedCurrency: USD
+        requestedBy: loan-api
+    AccountValidationPassExample:
+      summary: Account validation  PASS
+      value:
+        accountId: a1b2c3d4-0002-0002-0002-000000000001
+        valid: true
+        accountStatus: ACTIVE
+        currency: USD
+        accountType: SAVINGS
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        validationMessages: []
+        validatedAt: 2024-06-16T11:29:00Z
+    AccountValidationCheckFailExample:
+      summary: Account validation  FAIL (account FROZEN)
+      value:
+        accountId: a1b2c3d4-0002-0002-0002-000000000009
+        valid: false
+        accountStatus: FROZEN
+        currency: USD
+        accountType: SAVINGS
+        customerId: c1a2b3c4-0001-0001-0001-000000000009
+        validationMessages:
+          - Account is FROZEN and cannot receive funds.
+        validatedAt: 2024-06-16T11:29:00Z
+    AccountValidationFailedExample:
+      summary: Payment blocked at Stage 1  account FROZEN
+      value:
+        traceId: e3b0c442-0000-0000-0000-000000000422
+        code: ACCOUNT_VALIDATION_FAILED
+        message: Destination account is FROZEN and cannot receive funds.
+        blockedAtStage: ACCOUNT_VALIDATION
+        accountValidationMessages:
+          - Account is FROZEN and cannot receive funds.
+        riskFlags: null
+    RiskBlockedExample:
+      summary: Payment blocked at Stage 2  CRITICAL fraud flag
+      value:
+        traceId: e3b0c442-0000-0000-0000-000000000422
+        code: PAYMENT_BLOCKED_BY_RISK
+        message: Payment blocked by Risk API  CRITICAL fraud flag detected on this
+          transaction.
+        blockedAtStage: RISK_CHECK
+        accountValidationMessages: null
+        riskFlags:
+          - INCOME_MISMATCH
+          - UNUSUAL_LARGE_INFLOW_BEFORE_APPLICATION
+    InsufficientFundsExample:
+      summary: Transfer blocked  insufficient funds
+      value:
+        traceId: e3b0c442-0000-0000-0000-000000000422
+        code: INSUFFICIENT_FUNDS
+        message: Source account available balance of USD 1,200.00 is insufficient for
+          transfer of USD 5,000.00.
+        blockedAtStage: FUND_TRANSFER
+        accountValidationMessages: null
+        riskFlags: null
+    PaymentReceiptExample:
+      summary: Payment receipt for a completed disbursement
+      value:
+        receiptId: rcpt-a1b2-c3d4-e5f6-000000000001
+        paymentId: p1a2b3c4-0004-0004-0004-000000000001
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        paymentType: LOAN_DISBURSEMENT
+        status: COMPLETED
+        amount: 25000
+        currency: USD
+        destinationAccountNumber: "****0001"
+        destinationAccountType: SAVINGS
+        bankReference: BNK-2024-061600123
+        reference: Loan disbursement  PERSONAL  USD 25,000.00  Ref L001
+        valueDate: 2024-06-16
+        processedAt: 2024-06-16T11:35:00Z
+        generatedAt: 2024-06-16T11:36:00Z
+        validationSummary:
+          accountValidationPassed: true
+          riskCheckPassed: true
+          riskLevel: LOW
+    ReversalDuplicateExample:
+      summary: Reversal request  duplicate payment
+      value:
+        reason: DUPLICATE_PAYMENT
+        requestedBy: compliance-officer-001
+        notes: Duplicate disbursement detected for same loan. Original payment ID
+          p1a2b3c4-0004-0004-0004-000000000001.
+    ReversalFraudExample:
+      summary: Reversal request  fraud detected post-disbursement
+      value:
+        reason: FRAUD_DETECTED
+        requestedBy: fraud-team-analyst-005
+        notes: Post-disbursement fraud investigation confirmed identity theft. Funds to
+          be recalled immediately.
+    PaymentReversedExample:
+      summary: Payment after successful reversal
+      value:
+        paymentId: p1a2b3c4-0004-0004-0004-000000000001
+        paymentType: LOAN_DISBURSEMENT
+        status: REVERSED
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        destinationAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        amount: 25000
+        currency: USD
+        bankReference: BNK-2024-061600123
+        receiptAvailable: true
+        reversalDetails:
+          reversalPaymentId: p1a2b3c4-0004-0004-0004-000000000099
+          reason: DUPLICATE_PAYMENT
+          requestedBy: compliance-officer-001
+          notes: Duplicate disbursement reversed.
+          reversedAt: 2024-06-16T20:00:00Z
+        processedAt: 2024-06-16T11:35:00Z
+        updatedAt: 2024-06-16T20:00:00Z
+    PaymentListExample:
+      summary: Paginated payment list for a customer
+      value:
+        page: 1
+        pageSize: 20
+        totalCount: 3
+        totalPages: 1
+        payments:
+          - paymentId: p1a2b3c4-0004-0004-0004-000000000001
+            paymentType: LOAN_DISBURSEMENT
+            status: COMPLETED
+            loanId: l1a2b3c4-0003-0003-0003-000000000001
+            customerId: c1a2b3c4-0001-0001-0001-000000000001
+            destinationAccountId: a1b2c3d4-0002-0002-0002-000000000001
+            amount: 25000
+            currency: USD
+            bankReference: BNK-2024-061600123
+            receiptAvailable: true
+            createdAt: 2024-06-16T11:30:00Z
+            processedAt: 2024-06-16T11:35:00Z
+          - paymentId: p1a2b3c4-0004-0004-0004-000000000002
+            paymentType: INTERNAL_TRANSFER
+            status: COMPLETED
+            loanId: null
+            customerId: c1a2b3c4-0001-0001-0001-000000000001
+            sourceAccountId: a1b2c3d4-0002-0002-0002-000000000001
+            destinationAccountId: a1b2c3d4-0002-0002-0002-000000000002
+            amount: 5000
+            currency: USD
+            bankReference: BNK-2024-061600124
+            receiptAvailable: true
+            createdAt: 2024-06-16T12:00:00Z
+            processedAt: 2024-06-16T12:00:30Z
