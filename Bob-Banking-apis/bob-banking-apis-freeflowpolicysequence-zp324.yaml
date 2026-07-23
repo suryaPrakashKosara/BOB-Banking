@@ -1,0 +1,15 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: bob-banking-apis-freeflowpolicysequence-zp324
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Bob-Banking-apis:invoke-zp324:1.0
+  monitoring:
+    $ref: Bob-Banking-apis:telemetry-zp324:1.0

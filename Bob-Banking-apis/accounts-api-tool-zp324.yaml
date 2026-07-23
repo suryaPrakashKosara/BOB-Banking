@@ -1,0 +1,694 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: accounts-api-tool-zp324
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  description: |
+    ## Overview
+    The **Accounts API** is the authoritative source of truth for all bank accounts,
+    balances, and transaction records on the enterprise Banking platform.
+
+    It is a downstream consumer of the **Customer API** (`customerId` is the mandatory
+    foreign key on every account) and an upstream provider to both the **Loan API**
+    and the **Risk API**.
+
+    ## Responsibilities
+    - Manage the full lifecycle of Savings, Current, and Fixed Deposit accounts
+    - Return real-time and historical balance information
+      (available balance, ledger balance, average monthly balance)
+    - Return paginated transaction history with rich filtering
+    - Expose an account-validation endpoint consumed by the Payments API
+      before any disbursement or transfer
+
+    ## Account Types
+    | Type            | Description                                              |
+    |-----------------|----------------------------------------------------------|
+    | `SAVINGS`       | Interest-bearing retail savings account                  |
+    | `CURRENT`       | Transactional current / checking account                 |
+    | `FIXED_DEPOSIT` | Term deposit with fixed maturity and interest rate       |
+
+    ## Cross-API Relationships
+    | Consumer      | Endpoint(s) Used                                                  | Purpose                                       |
+    |---------------|-------------------------------------------------------------------|-----------------------------------------------|
+    | Customer API  | Provides `customerId` foreign key                                 | Ownership  every account belongs to one customer |
+    | Loan API      | `GET /accounts/customers/{customerId}`, `/balance`, `/transactions` | Loan eligibility  balance and repayment behaviour |
+    | Risk API      | `GET /accounts/{accountId}/transactions`                          | Fraud analysis and AML pattern detection      |
+    | Payments API  | `POST /accounts/{accountId}/validate`                             | Beneficiary account validation before disbursement |
+
+    ## Business Rules
+    - A customer can own multiple accounts (one-to-many). `customerId` is required on creation.
+    - An account cannot be closed if it has a non-zero balance.
+    - Fixed Deposit accounts are read-only after creation (maturity date and rate are immutable).
+    - A `FROZEN` account rejects all debits and credits.
+    - The `availableBalance` may differ from `ledgerBalance` due to pending transactions.
+  labels:
+    api-spec: ./accounts-api-spec.yml
+spec:
+  tools:
+    - name: openAccount
+      description: >
+        Opens a new Savings, Current, or Fixed Deposit account linked to an
+
+        existing customer. The `customerId` is validated against the Customer
+        API
+
+        before creation.
+
+
+        **Business rules:**
+
+        - `customerId` is mandatory  every account must belong to one customer.
+
+        - Fixed Deposit accounts require `fixedDepositDetails` in the request
+        body.
+
+        - On success returns `201` with a `Location` header pointing to the new
+        resource.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+            description: |
+              Owning customer. Foreign key to Customer API.
+              The Customer API is the authoritative source for this value.
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          accountType:
+            type: string
+            description: Classification of the bank account.
+            enum: &a1
+              - SAVINGS
+              - CURRENT
+              - FIXED_DEPOSIT
+            example: SAVINGS
+          currency:
+            type: string
+            description: ISO 4217 currency code.
+            example: USD
+          nickname:
+            type: string
+            description: Customer-facing label for the account.
+            maxLength: 60
+            example: Primary Savings
+          initialDeposit:
+            type: number
+            format: double
+            description: Optional opening deposit amount. Must be >= 0.
+            minimum: 0
+            example: 1000
+          fixedDepositDetails:
+            type: object
+            description: Details required when opening a Fixed Deposit account.
+            required:
+              - principalAmount
+              - tenorMonths
+              - interestRate
+              - interestFrequency
+            properties:
+              principalAmount:
+                type: number
+                format: double
+                description: Principal deposit amount. Must be > 0.
+                example: 50000
+              tenorMonths:
+                type: integer
+                description: Deposit term in months.
+                minimum: 1
+                maximum: 120
+                example: 12
+              interestRate:
+                type: number
+                format: double
+                description: Annual interest rate percentage (e.g. 6.5 for 6.5% p.a.).
+                example: 6.5
+              interestFrequency:
+                type: string
+                description: Frequency of interest payout for Fixed Deposits.
+                enum:
+                  - MONTHLY
+                  - QUARTERLY
+                  - HALF_YEARLY
+                  - ANNUALLY
+                  - ON_MATURITY
+                example: ON_MATURITY
+              autoRenew:
+                type: boolean
+                description: Automatically renew on maturity at the prevailing rate.
+                default: false
+              maturityCreditAccountId:
+                type: string
+                format: uuid
+                description: Account to receive maturity proceeds. Must belong to the same
+                  customer.
+                nullable: true
+          branchCode:
+            type: string
+            description: Branch code for accounts opened at a physical branch.
+            example: NYC-001
+        required:
+          - customerId
+          - accountType
+          - currency
+      title: Open a new bank account for a customer
+      x-api-binding:
+        operationPath: /accounts
+        operationMethod: POST
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: listAccounts
+      description: |
+        Returns a paginated list of accounts. Intended for internal banking
+        portal and service-to-service use. Supports filtering by account type,
+        status, and currency.
+      inputSchema:
+        type: object
+        properties:
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+          accountType:
+            description: Filter by account type.
+            x-parameter-location: query
+            type: string
+            enum: *a1
+            example: SAVINGS
+          status:
+            description: Filter by account status.
+            x-parameter-location: query
+            type: string
+            enum: &a2
+              - ACTIVE
+              - DORMANT
+              - FROZEN
+              - CLOSED
+            example: ACTIVE
+          currency:
+            description: Filter by ISO 4217 currency code.
+            x-parameter-location: query
+            type: string
+            example: USD
+      title: List accounts with optional filters
+      x-api-binding:
+        operationPath: /accounts
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAccountsByCustomerId
+      description: |
+        Returns all accounts linked to the given `customerId`.
+
+        **Business rule:** one customer can own multiple accounts.
+
+        This is the primary endpoint consumed by the **Loan API** to enumerate
+        the customer's accounts during the loan eligibility workflow.
+        Also used by the **Risk API** to discover all accounts before pulling
+        transaction history for AML analysis.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          accountType:
+            description: Filter by account type.
+            x-parameter-location: query
+            type: string
+            enum: *a1
+            example: SAVINGS
+          status:
+            description: Filter by account status.
+            x-parameter-location: query
+            type: string
+            enum: *a2
+            example: ACTIVE
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+        required:
+          - customerId
+      title: List all accounts owned by a customer
+      x-api-binding:
+        operationPath: /accounts/customers/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAccountById
+      description: >
+        Returns the full account record including type, status, currency,
+
+        and  for Fixed Deposits  maturity details.
+
+        Called by the Loan API and Payments API during their respective
+        workflows.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+        required:
+          - accountId
+      title: Retrieve account details by ID
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: updateAccount
+      description: |
+        Allows updating `nickname` and `status` (e.g. to FROZEN or DORMANT).
+        Fixed Deposit accounts cannot be updated (returns `405`).
+        `accountType`, `currency`, and `customerId` are immutable.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          nickname:
+            type: string
+            maxLength: 60
+          status:
+            type: string
+            description: Allowed transitions  only `FROZEN` and `DORMANT` can be set via
+              API.
+            enum:
+              - FROZEN
+              - DORMANT
+              - ACTIVE
+        required:
+          - accountId
+      title: Update mutable account attributes
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: PATCH
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: closeAccount
+      description: |
+        Closes the account (soft-delete  sets status to `CLOSED`).
+
+        **Business rule:** an account with a non-zero `ledgerBalance` cannot
+        be closed and returns `409 Conflict`.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+        required:
+          - accountId
+      title: Close a bank account
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: DELETE
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAccountBalance
+      description: >
+        Returns a complete balance snapshot including:
+
+        - `availableBalance`  funds immediately usable (cleared, unblocked)
+
+        - `ledgerBalance`  total balance including pending / uncleared items
+
+        - `blockedAmount`  funds held against pending transactions or disputes
+
+        - `averageMonthlyBalance`  rolling 30-day average (used by Loan API)
+
+
+        **Consumed by the Loan API** during step 3 of the loan eligibility
+        workflow
+
+        to assess the applicant's financial position before credit scoring.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+        required:
+          - accountId
+      title: Retrieve the current balance of an account
+      x-api-binding:
+        operationPath: /accounts/{accountId}/balance
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAllBalancesByCustomer
+      description: |
+        Returns balance information for every account owned by the customer in
+        a single call. Used by the **Loan API** to get a holistic view of the
+        applicant's total financial position across all accounts, and by the
+        **Risk API** during credit scoring.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          accountType:
+            description: Optionally restrict to a specific account type.
+            x-parameter-location: query
+            type: string
+            enum: *a1
+            example: SAVINGS
+        required:
+          - customerId
+      title: Retrieve balance snapshots for all accounts of a customer
+      x-api-binding:
+        operationPath: /accounts/customers/{customerId}/balances
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getTransactionHistory
+      description: >
+        Returns a paginated, filterable list of transactions.
+
+
+        **Consumed by:**
+
+        - **Loan API**  retrieves repayment history and income patterns to
+        assess
+          loan eligibility (step 4 of the eligibility workflow).
+        - **Risk API**  pulls transaction data for AML pattern detection and
+          fraud analysis.
+
+        Supports rich filtering by date range, transaction type, amount range,
+
+        and reference ID. Results are ordered by `valueDate` descending.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          fromDate:
+            description: Start date filter inclusive (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-01-01
+          toDate:
+            description: End date filter inclusive (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-12-31
+          type:
+            description: Filter by transaction type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - CREDIT
+              - DEBIT
+              - TRANSFER_IN
+              - TRANSFER_OUT
+              - LOAN_DISBURSEMENT
+              - LOAN_REPAYMENT
+              - INTEREST_CREDIT
+              - FD_MATURITY_CREDIT
+              - CHARGE
+              - REVERSAL
+            example: CREDIT
+          minAmount:
+            description: Minimum transaction amount filter.
+            x-parameter-location: query
+            type: number
+            format: double
+            example: 100
+          maxAmount:
+            description: Maximum transaction amount filter.
+            x-parameter-location: query
+            type: number
+            format: double
+            example: 50000
+          referenceId:
+            description: Filter by cross-API reference (e.g. a loanId or paymentId).
+            x-parameter-location: query
+            type: string
+          counterpartyAccount:
+            description: Filter by counterparty account number.
+            x-parameter-location: query
+            type: string
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+        required:
+          - accountId
+      title: Retrieve paginated transaction history for an account
+      x-api-binding:
+        operationPath: /accounts/{accountId}/transactions
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getTransactionById
+      description: |
+        Returns full details of one transaction including counterparty, channel,
+        reference IDs, and any linked cross-API identifiers (paymentId, loanId).
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          transactionId:
+            description: Unique transaction identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: t1a2b3c4-0006-0006-0006-000000000006
+        required:
+          - accountId
+          - transactionId
+      title: Retrieve a single transaction by ID
+      x-api-binding:
+        operationPath: /accounts/{accountId}/transactions/{transactionId}
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getTransactionSummary
+      description: >
+        Returns computed aggregates over a date range without returning raw
+
+        transaction rows. Used by the **Loan API** and **Risk API** to obtain
+
+        metrics (total credits, total debits, average monthly credit, missed
+
+        payment count, suspicious transaction count) efficiently in a single
+        call 
+
+        avoiding large pagination loops over raw transactions.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          fromDate:
+            description: Start of the analysis period (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2023-01-01
+          toDate:
+            description: End of the analysis period (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-12-31
+        required:
+          - accountId
+          - fromDate
+          - toDate
+      title: Retrieve aggregated transaction statistics for an account
+      x-api-binding:
+        operationPath: /accounts/{accountId}/transactions/summary
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getFixedDepositDetails
+      description: >
+        Returns the full Fixed Deposit details including principal, interest
+        rate,
+
+        maturity date, maturity amount, and premature closure penalty.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+        required:
+          - accountId
+      title: Retrieve Fixed Deposit term and interest details
+      x-api-binding:
+        operationPath: /accounts/{accountId}/fixed-deposit
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: breakFixedDeposit
+      description: >
+        Initiates premature closure of a Fixed Deposit. A penalty rate is
+        applied
+
+        to the accrued interest. Returns the net maturity amount after penalty.
+
+        The proceeds are credited to the customer's linked savings or current
+        account.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          creditToAccountId:
+            type: string
+            format: uuid
+            description: Account to receive the net proceeds after penalty. Must belong to
+              the same customer.
+          reason:
+            type: string
+            enum:
+              - EMERGENCY_FUNDS
+              - REINVESTMENT
+              - LOAN_REPAYMENT
+              - CUSTOMER_REQUEST
+              - OTHER
+            example: EMERGENCY_FUNDS
+          requestedBy:
+            type: string
+            description: User or system requesting the premature closure.
+        required:
+          - accountId
+          - creditToAccountId
+          - reason
+      title: Prematurely close (break) a Fixed Deposit
+      x-api-binding:
+        operationPath: /accounts/{accountId}/fixed-deposit/break
+        operationMethod: POST
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: validateAccount
+      description: >
+        Checks that the specified account:
+
+        - Exists and is `ACTIVE`
+
+        - Can receive funds (not `FROZEN` or `CLOSED`)
+
+        - Matches the expected currency (if supplied)
+
+
+        **Consumed exclusively by the Payments API** before every loan
+        disbursement
+
+        or fund transfer to validate the beneficiary account.
+
+        Returns a typed `AccountValidationResult`  not raw account data  to
+
+        minimise PII exposure across service boundaries.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          validationPurpose:
+            type: string
+            description: Context in which the validation is being performed.
+            enum:
+              - LOAN_DISBURSEMENT
+              - PAYMENT_TRANSFER
+              - BENEFICIARY_CHECK
+            example: LOAN_DISBURSEMENT
+          expectedCurrency:
+            type: string
+            description: Expected ISO 4217 currency. Validation fails if account currency
+              differs.
+            example: USD
+          requestedBy:
+            type: string
+            description: ID of the calling service (e.g. payments-service).
+            example: payments-service
+        required:
+          - accountId
+          - validationPurpose
+          - requestedBy
+      title: Validate an account for payment eligibility
+      x-api-binding:
+        operationPath: /accounts/{accountId}/validate
+        operationMethod: POST
+        api:
+          $path: ./accounts-api-spec.yml

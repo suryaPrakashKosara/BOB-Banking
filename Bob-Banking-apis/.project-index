@@ -1,0 +1,171 @@
+{
+  "nodes": [
+    {
+      "id": "03c9ff4b-9715-4cfe-97bd-e18a635eb8f6:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/accounts-api-tool-zp324.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784791901473,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "accounts-api-tool-zp324",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "4ede57d40ed5cec8"
+    },
+    {
+      "id": "303e79cc-189b-4dc1-9fac-4bd4007a460f:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/accounts-api-server-zp324.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784791902288,
+      "schemaVersion": 1,
+      "kind": "MCPServer",
+      "name": "accounts-api-server-zp324",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "14e479ffb89ca028"
+    },
+    {
+      "id": "69c14ac7-357b-4dba-8708-34f42895a712:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/bob-banking-apis-freeflowpolicysequence-zp324.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784791899799,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "bob-banking-apis-freeflowpolicysequence-zp324",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "401ee55c0ad07605"
+    },
+    {
+      "id": "73bda369-1ffd-41e1-a410-6bfc274e7e6d:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/telemetry-zp324.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784791899046,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "telemetry-zp324",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "36beda661074663d"
+    },
+    {
+      "id": "a5cbf947-ffff-4bd4-8142-e6a3ca045b98:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/invoke-zp324.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784791898132,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "invoke-zp324",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "11183e20b8f4399f"
+    },
+    {
+      "id": "aa962bf7-ad54-4186-9157-bca18df37f24:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/accounts-api-spec.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1784791896259,
+      "schemaVersion": 1
+    },
+    {
+      "id": "c52183ff-0f3e-4515-9fc9-6dce243feef5:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/bob-banking-apis-quota-zp324.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784791900595,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "bob-banking-apis-quota-zp324",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "bcae3f4f5ace3c8e"
+    }
+  ],
+  "edges": [
+    {
+      "id": "1080740f-329f-416c-ba24-cfabbd127820",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "303e79cc-189b-4dc1-9fac-4bd4007a460f:0",
+      "targetNodeId": "69c14ac7-357b-4dba-8708-34f42895a712:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:bob-banking-apis-freeflowpolicysequence-zp324:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784791902295,
+      "lastValidated": 1784791902295
+    },
+    {
+      "id": "1292d8f0-f865-47a5-90e1-7309e43c4fe2",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "303e79cc-189b-4dc1-9fac-4bd4007a460f:0",
+      "targetNodeId": "03c9ff4b-9715-4cfe-97bd-e18a635eb8f6:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:accounts-api-tool-zp324:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784791902295,
+      "lastValidated": 1784791902295
+    },
+    {
+      "id": "1ede05bb-a6e9-40cc-9b62-983517aa9b6e",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "69c14ac7-357b-4dba-8708-34f42895a712:0",
+      "targetNodeId": "a5cbf947-ffff-4bd4-8142-e6a3ca045b98:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:invoke-zp324:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784791899806,
+      "lastValidated": 1784791899806
+    },
+    {
+      "id": "32209d10-11d1-44c3-85f7-723ce8110273",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "69c14ac7-357b-4dba-8708-34f42895a712:0",
+      "targetNodeId": "73bda369-1ffd-41e1-a410-6bfc274e7e6d:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:telemetry-zp324:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784791899806,
+      "lastValidated": 1784791899806
+    },
+    {
+      "id": "e4397fa5-2076-4787-9086-9b22cb11b139",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "03c9ff4b-9715-4cfe-97bd-e18a635eb8f6:0",
+      "targetNodeId": "aa962bf7-ad54-4186-9157-bca18df37f24:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./accounts-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1784791901476,
+      "lastValidated": 1784791901476
+    },
+    {
+      "id": "fa3be0d0-c836-416d-99ae-c2489e7ddf5a",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "303e79cc-189b-4dc1-9fac-4bd4007a460f:0",
+      "targetNodeId": "c52183ff-0f3e-4515-9fc9-6dce243feef5:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:bob-banking-apis-quota-zp324:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784791902295,
+      "lastValidated": 1784791902295
+    }
+  ]
+}
