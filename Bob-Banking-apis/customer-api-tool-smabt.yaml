@@ -1,0 +1,686 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: customer-api-tool-smabt
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  description: |
+    ## Overview
+    The Customer API is the **master identity and profile service** for the enterprise
+    Banking platform. It is the authoritative source of truth for customer data and is
+    consumed by the Loan API and Risk API to support loan eligibility assessment,
+    KYC/AML validation, and risk scoring workflows.
+
+    ## Responsibilities
+    - Maintain and expose the customer profile lifecycle (create, read, update, deactivate)
+    - Return KYC (Know Your Customer) verification information
+    - Return customer-linked documents (identity, address, income proofs)
+    - Return accounts owned by a customer
+
+    ## Cross-API Relationships
+    | Consumer     | Usage                                                         |
+    |--------------|---------------------------------------------------------------|
+    | Loan API     | Retrieves customer profile and KYC status before loan assessment |
+    | Risk API     | Retrieves customer profile, KYC status, and risk category for compliance checks |
+    | Accounts API | References `customerId` as the foreign key on every account   |
+
+    ## Business Rules
+    - A customer can own multiple accounts (one-to-many).
+    - A loan application cannot proceed without a verified KYC status.
+    - Risk category is maintained by the Risk API and written back via `PATCH /customers/{customerId}/risk-category`.
+  labels:
+    api-spec: ./customer-api-spec.yml
+spec:
+  tools:
+    - name: createCustomer
+      description: >
+        Registers a new customer in the Banking platform. The customer is
+        created
+
+        with an initial KYC status of `PENDING` and no risk category assigned.
+
+        A unique `customerId` (UUID) is generated and returned.
+      inputSchema:
+        type: object
+        properties:
+          body: {}
+        required:
+          - body
+      title: Create a new customer
+      x-api-binding:
+        operationPath: /customers
+        operationMethod: POST
+        api:
+          $path: ./customer-api-spec.yml
+    - name: searchCustomers
+      description: >
+        Returns a paginated list of customers. Supports filtering by name,
+        email,
+
+        mobile, customer type, and KYC status.
+
+        Intended for internal banking portal and service-to-service use only.
+      inputSchema:
+        type: object
+        properties:
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+          firstName:
+            description: Filter by first name (case-insensitive, partial match).
+            x-parameter-location: query
+            type: string
+            example: Jane
+          lastName:
+            description: Filter by last name (case-insensitive, partial match).
+            x-parameter-location: query
+            type: string
+            example: Doe
+          email:
+            description: Filter by exact email address.
+            x-parameter-location: query
+            type: string
+            format: email
+            example: jane.doe@email.com
+          mobile:
+            description: Filter by mobile number (E.164 format).
+            x-parameter-location: query
+            type: string
+            example: "+12025550199"
+          customerType:
+            description: Filter by customer type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - INDIVIDUAL
+              - CORPORATE
+              - SOLE_TRADER
+              - NON_PROFIT
+            example: INDIVIDUAL
+          kycStatus:
+            description: Filter by KYC verification status.
+            x-parameter-location: query
+            type: string
+            enum: &a1
+              - PENDING
+              - IN_PROGRESS
+              - VERIFIED
+              - FAILED
+              - EXPIRED
+            example: VERIFIED
+      title: Search and list customers
+      x-api-binding:
+        operationPath: /customers
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getCustomerById
+      description: >
+        Returns the full customer profile including KYC status and risk
+        category.
+
+        This is the primary endpoint consumed by the **Loan API** and **Risk
+        API**
+
+        during cross-service orchestration.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+        required:
+          - customerId
+      title: Retrieve a customer profile by ID
+      x-api-binding:
+        operationPath: /customers/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: updateCustomer
+      description: |
+        Applies a partial update to mutable customer fields. Immutable fields
+        (`customerId`, `dateOfBirth`, `customerType`) are rejected if provided.
+        `kycStatus` and `riskCategory` have dedicated endpoints and cannot be
+        updated here.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          firstName:
+            type: string
+            minLength: 1
+            maxLength: 100
+          lastName:
+            type: string
+            minLength: 1
+            maxLength: 100
+          mobile:
+            type: string
+            pattern: ^\+[1-9]\d{6,14}$
+          email:
+            type: string
+            format: email
+          nationalId:
+            type: string
+          address:
+            type: object
+            description: Customer's primary residential or registered address.
+            required:
+              - street
+              - city
+              - country
+            properties:
+              line1:
+                type: string
+                example: 123 Main Street
+              line2:
+                type: string
+                example: Apartment 4B
+                nullable: true
+              city:
+                type: string
+                example: New York
+              state:
+                type: string
+                example: NY
+                nullable: true
+              postalCode:
+                type: string
+                example: "10001"
+              country:
+                type: string
+                description: ISO 3166-1 alpha-2 country code.
+                example: US
+        required:
+          - customerId
+      title: Partially update a customer profile
+      x-api-binding:
+        operationPath: /customers/{customerId}
+        operationMethod: PATCH
+        api:
+          $path: ./customer-api-spec.yml
+    - name: deactivateCustomer
+      description: >
+        Performs a **soft delete**  sets the customer status to `INACTIVE`.
+
+        A customer with active loans or positive account balances cannot be
+        deactivated
+
+        (returns `409 Conflict`).
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+        required:
+          - customerId
+      title: Deactivate a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}
+        operationMethod: DELETE
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getCustomerKyc
+      description: |
+        Returns the current KYC record including verification level, status,
+        expiry, and the list of checks performed.
+        Consumed by the **Risk API** to determine whether a new KYC validation
+        is required before a compliance check.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+        required:
+          - customerId
+      title: Retrieve KYC verification information for a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/kyc
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: updateKycStatus
+      description: |
+        Updates the KYC status after a verification workflow completes.
+        This endpoint is intended to be called **only by the Risk API** or an
+        authorised compliance system  not by end-user-facing clients.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          kycStatus:
+            type: string
+            description: >
+              Know Your Customer verification status.
+
+              - `PENDING`    not yet verified
+
+              - `IN_PROGRESS`  verification workflow running
+
+              - `VERIFIED`   fully verified; loan and payment services may
+              proceed
+
+              - `FAILED`     verification failed; manual review required
+
+              - `EXPIRED`    previously verified but verification period has
+              lapsed
+            enum: *a1
+            example: VERIFIED
+          verificationLevel:
+            type: string
+            enum:
+              - NONE
+              - BASIC
+              - ENHANCED
+              - FULL
+          verifiedBy:
+            type: string
+            description: System or officer ID performing the update.
+            example: risk-engine-v3
+          checksPerformed:
+            type: array
+            items:
+              type: object
+              description: An individual check performed within a KYC workflow.
+              properties:
+                checkType:
+                  type: string
+                  enum:
+                    - IDENTITY_DOCUMENT
+                    - ADDRESS_PROOF
+                    - BIOMETRIC
+                    - SANCTIONS_SCREENING
+                    - PEP_SCREENING
+                    - ADVERSE_MEDIA
+                  example: IDENTITY_DOCUMENT
+                result:
+                  type: string
+                  enum:
+                    - PASS
+                    - FAIL
+                    - PENDING
+                    - SKIPPED
+                  example: PASS
+                performedAt:
+                  type: string
+                  format: date-time
+                performedBy:
+                  type: string
+                  example: kyc-engine-v2
+          findings:
+            type: array
+            items:
+              type: object
+              properties:
+                code:
+                  type: string
+                  example: NAME_MISMATCH
+                description:
+                  type: string
+                  example: Name on document does not exactly match registered name.
+                severity:
+                  type: string
+                  enum:
+                    - INFO
+                    - WARNING
+                    - CRITICAL
+          expiresAt:
+            type: string
+            format: date-time
+            nullable: true
+        required:
+          - customerId
+          - kycStatus
+          - verificationLevel
+          - verifiedBy
+      title: Update the KYC status of a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/kyc/status
+        operationMethod: PUT
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getKycHistory
+      description: >
+        Returns a chronological list of all KYC checks performed for the
+        customer,
+
+        including outcomes and the verifying system. Used for audit and
+        regulatory reporting.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+        required:
+          - customerId
+      title: Retrieve the KYC verification history for a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/kyc/history
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: updateRiskCategory
+      description: >
+        Sets the risk category on a customer profile. This endpoint is called
+
+        exclusively by the **Risk API** after completing a risk scoring
+        workflow.
+
+        Consumer applications must not call this endpoint directly.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          riskCategory:
+            type: string
+            description: |
+              Risk classification assigned by the Risk API after risk scoring.
+              Null until the first risk assessment is completed.
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+            nullable: true
+            example: LOW
+          assessedBy:
+            type: string
+            description: Risk system or officer ID performing the assessment.
+            example: risk-engine-v3
+          assessedAt:
+            type: string
+            format: date-time
+            example: 2024-06-01T10:30:00Z
+          notes:
+            type: string
+            description: Optional justification or notes from the risk assessor.
+        required:
+          - customerId
+          - riskCategory
+          - assessedBy
+          - assessedAt
+      title: Update the risk category assigned to a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/risk-category
+        operationMethod: PATCH
+        api:
+          $path: ./customer-api-spec.yml
+    - name: listCustomerDocuments
+      description: |
+        Returns metadata for all documents associated with the customer.
+        Supports filtering by document type and status.
+        Document binary content is not returned here  use
+        `GET /customers/{customerId}/documents/{documentId}/content` for that.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          documentType:
+            description: Filter by document type.
+            x-parameter-location: query
+            type: string
+            enum: &a2
+              - NATIONAL_ID
+              - PASSPORT
+              - DRIVERS_LICENSE
+              - PROOF_OF_ADDRESS
+              - BANK_STATEMENT
+              - INCOME_PROOF
+              - TAX_RETURN
+              - COMPANY_REGISTRATION
+              - OTHER
+            example: PASSPORT
+          status:
+            description: Filter by document verification status.
+            x-parameter-location: query
+            type: string
+            enum:
+              - PENDING_REVIEW
+              - VERIFIED
+              - REJECTED
+              - EXPIRED
+            example: VERIFIED
+        required:
+          - customerId
+      title: List all documents for a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/documents
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: uploadCustomerDocument
+      description: >
+        Attaches a new document to the customer record. Accepted formats: PDF,
+        JPEG, PNG.
+
+        Maximum file size: 10 MB. The document is created with status
+        `PENDING_REVIEW`.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          documentType:
+            type: string
+            description: Classification of the document.
+            enum: *a2
+            example: PASSPORT
+          file:
+            type: string
+            format: binary
+            description: Document binary content. Max 10 MB. PDF, JPEG, or PNG only.
+          expiryDate:
+            type: string
+            format: date
+            description: Expiry date printed on the document (e.g. passport expiry).
+        required:
+          - customerId
+          - documentType
+          - file
+      title: Upload a document for a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/documents
+        operationMethod: POST
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getCustomerDocument
+      description: Make a GET request to /customers/{customerId}/documents/{documentId}
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          documentId:
+            description: Unique document identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: d1a2b3c4-0005-0005-0005-000000000005
+        required:
+          - customerId
+          - documentId
+      title: Retrieve document metadata by ID
+      x-api-binding:
+        operationPath: /customers/{customerId}/documents/{documentId}
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: deleteCustomerDocument
+      description: |
+        Permanently deletes the document and its content. Documents with status
+        `VERIFIED` cannot be deleted  contact compliance to archive instead.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          documentId:
+            description: Unique document identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: d1a2b3c4-0005-0005-0005-000000000005
+        required:
+          - customerId
+          - documentId
+      title: Remove a document from a customer record
+      x-api-binding:
+        operationPath: /customers/{customerId}/documents/{documentId}
+        operationMethod: DELETE
+        api:
+          $path: ./customer-api-spec.yml
+    - name: downloadCustomerDocumentContent
+      description: Returns the raw file bytes of the document (PDF, JPEG, or PNG).
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          documentId:
+            description: Unique document identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: d1a2b3c4-0005-0005-0005-000000000005
+        required:
+          - customerId
+          - documentId
+      title: Download the binary content of a document
+      x-api-binding:
+        operationPath: /customers/{customerId}/documents/{documentId}/content
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getAccountsByCustomer
+      description: >
+        Returns a summary projection of all bank accounts linked to the
+        customer.
+
+        This is a **read-only projection**  full account operations are
+        performed
+
+        via the Accounts API. The Accounts API is the authoritative source.
+
+
+        **Business rule:** one customer can own multiple accounts (one-to-many).
+
+
+        This endpoint is consumed by the **Loan API** to enumerate the
+        customer's
+
+        accounts before selecting a disbursement account.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          status:
+            description: Filter by account status.
+            x-parameter-location: query
+            type: string
+            enum:
+              - ACTIVE
+              - DORMANT
+              - CLOSED
+              - FROZEN
+          accountType:
+            description: Filter by account type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - CURRENT
+              - SAVINGS
+              - FIXED_DEPOSIT
+              - LOAN_DISBURSEMENT
+        required:
+          - customerId
+      title: List all accounts owned by a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/accounts
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml

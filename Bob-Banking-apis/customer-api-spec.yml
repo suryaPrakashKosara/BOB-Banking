@@ -1,0 +1,1613 @@
+openapi: 3.0.3
+info:
+  title: Customer API
+  description: |
+    ## Overview
+    The Customer API is the **master identity and profile service** for the enterprise
+    Banking platform. It is the authoritative source of truth for customer data and is
+    consumed by the Loan API and Risk API to support loan eligibility assessment,
+    KYC/AML validation, and risk scoring workflows.
+
+    ## Responsibilities
+    - Maintain and expose the customer profile lifecycle (create, read, update, deactivate)
+    - Return KYC (Know Your Customer) verification information
+    - Return customer-linked documents (identity, address, income proofs)
+    - Return accounts owned by a customer
+
+    ## Cross-API Relationships
+    | Consumer     | Usage                                                         |
+    |--------------|---------------------------------------------------------------|
+    | Loan API     | Retrieves customer profile and KYC status before loan assessment |
+    | Risk API     | Retrieves customer profile, KYC status, and risk category for compliance checks |
+    | Accounts API | References `customerId` as the foreign key on every account   |
+
+    ## Business Rules
+    - A customer can own multiple accounts (one-to-many).
+    - A loan application cannot proceed without a verified KYC status.
+    - Risk category is maintained by the Risk API and written back via `PATCH /customers/{customerId}/risk-category`.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+servers:
+  - url: https://customer-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/customers
+    description: Production
+tags:
+  - name: Customers
+    description: Customer profile creation, retrieval, and lifecycle management.
+  - name: KYC
+    description: Know Your Customer identity verification status and history.
+  - name: Documents
+    description: Customer-linked identity, address, and income documents.
+  - name: Accounts
+    description: Accounts owned by a customer (read-only projection; managed by
+      Accounts API).
+paths:
+  /customers:
+    post:
+      tags:
+        - Customers
+      operationId: createCustomer
+      summary: Create a new customer
+      description: >
+        Registers a new customer in the Banking platform. The customer is
+        created
+
+        with an initial KYC status of `PENDING` and no risk category assigned.
+
+        A unique `customerId` (UUID) is generated and returned.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/requestBodies/CustomerCreateRequest/content/application~1js\
+                on/schema"
+            examples:
+              individual:
+                $ref: "#/components/examples/CustomerCreateIndividualExample"
+              corporate:
+                $ref: "#/components/examples/CustomerCreateCorporateExample"
+      responses:
+        "201":
+          description: Customer created successfully.
+          headers:
+            Location:
+              description: URL of the newly created customer resource.
+              schema:
+                type: string
+                example: /customers/c1a2b3c4-0001-0001-0001-000000000001
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+              examples:
+                created:
+                  $ref: "#/components/examples/CustomerResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+      security:
+        - BearerAuth:
+            - customer:write
+    get:
+      tags:
+        - Customers
+      operationId: searchCustomers
+      summary: Search and list customers
+      description: >
+        Returns a paginated list of customers. Supports filtering by name,
+        email,
+
+        mobile, customer type, and KYC status.
+
+        Intended for internal banking portal and service-to-service use only.
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: firstName
+          in: query
+          description: Filter by first name (case-insensitive, partial match).
+          schema:
+            type: string
+            example: Jane
+        - name: lastName
+          in: query
+          description: Filter by last name (case-insensitive, partial match).
+          schema:
+            type: string
+            example: Doe
+        - name: email
+          in: query
+          description: Filter by exact email address.
+          schema:
+            type: string
+            format: email
+            example: jane.doe@email.com
+        - name: mobile
+          in: query
+          description: Filter by mobile number (E.164 format).
+          schema:
+            type: string
+            example: "+12025550199"
+        - name: customerType
+          in: query
+          description: Filter by customer type.
+          schema:
+            $ref: "#/components/schemas/CustomerType"
+        - name: kycStatus
+          in: query
+          description: Filter by KYC verification status.
+          schema:
+            $ref: "#/components/schemas/KycStatus"
+      responses:
+        "200":
+          description: Paginated customer list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPage"
+              examples:
+                list:
+                  $ref: "#/components/examples/CustomerPageExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - customer:read
+  /customers/{customerId}:
+    get:
+      tags:
+        - Customers
+      operationId: getCustomerById
+      summary: Retrieve a customer profile by ID
+      description: >
+        Returns the full customer profile including KYC status and risk
+        category.
+
+        This is the primary endpoint consumed by the **Loan API** and **Risk
+        API**
+
+        during cross-service orchestration.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: Customer profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+              examples:
+                active:
+                  $ref: "#/components/examples/CustomerResponseExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+    patch:
+      tags:
+        - Customers
+      operationId: updateCustomer
+      summary: Partially update a customer profile
+      description: |
+        Applies a partial update to mutable customer fields. Immutable fields
+        (`customerId`, `dateOfBirth`, `customerType`) are rejected if provided.
+        `kycStatus` and `riskCategory` have dedicated endpoints and cannot be
+        updated here.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdateRequest"
+            examples:
+              updateEmail:
+                summary: Update email address
+                value:
+                  email: jane.newemail@bank.com
+              updateMobile:
+                summary: Update mobile number
+                value:
+                  mobile: "+12025550200"
+      responses:
+        "200":
+          description: Customer updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:write
+    delete:
+      tags:
+        - Customers
+      operationId: deactivateCustomer
+      summary: Deactivate a customer
+      description: >
+        Performs a **soft delete**  sets the customer status to `INACTIVE`.
+
+        A customer with active loans or positive account balances cannot be
+        deactivated
+
+        (returns `409 Conflict`).
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "204":
+          description: Customer deactivated successfully. No content returned.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+      security:
+        - BearerAuth:
+            - customer:delete
+  /customers/{customerId}/kyc:
+    get:
+      tags:
+        - KYC
+      operationId: getCustomerKyc
+      summary: Retrieve KYC verification information for a customer
+      description: |
+        Returns the current KYC record including verification level, status,
+        expiry, and the list of checks performed.
+        Consumed by the **Risk API** to determine whether a new KYC validation
+        is required before a compliance check.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: KYC record retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycRecord"
+              examples:
+                verified:
+                  $ref: "#/components/examples/KycRecordVerifiedExample"
+                pending:
+                  $ref: "#/components/examples/KycRecordPendingExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+  /customers/{customerId}/kyc/status:
+    put:
+      tags:
+        - KYC
+      operationId: updateKycStatus
+      summary: Update the KYC status of a customer
+      description: |
+        Updates the KYC status after a verification workflow completes.
+        This endpoint is intended to be called **only by the Risk API** or an
+        authorised compliance system  not by end-user-facing clients.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KycStatusUpdateRequest"
+            examples:
+              pass:
+                $ref: "#/components/examples/KycStatusUpdatePassExample"
+              fail:
+                $ref: "#/components/examples/KycStatusUpdateFailExample"
+      responses:
+        "200":
+          description: KYC status updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - kyc:write
+  /customers/{customerId}/kyc/history:
+    get:
+      tags:
+        - KYC
+      operationId: getKycHistory
+      summary: Retrieve the KYC verification history for a customer
+      description: >
+        Returns a chronological list of all KYC checks performed for the
+        customer,
+
+        including outcomes and the verifying system. Used for audit and
+        regulatory reporting.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: KYC verification history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycHistoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+  /customers/{customerId}/risk-category:
+    patch:
+      tags:
+        - Customers
+      operationId: updateRiskCategory
+      summary: Update the risk category assigned to a customer
+      description: >
+        Sets the risk category on a customer profile. This endpoint is called
+
+        exclusively by the **Risk API** after completing a risk scoring
+        workflow.
+
+        Consumer applications must not call this endpoint directly.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiskCategoryUpdateRequest"
+            examples:
+              setLow:
+                summary: Assign LOW risk
+                value:
+                  riskCategory: LOW
+                  assessedBy: risk-engine-v3
+                  assessedAt: 2024-06-01T10:30:00Z
+              setHigh:
+                summary: Assign HIGH risk
+                value:
+                  riskCategory: HIGH
+                  assessedBy: risk-engine-v3
+                  assessedAt: 2024-06-01T10:31:00Z
+      responses:
+        "200":
+          description: Risk category updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:write
+  /customers/{customerId}/documents:
+    get:
+      tags:
+        - Documents
+      operationId: listCustomerDocuments
+      summary: List all documents for a customer
+      description: |
+        Returns metadata for all documents associated with the customer.
+        Supports filtering by document type and status.
+        Document binary content is not returned here  use
+        `GET /customers/{customerId}/documents/{documentId}/content` for that.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - name: documentType
+          in: query
+          description: Filter by document type.
+          schema:
+            $ref: "#/components/schemas/DocumentType"
+        - name: status
+          in: query
+          description: Filter by document verification status.
+          schema:
+            $ref: "#/components/schemas/DocumentStatus"
+      responses:
+        "200":
+          description: List of customer documents.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentList"
+              examples:
+                list:
+                  $ref: "#/components/examples/DocumentListExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+    post:
+      tags:
+        - Documents
+      operationId: uploadCustomerDocument
+      summary: Upload a document for a customer
+      description: >
+        Attaches a new document to the customer record. Accepted formats: PDF,
+        JPEG, PNG.
+
+        Maximum file size: 10 MB. The document is created with status
+        `PENDING_REVIEW`.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/DocumentUploadRequest"
+      responses:
+        "201":
+          description: Document uploaded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+              examples:
+                uploaded:
+                  $ref: "#/components/examples/DocumentUploadedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+      security:
+        - BearerAuth:
+            - customer:write
+  /customers/{customerId}/documents/{documentId}:
+    get:
+      tags:
+        - Documents
+      operationId: getCustomerDocument
+      summary: Retrieve document metadata by ID
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/DocumentIdParam"
+      responses:
+        "200":
+          description: Document metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+    delete:
+      tags:
+        - Documents
+      operationId: deleteCustomerDocument
+      summary: Remove a document from a customer record
+      description: |
+        Permanently deletes the document and its content. Documents with status
+        `VERIFIED` cannot be deleted  contact compliance to archive instead.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/DocumentIdParam"
+      responses:
+        "204":
+          description: Document deleted.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+      security:
+        - BearerAuth:
+            - customer:write
+  /customers/{customerId}/documents/{documentId}/content:
+    get:
+      tags:
+        - Documents
+      operationId: downloadCustomerDocumentContent
+      summary: Download the binary content of a document
+      description: Returns the raw file bytes of the document (PDF, JPEG, or PNG).
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/DocumentIdParam"
+      responses:
+        "200":
+          description: Document binary content.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+  /customers/{customerId}/accounts:
+    get:
+      tags:
+        - Accounts
+      operationId: getAccountsByCustomer
+      summary: List all accounts owned by a customer
+      description: >
+        Returns a summary projection of all bank accounts linked to the
+        customer.
+
+        This is a **read-only projection**  full account operations are
+        performed
+
+        via the Accounts API. The Accounts API is the authoritative source.
+
+
+        **Business rule:** one customer can own multiple accounts (one-to-many).
+
+
+        This endpoint is consumed by the **Loan API** to enumerate the
+        customer's
+
+        accounts before selecting a disbursement account.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - name: status
+          in: query
+          description: Filter by account status.
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - DORMANT
+              - CLOSED
+              - FROZEN
+        - name: accountType
+          in: query
+          description: Filter by account type.
+          schema:
+            type: string
+            enum:
+              - CURRENT
+              - SAVINGS
+              - FIXED_DEPOSIT
+              - LOAN_DISBURSEMENT
+      responses:
+        "200":
+          description: List of accounts owned by the customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerAccountList"
+              examples:
+                accounts:
+                  $ref: "#/components/examples/CustomerAccountListExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - customer:read
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT Bearer token issued by the IBM API Connect OAuth provider.
+
+        Scopes:
+
+        - `customer:read`   read customer, KYC, documents, accounts
+
+        - `customer:write`  create/update customer and upload documents
+
+        - `customer:delete`  deactivate a customer
+
+        - `kyc:write`       update KYC status (Risk API / compliance systems
+        only)
+
+        - `risk:write`      update risk category (Risk API only)
+  parameters:
+    CustomerIdParam:
+      name: customerId
+      in: path
+      required: true
+      description: Unique customer identifier (UUID v4).
+      schema:
+        type: string
+        format: uuid
+        example: c1a2b3c4-0001-0001-0001-000000000001
+    DocumentIdParam:
+      name: documentId
+      in: path
+      required: true
+      description: Unique document identifier (UUID v4).
+      schema:
+        type: string
+        format: uuid
+        example: d1a2b3c4-0005-0005-0005-000000000005
+    PageParam:
+      name: page
+      in: query
+      description: Page number (1-based).
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      description: Number of records per page.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+  requestBodies:
+    CustomerCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - firstName
+              - lastName
+              - dateOfBirth
+              - mobile
+              - email
+              - customerType
+            properties:
+              firstName:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: Jane
+              lastName:
+                type: string
+                minLength: 1
+                maxLength: 100
+                example: Doe
+              dateOfBirth:
+                type: string
+                format: date
+                description: ISO 8601 date. Must be in the past.
+                example: 1985-06-15
+              mobile:
+                type: string
+                description: E.164 international mobile number format.
+                pattern: ^\+[1-9]\d{6,14}$
+                example: "+12025550199"
+              email:
+                type: string
+                format: email
+                example: jane.doe@email.com
+              customerType:
+                $ref: "#/components/schemas/CustomerType"
+              nationalId:
+                type: string
+                description: Government-issued national ID or passport number.
+                example: ID-987654321
+              address:
+                $ref: "#/components/schemas/Address"
+  schemas:
+    Customer:
+      type: object
+      description: Full customer profile as maintained by the Customer API.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          readOnly: true
+          description: System-generated unique identifier.
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1985-06-15
+        mobile:
+          type: string
+          description: E.164 international mobile number.
+          example: "+12025550199"
+        email:
+          type: string
+          format: email
+          example: jane.doe@email.com
+        customerType:
+          $ref: "#/components/schemas/CustomerType"
+        kycStatus:
+          $ref: "#/components/schemas/KycStatus"
+        riskCategory:
+          $ref: "#/components/schemas/RiskCategory"
+        status:
+          $ref: "#/components/schemas/CustomerStatus"
+        nationalId:
+          type: string
+          example: ID-987654321
+        address:
+          $ref: "#/components/schemas/Address"
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2024-01-15T09:00:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2024-06-01T14:30:00Z
+    CustomerUpdateRequest:
+      type: object
+      description: |
+        Fields allowed for partial update via PATCH.
+        `customerId`, `dateOfBirth`, and `customerType` are immutable.
+        `kycStatus` and `riskCategory` have dedicated endpoints.
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        mobile:
+          type: string
+          pattern: ^\+[1-9]\d{6,14}$
+        email:
+          type: string
+          format: email
+        nationalId:
+          type: string
+        address:
+          $ref: "#/components/schemas/Address"
+    CustomerPage:
+      type: object
+      description: Paginated list of customers.
+      properties:
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 20
+        totalCount:
+          type: integer
+          example: 142
+        totalPages:
+          type: integer
+          example: 8
+        customers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Customer"
+    CustomerType:
+      type: string
+      description: Distinguishes individual retail customers from corporate entities.
+      enum:
+        - INDIVIDUAL
+        - CORPORATE
+        - SOLE_TRADER
+        - NON_PROFIT
+      example: INDIVIDUAL
+    CustomerStatus:
+      type: string
+      description: Operational lifecycle status of the customer record.
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - SUSPENDED
+        - PENDING_VERIFICATION
+        - CLOSED
+      example: ACTIVE
+    KycStatus:
+      type: string
+      description: |
+        Know Your Customer verification status.
+        - `PENDING`    not yet verified
+        - `IN_PROGRESS`  verification workflow running
+        - `VERIFIED`   fully verified; loan and payment services may proceed
+        - `FAILED`     verification failed; manual review required
+        - `EXPIRED`    previously verified but verification period has lapsed
+      enum:
+        - PENDING
+        - IN_PROGRESS
+        - VERIFIED
+        - FAILED
+        - EXPIRED
+      example: VERIFIED
+    RiskCategory:
+      type: string
+      description: |
+        Risk classification assigned by the Risk API after risk scoring.
+        Null until the first risk assessment is completed.
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      nullable: true
+      example: LOW
+    KycRecord:
+      type: object
+      description: Current KYC verification record for a customer.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          readOnly: true
+        kycStatus:
+          $ref: "#/components/schemas/KycStatus"
+        verificationLevel:
+          type: string
+          description: Depth of identity verification performed.
+          enum:
+            - NONE
+            - BASIC
+            - ENHANCED
+            - FULL
+          example: FULL
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-05-20T11:15:00Z
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: KYC validity expiry. Null if not applicable.
+          example: 2026-05-20T11:15:00Z
+        verifiedBy:
+          type: string
+          description: ID of the system or officer that completed the verification.
+          nullable: true
+          example: risk-engine-v3
+        checksPerformed:
+          type: array
+          description: Individual checks that were executed as part of this KYC.
+          items:
+            $ref: "#/components/schemas/KycCheck"
+        findings:
+          type: array
+          description: Any issues or flags raised during verification.
+          items:
+            $ref: "#/components/schemas/KycFinding"
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    KycCheck:
+      type: object
+      description: An individual check performed within a KYC workflow.
+      properties:
+        checkType:
+          type: string
+          enum:
+            - IDENTITY_DOCUMENT
+            - ADDRESS_PROOF
+            - BIOMETRIC
+            - SANCTIONS_SCREENING
+            - PEP_SCREENING
+            - ADVERSE_MEDIA
+          example: IDENTITY_DOCUMENT
+        result:
+          type: string
+          enum:
+            - PASS
+            - FAIL
+            - PENDING
+            - SKIPPED
+          example: PASS
+        performedAt:
+          type: string
+          format: date-time
+        performedBy:
+          type: string
+          example: kyc-engine-v2
+    KycFinding:
+      type: object
+      properties:
+        code:
+          type: string
+          example: NAME_MISMATCH
+        description:
+          type: string
+          example: Name on document does not exactly match registered name.
+        severity:
+          type: string
+          enum:
+            - INFO
+            - WARNING
+            - CRITICAL
+    KycStatusUpdateRequest:
+      type: object
+      required:
+        - kycStatus
+        - verificationLevel
+        - verifiedBy
+      properties:
+        kycStatus:
+          $ref: "#/components/schemas/KycStatus"
+        verificationLevel:
+          type: string
+          enum:
+            - NONE
+            - BASIC
+            - ENHANCED
+            - FULL
+        verifiedBy:
+          type: string
+          description: System or officer ID performing the update.
+          example: risk-engine-v3
+        checksPerformed:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycCheck"
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycFinding"
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+    KycHistoryPage:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycRecord"
+    RiskCategoryUpdateRequest:
+      type: object
+      required:
+        - riskCategory
+        - assessedBy
+        - assessedAt
+      properties:
+        riskCategory:
+          $ref: "#/components/schemas/RiskCategory"
+        assessedBy:
+          type: string
+          description: Risk system or officer ID performing the assessment.
+          example: risk-engine-v3
+        assessedAt:
+          type: string
+          format: date-time
+          example: 2024-06-01T10:30:00Z
+        notes:
+          type: string
+          description: Optional justification or notes from the risk assessor.
+    Document:
+      type: object
+      description: Metadata for a customer-linked document.
+      properties:
+        documentId:
+          type: string
+          format: uuid
+          readOnly: true
+          example: d1a2b3c4-0005-0005-0005-000000000005
+        customerId:
+          type: string
+          format: uuid
+          readOnly: true
+        documentType:
+          $ref: "#/components/schemas/DocumentType"
+        fileName:
+          type: string
+          example: passport_jane_doe.pdf
+        mimeType:
+          type: string
+          enum:
+            - application/pdf
+            - image/jpeg
+            - image/png
+          example: application/pdf
+        fileSizeBytes:
+          type: integer
+          example: 204800
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+          description: Expiry date of the document itself (e.g. passport expiry).
+          example: 2030-06-15
+        uploadedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2024-01-15T09:05:00Z
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          example: 2024-01-16T10:00:00Z
+        verifiedBy:
+          type: string
+          nullable: true
+          example: compliance-system-v2
+    DocumentList:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        totalCount:
+          type: integer
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+    DocumentUploadRequest:
+      type: object
+      required:
+        - documentType
+        - file
+      properties:
+        documentType:
+          $ref: "#/components/schemas/DocumentType"
+        file:
+          type: string
+          format: binary
+          description: Document binary content. Max 10 MB. PDF, JPEG, or PNG only.
+        expiryDate:
+          type: string
+          format: date
+          description: Expiry date printed on the document (e.g. passport expiry).
+    DocumentType:
+      type: string
+      description: Classification of the document.
+      enum:
+        - NATIONAL_ID
+        - PASSPORT
+        - DRIVERS_LICENSE
+        - PROOF_OF_ADDRESS
+        - BANK_STATEMENT
+        - INCOME_PROOF
+        - TAX_RETURN
+        - COMPANY_REGISTRATION
+        - OTHER
+      example: PASSPORT
+    DocumentStatus:
+      type: string
+      enum:
+        - PENDING_REVIEW
+        - VERIFIED
+        - REJECTED
+        - EXPIRED
+      example: VERIFIED
+    CustomerAccountSummary:
+      type: object
+      description: |
+        Lightweight account projection returned by the Customer API.
+        Full account operations are served by the Accounts API.
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          example: a1b2c3d4-0002-0002-0002-000000000002
+        accountNumber:
+          type: string
+          example: 001-987654321
+        accountType:
+          type: string
+          enum:
+            - CURRENT
+            - SAVINGS
+            - FIXED_DEPOSIT
+            - LOAN_DISBURSEMENT
+          example: SAVINGS
+        currency:
+          type: string
+          description: ISO 4217 currency code.
+          example: USD
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - DORMANT
+            - CLOSED
+            - FROZEN
+          example: ACTIVE
+        openedAt:
+          type: string
+          format: date-time
+    CustomerAccountList:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        totalCount:
+          type: integer
+          example: 3
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerAccountSummary"
+    Address:
+      type: object
+      description: Customer's primary residential or registered address.
+      required:
+        - street
+        - city
+        - country
+      properties:
+        line1:
+          type: string
+          example: 123 Main Street
+        line2:
+          type: string
+          example: Apartment 4B
+          nullable: true
+        city:
+          type: string
+          example: New York
+        state:
+          type: string
+          example: NY
+          nullable: true
+        postalCode:
+          type: string
+          example: "10001"
+        country:
+          type: string
+          description: ISO 3166-1 alpha-2 country code.
+          example: US
+    ApiError:
+      type: object
+      description: Standard error envelope returned on all 4xx and 5xx responses.
+      properties:
+        traceId:
+          type: string
+          format: uuid
+          description: Unique trace ID for distributed log correlation across APIs.
+          example: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: CUSTOMER_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error description.
+          example: No customer found with the specified ID.
+        details:
+          type: array
+          description: Field-level validation errors (present on 400 responses).
+          items:
+            $ref: "#/components/schemas/FieldError"
+          nullable: true
+    FieldError:
+      type: object
+      description: Describes a single field-level validation failure.
+      properties:
+        field:
+          type: string
+          example: email
+        message:
+          type: string
+          example: Must be a valid email address.
+  responses:
+    BadRequest:
+      description: |
+        400 Bad Request  the request payload failed validation.
+        Check `details` for field-level errors.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+            code: VALIDATION_ERROR
+            message: Request payload contains invalid fields.
+            details:
+              - field: email
+                message: Must be a valid email address.
+              - field: mobile
+                message: Must follow E.164 format (e.g. +12025550199).
+    Unauthorized:
+      description: |
+        401 Unauthorized  no valid JWT Bearer token provided.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000401
+            code: UNAUTHORIZED
+            message: A valid Bearer token is required to access this resource.
+    Forbidden:
+      description: |
+        403 Forbidden  the token is valid but lacks the required scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000403
+            code: INSUFFICIENT_SCOPE
+            message: The token does not have the required scope for this operation.
+    NotFound:
+      description: |
+        404 Not Found  the specified resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000404
+            code: CUSTOMER_NOT_FOUND
+            message: No customer found with the specified ID.
+    Conflict:
+      description: >
+        409 Conflict  the request conflicts with the current state of the
+        resource.
+
+        Examples: duplicate email on create, deactivating a customer with active
+        accounts.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000409
+            code: DUPLICATE_EMAIL
+            message: A customer with this email address already exists.
+    PayloadTooLarge:
+      description: |
+        413 Payload Too Large  uploaded file exceeds the 10 MB limit.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000413
+            code: FILE_TOO_LARGE
+            message: Uploaded file exceeds the maximum allowed size of 10 MB.
+    InternalServerError:
+      description: |
+        500 Internal Server Error  an unexpected error occurred.
+        Include the `traceId` when raising a support ticket.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000500
+            code: INTERNAL_ERROR
+            message: An unexpected error occurred. Please retry or contact support.
+  examples:
+    CustomerCreateIndividualExample:
+      summary: Create an individual retail customer
+      value:
+        firstName: Jane
+        lastName: Doe
+        dateOfBirth: 1985-06-15
+        mobile: "+12025550199"
+        email: jane.doe@email.com
+        customerType: INDIVIDUAL
+        nationalId: ID-987654321
+        address:
+          line1: 123 Main Street
+          line2: Apartment 4B
+          city: New York
+          state: NY
+          postalCode: "10001"
+          country: US
+    CustomerCreateCorporateExample:
+      summary: Create a corporate customer
+      value:
+        firstName: Acme
+        lastName: Corporation
+        dateOfBirth: 2000-01-01
+        mobile: "+12025550100"
+        email: treasury@acmecorp.com
+        customerType: CORPORATE
+        nationalId: REG-ACME-00123
+        address:
+          line1: 1 Corporate Plaza
+          city: Chicago
+          state: IL
+          postalCode: "60601"
+          country: US
+    CustomerResponseExample:
+      summary: Active individual customer profile
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        firstName: Jane
+        lastName: Doe
+        dateOfBirth: 1985-06-15
+        mobile: "+12025550199"
+        email: jane.doe@email.com
+        customerType: INDIVIDUAL
+        kycStatus: VERIFIED
+        riskCategory: LOW
+        status: ACTIVE
+        nationalId: ID-987654321
+        address:
+          line1: 123 Main Street
+          line2: Apartment 4B
+          city: New York
+          state: NY
+          postalCode: "10001"
+          country: US
+        createdAt: 2024-01-15T09:00:00Z
+        updatedAt: 2024-06-01T14:30:00Z
+    CustomerPageExample:
+      summary: Paginated customer list (page 1)
+      value:
+        page: 1
+        pageSize: 20
+        totalCount: 142
+        totalPages: 8
+        customers:
+          - customerId: c1a2b3c4-0001-0001-0001-000000000001
+            firstName: Jane
+            lastName: Doe
+            dateOfBirth: 1985-06-15
+            mobile: "+12025550199"
+            email: jane.doe@email.com
+            customerType: INDIVIDUAL
+            kycStatus: VERIFIED
+            riskCategory: LOW
+            status: ACTIVE
+            createdAt: 2024-01-15T09:00:00Z
+            updatedAt: 2024-06-01T14:30:00Z
+          - customerId: c1a2b3c4-0001-0001-0001-000000000002
+            firstName: John
+            lastName: Smith
+            dateOfBirth: 1979-11-03
+            mobile: "+12025550188"
+            email: john.smith@email.com
+            customerType: INDIVIDUAL
+            kycStatus: PENDING
+            riskCategory: null
+            status: PENDING_VERIFICATION
+            createdAt: 2024-06-10T08:00:00Z
+            updatedAt: 2024-06-10T08:00:00Z
+    KycRecordVerifiedExample:
+      summary: Fully verified KYC record
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        kycStatus: VERIFIED
+        verificationLevel: FULL
+        verifiedAt: 2024-05-20T11:15:00Z
+        expiresAt: 2026-05-20T11:15:00Z
+        verifiedBy: risk-engine-v3
+        checksPerformed:
+          - checkType: IDENTITY_DOCUMENT
+            result: PASS
+            performedAt: 2024-05-20T11:10:00Z
+            performedBy: kyc-engine-v2
+          - checkType: ADDRESS_PROOF
+            result: PASS
+            performedAt: 2024-05-20T11:11:00Z
+            performedBy: kyc-engine-v2
+          - checkType: SANCTIONS_SCREENING
+            result: PASS
+            performedAt: 2024-05-20T11:12:00Z
+            performedBy: kyc-engine-v2
+          - checkType: PEP_SCREENING
+            result: PASS
+            performedAt: 2024-05-20T11:13:00Z
+            performedBy: kyc-engine-v2
+        findings: []
+        updatedAt: 2024-05-20T11:15:00Z
+    KycRecordPendingExample:
+      summary: KYC in progress with a warning finding
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000002
+        kycStatus: IN_PROGRESS
+        verificationLevel: BASIC
+        verifiedAt: null
+        expiresAt: null
+        verifiedBy: null
+        checksPerformed:
+          - checkType: IDENTITY_DOCUMENT
+            result: PASS
+            performedAt: 2024-06-10T08:05:00Z
+            performedBy: kyc-engine-v2
+          - checkType: ADDRESS_PROOF
+            result: PENDING
+            performedAt: 2024-06-10T08:06:00Z
+            performedBy: kyc-engine-v2
+        findings:
+          - code: ADDRESS_UNVERIFIED
+            description: Utility bill date is older than 3 months.
+            severity: WARNING
+        updatedAt: 2024-06-10T08:06:00Z
+    KycStatusUpdatePassExample:
+      summary: Mark KYC as VERIFIED
+      value:
+        kycStatus: VERIFIED
+        verificationLevel: FULL
+        verifiedBy: risk-engine-v3
+        checksPerformed:
+          - checkType: IDENTITY_DOCUMENT
+            result: PASS
+            performedAt: 2024-06-15T10:00:00Z
+            performedBy: risk-engine-v3
+          - checkType: SANCTIONS_SCREENING
+            result: PASS
+            performedAt: 2024-06-15T10:01:00Z
+            performedBy: risk-engine-v3
+        findings: []
+        expiresAt: 2026-06-15T10:00:00Z
+    KycStatusUpdateFailExample:
+      summary: Mark KYC as FAILED with critical finding
+      value:
+        kycStatus: FAILED
+        verificationLevel: BASIC
+        verifiedBy: risk-engine-v3
+        checksPerformed:
+          - checkType: SANCTIONS_SCREENING
+            result: FAIL
+            performedAt: 2024-06-15T10:02:00Z
+            performedBy: risk-engine-v3
+        findings:
+          - code: SANCTIONS_MATCH
+            description: Customer name matches OFAC sanctions list entry.
+            severity: CRITICAL
+        expiresAt: null
+    DocumentListExample:
+      summary: Customer documents list
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        totalCount: 2
+        documents:
+          - documentId: d1a2b3c4-0005-0005-0005-000000000005
+            customerId: c1a2b3c4-0001-0001-0001-000000000001
+            documentType: PASSPORT
+            fileName: passport_jane_doe.pdf
+            mimeType: application/pdf
+            fileSizeBytes: 204800
+            status: VERIFIED
+            expiryDate: 2030-06-15
+            uploadedAt: 2024-01-15T09:05:00Z
+            verifiedAt: 2024-01-16T10:00:00Z
+            verifiedBy: compliance-system-v2
+          - documentId: d1a2b3c4-0005-0005-0005-000000000006
+            customerId: c1a2b3c4-0001-0001-0001-000000000001
+            documentType: PROOF_OF_ADDRESS
+            fileName: utility_bill_jan2024.pdf
+            mimeType: application/pdf
+            fileSizeBytes: 102400
+            status: VERIFIED
+            expiryDate: null
+            uploadedAt: 2024-01-15T09:10:00Z
+            verifiedAt: 2024-01-16T10:05:00Z
+            verifiedBy: compliance-system-v2
+    DocumentUploadedExample:
+      summary: Newly uploaded document (awaiting review)
+      value:
+        documentId: d1a2b3c4-0005-0005-0005-000000000007
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        documentType: INCOME_PROOF
+        fileName: payslip_may2024.pdf
+        mimeType: application/pdf
+        fileSizeBytes: 153600
+        status: PENDING_REVIEW
+        expiryDate: null
+        uploadedAt: 2024-06-15T12:00:00Z
+        verifiedAt: null
+        verifiedBy: null
+    CustomerAccountListExample:
+      summary: Accounts owned by a customer
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        totalCount: 2
+        accounts:
+          - accountId: a1b2c3d4-0002-0002-0002-000000000001
+            accountNumber: 001-100000001
+            accountType: CURRENT
+            currency: USD
+            status: ACTIVE
+            openedAt: 2024-01-15T09:30:00Z
+          - accountId: a1b2c3d4-0002-0002-0002-000000000002
+            accountNumber: 001-200000002
+            accountType: SAVINGS
+            currency: USD
+            status: ACTIVE
+            openedAt: 2024-02-01T10:00:00Z
