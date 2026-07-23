@@ -1,0 +1,1996 @@
+openapi: 3.0.3
+info:
+  title: Loan API
+  description: |
+    ## Overview
+    The **Loan API** is the central **workflow orchestrator** for the enterprise Banking
+    platform's loan lifecycle. It does not merely store loan data  it actively
+    coordinates a multi-step workflow spanning four upstream APIs to determine
+    loan eligibility and execute disbursement.
+
+    ## Eight-Step Orchestration Workflow
+
+    When a loan application is submitted via `POST /loan/apply`, the Loan API
+    executes the following sequence internally:
+
+    ```
+    Step 1  GET /customers/{customerId}
+              � Customer API: retrieve customer profile and KYC status
+
+    Step 2  GET /accounts/customers/{customerId}
+              � Accounts API: retrieve all accounts owned by the customer
+
+    Step 3  GET /accounts/{accountId}/balance
+              � Accounts API: retrieve account balance and average monthly balance
+
+    Step 4  GET /accounts/{accountId}/transactions/summary
+              � Accounts API: retrieve aggregated transaction history
+
+    Step 5  POST /risk/kyc/validate
+             POST /risk/sanctions/screen
+             POST /risk/aml/validate
+             POST /risk/fraud/analyze
+             POST /risk/credit-score/calculate
+             POST /risk/loan-risk-score
+              � Risk API: execute full six-check compliance and scoring pipeline
+
+    Step 6  POST /loan/eligibility
+              � Internal: compute eligibility from collected data and risk verdict
+
+    Step 7  POST /loan/approve  OR  POST /loan/reject
+              � Internal: record approval or rejection decision
+
+    Step 8  POST /payments/disbursements
+              � Payments API: disburse approved loan funds to the customer account
+    ```
+
+    **Gate rules:**
+    - Steps 14 must return data before Step 5 is invoked.
+    - Step 5 (`Risk API`) must return `recommendation: APPROVE` or
+      `APPROVE_WITH_CONDITIONS` before Step 6 may produce `ELIGIBLE`.
+    - Step 7 `approve` requires `eligibilityStatus: ELIGIBLE`.
+    - Step 8 is invoked automatically after approval. Manual approval
+      can optionally hold disbursement pending a further officer action.
+
+    ## Exposed REST Endpoints
+    | Method | Path               | Purpose                                              |
+    |--------|--------------------|------------------------------------------------------|
+    | POST   | /loan/apply        | Submit a new loan application (triggers Steps 15)   |
+    | GET    | /loan/{loanId}     | Retrieve a loan application record                   |
+    | POST   | /loan/eligibility  | Trigger or retrieve eligibility assessment (Step 6)  |
+    | POST   | /loan/approve      | Approve an eligible loan (Step 7  approve path)     |
+    | POST   | /loan/reject       | Reject a loan application (Step 7  reject path)     |
+
+    ## Cross-API Relationships
+    | API          | Consumed Endpoints                                         | Purpose                          |
+    |--------------|------------------------------------------------------------|----------------------------------|
+    | Customer API | `GET /customers/{customerId}`                              | Step 1  customer profile        |
+    | Accounts API | `GET /accounts/customers/{customerId}`                     | Step 2  list accounts           |
+    | Accounts API | `GET /accounts/{accountId}/balance`                        | Step 3  balance snapshot        |
+    | Accounts API | `GET /accounts/{accountId}/transactions/summary`           | Step 4  transaction metrics     |
+    | Risk API     | 6 endpoints (KYC � Sanctions � AML � Fraud � Credit � Risk) | Step 5  compliance & scoring   |
+    | Payments API | `POST /payments/disbursements`                             | Step 8  fund disbursement       |
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+servers:
+  - url: https://api.bank.com/v1
+    description: Production
+  - url: https://api-staging.bank.com/v1
+    description: Staging
+  - url: https://api-sandbox.bank.com/v1
+    description: Sandbox / Developer Testing
+tags:
+  - name: Loan Application
+    description: Loan application submission and retrieval.
+  - name: Eligibility
+    description: Loan eligibility assessment orchestrating Steps 15.
+  - name: Decision
+    description: Loan approval and rejection decisions (Step 7).
+  - name: Loan Lifecycle
+    description: Active loan record management, repayment schedule, and status.
+paths:
+  /loan/apply:
+    post:
+      tags:
+        - Loan Application
+      operationId: applyForLoan
+      summary: Submit a new loan application
+      description: >
+        Creates a new loan application and immediately triggers the full
+
+        eight-step orchestration workflow in the background.
+
+
+        ### What happens internally on submission
+
+
+        | Step | Action                                  | API Called       |
+
+        |------|-----------------------------------------|------------------|
+
+        | 1    | Retrieve customer profile               | Customer API     |
+
+        | 2    | Retrieve customer accounts              | Accounts API     |
+
+        | 3    | Retrieve account balance                | Accounts API     |
+
+        | 4    | Retrieve transaction history summary    | Accounts API     |
+
+        | 5    | Execute Risk API pipeline (6 checks)    | Risk API         |
+
+
+        Steps 68 are triggered separately via `/loan/eligibility` and
+
+        `/loan/approve` or `/loan/reject`, allowing loan officers to
+
+        review the Risk API verdict before committing to a decision.
+
+
+        **Business rules:**
+
+        - `customerId` must exist in the Customer API.
+
+        - `disbursementAccountId` must belong to the same customer and be
+        ACTIVE.
+
+        - Customer KYC status must not be `FAILED` or `EXPIRED` at submission
+        time.
+
+        - Returns `202 Accepted`  the workflow runs asynchronously.
+          Poll `GET /loan/{loanId}` to track progress.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanApplicationRequest"
+            examples:
+              personal:
+                $ref: "#/components/examples/LoanApplicationPersonalExample"
+              mortgage:
+                $ref: "#/components/examples/LoanApplicationMortgageExample"
+      responses:
+        "202":
+          description: |
+            Loan application accepted. Workflow initiated asynchronously.
+            Poll `GET /loan/{loanId}` for status updates.
+          headers:
+            Location:
+              description: URL of the created loan application resource.
+              schema:
+                type: string
+                example: /loan/l1a2b3c4-0003-0003-0003-000000000001
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanApplication"
+              examples:
+                submitted:
+                  $ref: "#/components/examples/LoanApplicationSubmittedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Customer or disbursement account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000404
+                code: CUSTOMER_NOT_FOUND
+                message: No customer found for the supplied customerId.
+        "409":
+          description: |
+            An open application already exists for this customer and loan type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000409
+                code: DUPLICATE_APPLICATION
+                message: An open loan application already exists for this customer.
+        "422":
+          description: >
+            Customer KYC status is FAILED or EXPIRED  application cannot
+            proceed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000422
+                code: KYC_NOT_VERIFIED
+                message: Customer KYC status must be VERIFIED before applying for a loan.
+      security:
+        - BearerAuth:
+            - loan:write
+  /loan/{loanId}:
+    get:
+      tags:
+        - Loan Application
+      operationId: getLoanById
+      summary: Retrieve a loan application or active loan record by ID
+      description: |
+        Returns the full loan record including current status, eligibility
+        assessment result, workflow step progress, risk score summary,
+        and  after disbursement  the active loan details.
+
+        **Use this endpoint to poll for workflow progress** after submitting
+        a loan application via `POST /loan/apply`.
+
+        The `workflowProgress` object shows the status of each of the
+        eight orchestration steps (PENDING / IN_PROGRESS / COMPLETED / FAILED).
+      parameters:
+        - $ref: "#/components/parameters/LoanIdParam"
+      responses:
+        "200":
+          description: Loan application record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanApplication"
+              examples:
+                underReview:
+                  $ref: "#/components/examples/LoanApplicationUnderReviewExample"
+                approved:
+                  $ref: "#/components/examples/LoanApplicationApprovedExample"
+                rejected:
+                  $ref: "#/components/examples/LoanApplicationRejectedExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - loan:read
+  /loan/eligibility:
+    post:
+      tags:
+        - Eligibility
+      operationId: assessLoanEligibility
+      summary: Trigger or re-trigger the loan eligibility assessment (Step 6)
+      description: |
+        Executes **Step 6** of the workflow: computes the loan eligibility
+        verdict by consolidating the outputs from Steps 15.
+
+        ### Eligibility Logic
+
+        The eligibility engine evaluates:
+
+        | Input                          | Source           | Threshold / Rule                        |
+        |--------------------------------|------------------|-----------------------------------------|
+        | `kycStatus`                    | Customer API     | Must be `VERIFIED`                      |
+        | `sanctionsResult.passed`       | Risk API         | Must be `true`                          |
+        | `amlResult.passed`             | Risk API         | Must be `true`                          |
+        | `fraudResult.passed`           | Risk API         | Must be `true`                          |
+        | `creditScore.score`            | Risk API         | Must be e 580 (FAIR band or above)      |
+        | `riskScore.recommendation`     | Risk API         | Must be `APPROVE` or `APPROVE_WITH_CONDITIONS` |
+        | `availableBalance`             | Accounts API     | Must be e minimum balance threshold     |
+        | `averageMonthlyBalance`        | Accounts API     | Loan EMI must be d 40% of monthly income |
+        | `missedPaymentCount`           | Accounts API     | Must be d configurable maximum (default 2) |
+
+        **Result:** `ELIGIBLE` or `INELIGIBLE` with a list of failed rules.
+
+        This endpoint can also be called to **re-trigger** assessment if new
+        information is available (e.g., customer updates their KYC documents).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EligibilityRequest"
+            examples:
+              trigger:
+                $ref: "#/components/examples/EligibilityRequestExample"
+      responses:
+        "200":
+          description: Eligibility assessment result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EligibilityResult"
+              examples:
+                eligible:
+                  $ref: "#/components/examples/EligibilityEligibleExample"
+                ineligible:
+                  $ref: "#/components/examples/EligibilityIneligibleExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Loan application not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: Loan application is not in a state that allows eligibility
+            assessment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000409
+                code: WORKFLOW_STEPS_INCOMPLETE
+                message: Steps 15 must complete before eligibility can be assessed.
+      security:
+        - BearerAuth:
+            - loan:write
+  /loan/approve:
+    post:
+      tags:
+        - Decision
+      operationId: approveLoan
+      summary: Approve a loan application and initiate fund disbursement (Steps 78)
+      description: >
+        Executes **Step 7 (approve)** and immediately triggers **Step 8
+        (disbursement)**.
+
+
+        ### Pre-conditions (enforced by the API)
+
+        - Application status must be `UNDER_REVIEW`.
+
+        - `eligibilityStatus` must be `ELIGIBLE`.
+
+        - Risk API `recommendation` must be `APPROVE` or
+        `APPROVE_WITH_CONDITIONS`.
+
+        - For `APPROVE_WITH_CONDITIONS`: the `conditionsMet` flag in the request
+          body must be `true` (indicating officer has verified conditions are satisfied).
+
+        ### Step 8  Disbursement (automatic after approval)
+
+        After recording the approval, the Loan API calls the **Payments API**:
+
+        ```
+
+        POST /payments/disbursements
+
+        Body: { loanId, customerId, disbursementAccountId, amount, currency }
+
+        ```
+
+        The Payments API first validates the beneficiary account via
+
+        `POST /accounts/{accountId}/validate` on the **Accounts API** before
+
+        transferring funds. On payment success, the loan status transitions to
+        `DISBURSED`.
+
+
+        Returns `200` with the updated loan record including the
+        `disbursementPaymentId`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanApprovalRequest"
+            examples:
+              standardApproval:
+                $ref: "#/components/examples/LoanApprovalRequestExample"
+              conditionalApproval:
+                $ref: "#/components/examples/LoanConditionalApprovalExample"
+      responses:
+        "200":
+          description: >
+            Loan approved and disbursement initiated.
+
+            The `disbursementPaymentId` is populated once the Payments API
+            confirms.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanApplication"
+              examples:
+                approved:
+                  $ref: "#/components/examples/LoanApplicationApprovedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            Application is not eligible for approval. Possible causes:
+            - `eligibilityStatus` is not `ELIGIBLE`
+            - Application is not in `UNDER_REVIEW` status
+            - Risk API recommendation is `MANUAL_REVIEW` or `REJECT`
+            - Conditions not confirmed for `APPROVE_WITH_CONDITIONS`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              examples:
+                notEligible:
+                  summary: Eligibility check not passed
+                  value:
+                    traceId: e3b0c442-0000-0000-0000-000000000409
+                    code: NOT_ELIGIBLE
+                    message: Loan application eligibility status is INELIGIBLE. Cannot approve.
+                wrongStatus:
+                  summary: Application already decided
+                  value:
+                    traceId: e3b0c442-0000-0000-0000-000000000409
+                    code: INVALID_STATUS_TRANSITION
+                    message: Application is not in UNDER_REVIEW status.
+        "502":
+          description: Disbursement failed  Payments API returned an error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000502
+                code: DISBURSEMENT_FAILED
+                message: Loan approved but disbursement failed. Retry via POST
+                  /loan/{loanId}/disburse.
+      security:
+        - BearerAuth:
+            - loan:approve
+  /loan/reject:
+    post:
+      tags:
+        - Decision
+      operationId: rejectLoan
+      summary: Reject a loan application (Step 7  reject path)
+      description: >
+        Executes **Step 7 (reject)**. Records the rejection decision, reason,
+
+        and officer details. Transitions the application status to `REJECTED`.
+
+
+        **Pre-conditions:**
+
+        - Application must be in `UNDER_REVIEW` or `PENDING` status.
+
+        - Cannot reject an already `APPROVED`, `DISBURSED`, or `CLOSED`
+        application.
+
+
+        **No downstream API calls are made on rejection.**
+
+        The customer is notified via the notification service (out of scope for
+        this API).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanRejectionRequest"
+            examples:
+              riskReject:
+                $ref: "#/components/examples/LoanRejectionRiskExample"
+              kycReject:
+                $ref: "#/components/examples/LoanRejectionKycExample"
+      responses:
+        "200":
+          description: Loan application rejected successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanApplication"
+              examples:
+                rejected:
+                  $ref: "#/components/examples/LoanApplicationRejectedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Application cannot be rejected in its current status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000409
+                code: INVALID_STATUS_TRANSITION
+                message: Cannot reject an application with status DISBURSED.
+      security:
+        - BearerAuth:
+            - loan:approve
+  /loan:
+    get:
+      tags:
+        - Loan Application
+      operationId: listLoans
+      summary: List loan applications with optional filters
+      description: |
+        Returns a paginated list of loan applications. Supports filtering by
+        customer, status, loan type, and date range. Intended for the internal
+        banking portal and service-to-service integrations.
+      parameters:
+        - name: customerId
+          in: query
+          description: Filter by customer (UUID v4 from Customer API).
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by application status.
+          schema:
+            $ref: "#/components/schemas/LoanApplicationStatus"
+        - name: loanType
+          in: query
+          description: Filter by loan type.
+          schema:
+            $ref: "#/components/schemas/LoanType"
+        - name: submittedFrom
+          in: query
+          description: Filter by submission date  from (ISO 8601 date).
+          schema:
+            type: string
+            format: date
+            example: 2024-01-01
+        - name: submittedTo
+          in: query
+          description: Filter by submission date  to (ISO 8601 date).
+          schema:
+            type: string
+            format: date
+            example: 2024-12-31
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of loan applications.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanApplicationPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - loan:read
+  /loan/{loanId}/workflow-status:
+    get:
+      tags:
+        - Loan Application
+      operationId: getWorkflowStatus
+      summary: Retrieve the step-by-step workflow progress for a loan application
+      description: |
+        Returns the status of each of the eight orchestration steps for the
+        given loan application. Useful for monitoring dashboards and debugging
+        stalled workflows.
+      parameters:
+        - $ref: "#/components/parameters/LoanIdParam"
+      responses:
+        "200":
+          description: Workflow progress.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowProgress"
+              examples:
+                inProgress:
+                  $ref: "#/components/examples/WorkflowProgressExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - loan:read
+  /loan/{loanId}/disburse:
+    post:
+      tags:
+        - Loan Lifecycle
+      operationId: disburseLoan
+      summary: Retry or manually trigger loan disbursement (Step 8)
+      description: |
+        Manually triggers **Step 8** for approved loans where auto-disbursement
+        failed (e.g., the Payments API was temporarily unavailable).
+
+        **Pre-condition:** Application must be in `APPROVED` status with no
+        existing successful disbursement.
+      parameters:
+        - $ref: "#/components/parameters/LoanIdParam"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisburseRequest"
+      responses:
+        "200":
+          description: Disbursement initiated. Returns updated loan record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanApplication"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Loan is not in APPROVED status or disbursement already succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Payments API returned an error. Retry later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+        - BearerAuth:
+            - loan:approve
+  /loan/{loanId}/repayments:
+    get:
+      tags:
+        - Loan Lifecycle
+      operationId: getRepaymentSchedule
+      summary: Retrieve the repayment schedule for a disbursed loan
+      parameters:
+        - $ref: "#/components/parameters/LoanIdParam"
+      responses:
+        "200":
+          description: Repayment schedule.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepaymentSchedule"
+              examples:
+                schedule:
+                  $ref: "#/components/examples/RepaymentScheduleExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Loan not yet disbursed  no repayment schedule exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+      security:
+        - BearerAuth:
+            - loan:read
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT Bearer token issued by the IBM API Connect OAuth provider.
+
+        Scopes:
+
+        - `loan:read`     read loan applications and repayment schedules
+
+        - `loan:write`    submit applications and trigger eligibility
+        assessment
+
+        - `loan:approve`  approve or reject loan applications; trigger
+        disbursement
+  parameters:
+    LoanIdParam:
+      name: loanId
+      in: path
+      required: true
+      description: Unique loan application identifier (UUID v4).
+      schema:
+        type: string
+        format: uuid
+        example: l1a2b3c4-0003-0003-0003-000000000001
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  schemas:
+    LoanType:
+      type: string
+      description: Classification of the loan product.
+      enum:
+        - PERSONAL
+        - MORTGAGE
+        - AUTO
+        - BUSINESS
+        - EDUCATION
+        - OVERDRAFT
+      example: PERSONAL
+    LoanApplicationStatus:
+      type: string
+      description: >
+        Lifecycle status of a loan application.
+
+        - `PENDING`            submitted; Steps 15 running in background
+
+        - `UNDER_REVIEW`       Steps 15 complete; awaiting officer decision
+
+        - `ELIGIBLE`           eligibility assessed as ELIGIBLE; awaiting
+        approval
+
+        - `INELIGIBLE`         eligibility assessed as INELIGIBLE
+
+        - `APPROVED`           officer approved; disbursement triggered
+
+        - `DISBURSED`          funds transferred to customer account
+
+        - `REJECTED`           officer rejected the application
+
+        - `CANCELLED`          applicant withdrew the application
+
+        - `CLOSED`             loan fully repaid or written off
+      enum:
+        - PENDING
+        - UNDER_REVIEW
+        - ELIGIBLE
+        - INELIGIBLE
+        - APPROVED
+        - DISBURSED
+        - REJECTED
+        - CANCELLED
+        - CLOSED
+      example: UNDER_REVIEW
+    EligibilityStatus:
+      type: string
+      description: Outcome of the Step 6 eligibility assessment.
+      enum:
+        - NOT_STARTED
+        - IN_PROGRESS
+        - ELIGIBLE
+        - INELIGIBLE
+      example: ELIGIBLE
+    WorkflowStepStatus:
+      type: string
+      description: Execution status of a single orchestration step.
+      enum:
+        - PENDING
+        - IN_PROGRESS
+        - COMPLETED
+        - FAILED
+        - SKIPPED
+      example: COMPLETED
+    RejectionReason:
+      type: string
+      description: Structured reason for loan rejection.
+      enum:
+        - FAILED_KYC
+        - FAILED_SANCTIONS
+        - FAILED_AML
+        - FRAUD_RISK
+        - LOW_CREDIT_SCORE
+        - HIGH_RISK_SCORE
+        - INSUFFICIENT_BALANCE
+        - HIGH_DEBT_TO_INCOME_RATIO
+        - MISSED_PAYMENT_HISTORY
+        - INCOMPLETE_DOCUMENTS
+        - MANUAL_OFFICER_DECISION
+        - OTHER
+      example: LOW_CREDIT_SCORE
+    LoanStatus:
+      type: string
+      description: Status of an active (disbursed) loan.
+      enum:
+        - ACTIVE
+        - PAID_OFF
+        - DEFAULTED
+        - RESTRUCTURED
+        - WRITTEN_OFF
+      example: ACTIVE
+    LoanApplicationRequest:
+      type: object
+      required:
+        - customerId
+        - disbursementAccountId
+        - loanType
+        - requestedAmount
+        - currency
+        - tenorMonths
+        - purpose
+      description: |
+        Request body for `POST /loan/apply`.
+        The `customerId` is the foreign key to the Customer API.
+        The `disbursementAccountId` is the foreign key to the Accounts API.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          description: >
+            Applicant customer. Foreign key to Customer API.
+
+            The Loan API will call `GET /customers/{customerId}` internally as
+            Step 1.
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId:
+          type: string
+          format: uuid
+          description: >
+            Account to receive loan funds upon approval.
+
+            Foreign key to Accounts API. Must belong to `customerId` and be
+            ACTIVE.
+
+            Validated by Payments API via `POST /accounts/{accountId}/validate`
+            in Step 8.
+          example: a1b2c3d4-0002-0002-0002-000000000001
+        loanType:
+          $ref: "#/components/schemas/LoanType"
+        requestedAmount:
+          type: number
+          format: double
+          description: Loan principal requested. Must be > 0.
+          minimum: 1
+          example: 25000
+        currency:
+          type: string
+          description: ISO 4217 currency code.
+          example: USD
+        tenorMonths:
+          type: integer
+          description: Loan duration in months.
+          minimum: 1
+          maximum: 360
+          example: 36
+        purpose:
+          type: string
+          description: Human-readable description of the loan purpose.
+          maxLength: 500
+          example: Home renovation  kitchen remodel and roof replacement.
+        collateral:
+          $ref: "#/components/schemas/CollateralDetails"
+          description: Optional collateral. Required for MORTGAGE and certain BUSINESS
+            loans.
+        employerDetails:
+          $ref: "#/components/schemas/EmployerDetails"
+          description: Optional employer information to support income verification.
+    EligibilityRequest:
+      type: object
+      required:
+        - loanId
+      description: Request body for `POST /loan/eligibility`.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+          description: Loan application to assess.
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        forceReassess:
+          type: boolean
+          description: |
+            Force a full re-execution of Steps 15 and re-assessment even if
+            a previous result exists. Use when the customer has updated KYC
+            documents or accounts since the original submission.
+          default: false
+    LoanApprovalRequest:
+      type: object
+      required:
+        - loanId
+        - approvedBy
+        - approvedAmount
+        - interestRate
+      description: Request body for `POST /loan/approve`.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        approvedBy:
+          type: string
+          description: Officer ID or automated system reference that approved the loan.
+          example: officer-jane-doe-007
+        approvedAmount:
+          type: number
+          format: double
+          description: >
+            Approved loan amount. May differ from `requestedAmount` (partial
+            approval).
+          example: 25000
+        interestRate:
+          type: number
+          format: double
+          description: Annual interest rate percentage applied to the loan.
+          example: 8.5
+        tenorMonths:
+          type: integer
+          description: Final approved tenor in months. Defaults to requested tenor if
+            omitted.
+          example: 36
+        conditionsMet:
+          type: boolean
+          description: >
+            Required `true` when risk `recommendation` is
+            `APPROVE_WITH_CONDITIONS`.
+
+            Certifies that the officer has verified all conditions are satisfied
+
+            (e.g., collateral pledged, co-signer confirmed).
+          default: false
+        approvalNotes:
+          type: string
+          description: Optional officer notes recorded against the approval decision.
+        holdDisbursement:
+          type: boolean
+          description: >
+            Set `true` to approve the loan without immediately triggering
+            disbursement.
+
+            Disbursement must then be triggered manually via `POST
+            /loan/{loanId}/disburse`.
+          default: false
+    LoanRejectionRequest:
+      type: object
+      required:
+        - loanId
+        - rejectedBy
+        - reason
+      description: Request body for `POST /loan/reject`.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+          example: l1a2b3c4-0003-0003-0003-000000000002
+        rejectedBy:
+          type: string
+          description: Officer ID or system that issued the rejection.
+          example: officer-john-smith-003
+        reason:
+          $ref: "#/components/schemas/RejectionReason"
+        reasonDetail:
+          type: string
+          description: Human-readable elaboration on the rejection reason.
+          example: Credit score of 420 (POOR) is below the minimum threshold of 580.
+        notifyCustomer:
+          type: boolean
+          description: Whether to send the customer a rejection notification.
+          default: true
+    DisburseRequest:
+      type: object
+      description: Optional override parameters for manual disbursement trigger.
+      properties:
+        overrideDisbursementAccountId:
+          type: string
+          format: uuid
+          description: >
+            Override the disbursement account if the original account was closed
+
+            or frozen since approval. Must belong to the same customer and be
+            ACTIVE.
+          nullable: true
+        disbursementNotes:
+          type: string
+    LoanApplication:
+      type: object
+      description: Full loan application record including workflow state and decisions.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+          readOnly: true
+          description: System-generated unique identifier.
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        customerId:
+          type: string
+          format: uuid
+          description: Applicant. Foreign key to Customer API.
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId:
+          type: string
+          format: uuid
+          description: Target account. Foreign key to Accounts API.
+          example: a1b2c3d4-0002-0002-0002-000000000001
+        loanType:
+          $ref: "#/components/schemas/LoanType"
+        requestedAmount:
+          type: number
+          format: double
+          example: 25000
+        approvedAmount:
+          type: number
+          format: double
+          nullable: true
+          description: Populated after approval. May differ from `requestedAmount`.
+          example: 25000
+        currency:
+          type: string
+          example: USD
+        tenorMonths:
+          type: integer
+          example: 36
+        interestRate:
+          type: number
+          format: double
+          nullable: true
+          description: Annual rate in percent. Populated after approval.
+          example: 8.5
+        purpose:
+          type: string
+          example: Home renovation  kitchen remodel and roof replacement.
+        status:
+          $ref: "#/components/schemas/LoanApplicationStatus"
+        eligibilityStatus:
+          $ref: "#/components/schemas/EligibilityStatus"
+        eligibilityResult:
+          $ref: "#/components/schemas/EligibilityResult"
+          nullable: true
+          description: Populated after Step 6 completes.
+        riskScoreSummary:
+          $ref: "#/components/schemas/RiskScoreSummary"
+          nullable: true
+          description: Populated after Step 5 (Risk API) completes.
+        workflowProgress:
+          $ref: "#/components/schemas/WorkflowProgress"
+          description: Step-by-step workflow execution status.
+        approvedBy:
+          type: string
+          nullable: true
+          description: Officer who approved. Populated on approval.
+          example: officer-jane-doe-007
+        approvalNotes:
+          type: string
+          nullable: true
+        rejectedBy:
+          type: string
+          nullable: true
+          description: Officer who rejected. Populated on rejection.
+        rejectionReason:
+          $ref: "#/components/schemas/RejectionReason"
+          nullable: true
+        rejectionReasonDetail:
+          type: string
+          nullable: true
+        disbursementPaymentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Payment reference from the Payments API (Step 8).
+            Populated after disbursement is initiated.
+          example: p1a2b3c4-0004-0004-0004-000000000001
+        disbursementStatus:
+          type: string
+          enum:
+            - NOT_INITIATED
+            - PENDING
+            - COMPLETED
+            - FAILED
+          nullable: true
+          description: Status of the disbursement payment.
+          example: COMPLETED
+        collateral:
+          $ref: "#/components/schemas/CollateralDetails"
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2024-06-15T09:00:00Z
+        decidedAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          example: 2024-06-16T11:30:00Z
+        disbursedAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          example: 2024-06-16T11:35:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    LoanApplicationPage:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        totalPages:
+          type: integer
+        applications:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoanApplication"
+    EligibilityResult:
+      type: object
+      description: |
+        Consolidated eligibility verdict from Step 6.
+        Returned inline on `LoanApplication.eligibilityResult` and
+        as the direct response body of `POST /loan/eligibility`.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+        eligibilityStatus:
+          $ref: "#/components/schemas/EligibilityStatus"
+        ruleResults:
+          type: array
+          description: Results of each individual eligibility rule evaluated.
+          items:
+            $ref: "#/components/schemas/EligibilityRuleResult"
+        maxApprovableAmount:
+          type: number
+          format: double
+          description: |
+            Maximum loan amount the customer is eligible for based on
+            income, balance, and risk thresholds. Present only when `ELIGIBLE`.
+          nullable: true
+          example: 30000
+        proposedInterestRate:
+          type: number
+          format: double
+          description: |
+            Indicative interest rate recommended by the eligibility engine
+            based on credit score and risk level.
+          nullable: true
+          example: 8.5
+        assessedAt:
+          type: string
+          format: date-time
+    EligibilityRuleResult:
+      type: object
+      description: Outcome of a single eligibility rule.
+      properties:
+        rule:
+          type: string
+          description: Machine-readable rule identifier.
+          enum:
+            - KYC_VERIFIED
+            - SANCTIONS_CLEAR
+            - AML_PASSED
+            - FRAUD_CHECK_PASSED
+            - CREDIT_SCORE_MINIMUM
+            - RISK_RECOMMENDATION_ACCEPTABLE
+            - SUFFICIENT_BALANCE
+            - DEBT_TO_INCOME_RATIO
+            - MISSED_PAYMENT_THRESHOLD
+          example: CREDIT_SCORE_MINIMUM
+        passed:
+          type: boolean
+        actualValue:
+          type: string
+          description: The actual value evaluated (formatted as string for display).
+          example: "720"
+        thresholdValue:
+          type: string
+          description: The required threshold or expected value.
+          example: e 580
+        message:
+          type: string
+          description: Human-readable result message.
+          example: Credit score 720 meets the minimum threshold of 580.
+    RiskScoreSummary:
+      type: object
+      description: |
+        Summary of the Risk API Step 5 result, stored on the loan application.
+        The full Risk API response is stored internally but this projection
+        is exposed on the LoanApplication for officer review.
+      properties:
+        riskScore:
+          type: integer
+          description: Composite risk score (0100).
+          example: 42
+        riskLevel:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          example: MEDIUM
+        recommendation:
+          type: string
+          enum:
+            - APPROVE
+            - APPROVE_WITH_CONDITIONS
+            - MANUAL_REVIEW
+            - REJECT
+          example: APPROVE_WITH_CONDITIONS
+        recommendationReason:
+          type: string
+          example: Credit score is GOOD (720). Risk score of 42 is MEDIUM  collateral
+            required.
+        creditScore:
+          type: integer
+          description: Credit score from the Risk API (300850 scale).
+          example: 720
+        creditBand:
+          type: string
+          enum:
+            - POOR
+            - FAIR
+            - GOOD
+            - VERY_GOOD
+            - EXCELLENT
+          example: GOOD
+        kycPassed:
+          type: boolean
+          example: true
+        sanctionsPassed:
+          type: boolean
+          example: true
+        amlPassed:
+          type: boolean
+          example: true
+        fraudPassed:
+          type: boolean
+          example: true
+        assessedAt:
+          type: string
+          format: date-time
+    WorkflowProgress:
+      type: object
+      description: Step-by-step execution status of the eight-step loan workflow.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+        overallStatus:
+          type: string
+          enum:
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+          example: COMPLETED
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowStep"
+    WorkflowStep:
+      type: object
+      description: Status of a single orchestration step.
+      properties:
+        stepNumber:
+          type: integer
+          description: Step number in the eight-step workflow (18).
+          example: 5
+        stepName:
+          type: string
+          description: Human-readable step name.
+          example: Risk API  Compliance & Scoring Pipeline
+        status:
+          $ref: "#/components/schemas/WorkflowStepStatus"
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+          description: Populated if step status is FAILED.
+    RepaymentSchedule:
+      type: object
+      description: Full repayment schedule for a disbursed loan.
+      properties:
+        loanId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        principalAmount:
+          type: number
+          format: double
+          example: 25000
+        interestRate:
+          type: number
+          format: double
+          example: 8.5
+        tenorMonths:
+          type: integer
+          example: 36
+        emiAmount:
+          type: number
+          format: double
+          description: Fixed Equated Monthly Instalment amount.
+          example: 787.02
+        totalInterestPayable:
+          type: number
+          format: double
+          example: 3332.72
+        totalRepaymentAmount:
+          type: number
+          format: double
+          example: 28332.72
+        installments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Installment"
+    Installment:
+      type: object
+      description: A single monthly repayment installment.
+      properties:
+        installmentNumber:
+          type: integer
+          example: 1
+        dueDate:
+          type: string
+          format: date
+          example: 2024-07-16
+        openingBalance:
+          type: number
+          format: double
+          example: 25000
+        emiAmount:
+          type: number
+          format: double
+          example: 787.02
+        principalComponent:
+          type: number
+          format: double
+          example: 610.35
+        interestComponent:
+          type: number
+          format: double
+          example: 176.67
+        closingBalance:
+          type: number
+          format: double
+          example: 24389.65
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PAID
+            - OVERDUE
+            - WAIVED
+          example: PENDING
+    CollateralDetails:
+      type: object
+      description: Asset pledged as collateral against the loan.
+      properties:
+        collateralType:
+          type: string
+          enum:
+            - PROPERTY
+            - VEHICLE
+            - SAVINGS
+            - FIXED_DEPOSIT
+            - GUARANTOR
+            - NONE
+          example: PROPERTY
+        description:
+          type: string
+          example: Residential property at 123 Main Street, New York, NY 10001
+        estimatedValue:
+          type: number
+          format: double
+          example: 350000
+        currency:
+          type: string
+          example: USD
+        documentReference:
+          type: string
+          description: Reference to collateral document uploaded via Customer API.
+          example: d1a2b3c4-0005-0005-0005-000000000010
+    EmployerDetails:
+      type: object
+      description: Employer information to support income verification in Step 5.
+      properties:
+        employerName:
+          type: string
+          example: ACME Corporation
+        employmentType:
+          type: string
+          enum:
+            - FULL_TIME
+            - PART_TIME
+            - CONTRACT
+            - SELF_EMPLOYED
+          example: FULL_TIME
+        annualSalary:
+          type: number
+          format: double
+          example: 90000
+        currency:
+          type: string
+          example: USD
+        yearsEmployed:
+          type: number
+          format: double
+          example: 4.5
+    ApiError:
+      type: object
+      description: Standard error envelope for all 4xx / 5xx responses.
+      properties:
+        traceId:
+          type: string
+          format: uuid
+          description: Distributed trace ID for log correlation across APIs (IBM API
+            Connect analytics).
+          example: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: NOT_ELIGIBLE
+        message:
+          type: string
+          description: Human-readable error description.
+          example: Loan application eligibility status is INELIGIBLE. Cannot approve.
+        details:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: requestedAmount
+        message:
+          type: string
+          example: Must be greater than 0.
+  responses:
+    BadRequest:
+      description: 400 Bad Request  payload failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+            code: VALIDATION_ERROR
+            message: Request payload contains invalid fields.
+            details:
+              - field: requestedAmount
+                message: Must be greater than 0.
+              - field: tenorMonths
+                message: Must be between 1 and 360.
+    Unauthorized:
+      description: 401 Unauthorized  missing or invalid JWT Bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000401
+            code: UNAUTHORIZED
+            message: A valid Bearer token is required.
+    Forbidden:
+      description: 403 Forbidden  valid token but insufficient scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000403
+            code: INSUFFICIENT_SCOPE
+            message: The token does not have the required scope for this operation.
+    NotFound:
+      description: 404 Not Found  loan application not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000404
+            code: LOAN_NOT_FOUND
+            message: No loan application found with the specified ID.
+  examples:
+    LoanApplicationPersonalExample:
+      summary: Personal loan application request
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        loanType: PERSONAL
+        requestedAmount: 25000
+        currency: USD
+        tenorMonths: 36
+        purpose: Home renovation  kitchen remodel and roof replacement.
+        employerDetails:
+          employerName: ACME Corporation
+          employmentType: FULL_TIME
+          annualSalary: 90000
+          currency: USD
+          yearsEmployed: 4.5
+    LoanApplicationMortgageExample:
+      summary: Mortgage loan application request
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        loanType: MORTGAGE
+        requestedAmount: 350000
+        currency: USD
+        tenorMonths: 240
+        purpose: Purchase of residential property at 45 Oak Lane, New York.
+        collateral:
+          collateralType: PROPERTY
+          description: Residential property at 45 Oak Lane, New York, NY 10025
+          estimatedValue: 420000
+          currency: USD
+        employerDetails:
+          employerName: ACME Corporation
+          employmentType: FULL_TIME
+          annualSalary: 90000
+          currency: USD
+          yearsEmployed: 4.5
+    LoanApplicationSubmittedExample:
+      summary: Loan application submitted  workflow initiated
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        loanType: PERSONAL
+        requestedAmount: 25000
+        approvedAmount: null
+        currency: USD
+        tenorMonths: 36
+        interestRate: null
+        purpose: Home renovation  kitchen remodel and roof replacement.
+        status: PENDING
+        eligibilityStatus: NOT_STARTED
+        eligibilityResult: null
+        riskScoreSummary: null
+        workflowProgress:
+          loanId: l1a2b3c4-0003-0003-0003-000000000001
+          overallStatus: IN_PROGRESS
+          steps:
+            - stepNumber: 1
+              stepName: Retrieve Customer Profile  Customer API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:01Z
+              completedAt: 2024-06-15T09:00:02Z
+            - stepNumber: 2
+              stepName: Retrieve Customer Accounts  Accounts API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:02Z
+              completedAt: 2024-06-15T09:00:03Z
+            - stepNumber: 3
+              stepName: Retrieve Account Balance  Accounts API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:03Z
+              completedAt: 2024-06-15T09:00:04Z
+            - stepNumber: 4
+              stepName: Retrieve Transaction History  Accounts API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:04Z
+              completedAt: 2024-06-15T09:00:05Z
+            - stepNumber: 5
+              stepName: Risk API  Compliance & Scoring Pipeline
+              status: IN_PROGRESS
+              startedAt: 2024-06-15T09:00:05Z
+              completedAt: null
+            - stepNumber: 6
+              stepName: Eligibility Assessment
+              status: PENDING
+            - stepNumber: 7
+              stepName: Approval / Rejection Decision
+              status: PENDING
+            - stepNumber: 8
+              stepName: Payments API  Loan Disbursement
+              status: PENDING
+        disbursementPaymentId: null
+        disbursementStatus: NOT_INITIATED
+        submittedAt: 2024-06-15T09:00:00Z
+        decidedAt: null
+        disbursedAt: null
+        updatedAt: 2024-06-15T09:00:05Z
+    LoanApplicationUnderReviewExample:
+      summary: Loan application  UNDER_REVIEW with risk score summary
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        loanType: PERSONAL
+        requestedAmount: 25000
+        approvedAmount: null
+        currency: USD
+        tenorMonths: 36
+        interestRate: null
+        purpose: Home renovation  kitchen remodel and roof replacement.
+        status: UNDER_REVIEW
+        eligibilityStatus: ELIGIBLE
+        riskScoreSummary:
+          riskScore: 42
+          riskLevel: MEDIUM
+          recommendation: APPROVE_WITH_CONDITIONS
+          recommendationReason: Credit score is GOOD (720). Risk score 42  collateral or
+            co-signer required.
+          creditScore: 720
+          creditBand: GOOD
+          kycPassed: true
+          sanctionsPassed: true
+          amlPassed: true
+          fraudPassed: true
+          assessedAt: 2024-06-15T09:00:30Z
+        eligibilityResult:
+          loanId: l1a2b3c4-0003-0003-0003-000000000001
+          eligibilityStatus: ELIGIBLE
+          ruleResults:
+            - rule: KYC_VERIFIED
+              passed: true
+              actualValue: VERIFIED
+              thresholdValue: VERIFIED
+              message: Customer KYC status is VERIFIED.
+            - rule: CREDIT_SCORE_MINIMUM
+              passed: true
+              actualValue: "720"
+              thresholdValue: e 580
+              message: Credit score 720 meets the minimum threshold of 580.
+            - rule: RISK_RECOMMENDATION_ACCEPTABLE
+              passed: true
+              actualValue: APPROVE_WITH_CONDITIONS
+              thresholdValue: APPROVE or APPROVE_WITH_CONDITIONS
+              message: Risk recommendation is acceptable.
+            - rule: DEBT_TO_INCOME_RATIO
+              passed: true
+              actualValue: 31%
+              thresholdValue: d 40%
+              message: EMI of $787 is 31% of average monthly income.
+            - rule: MISSED_PAYMENT_THRESHOLD
+              passed: true
+              actualValue: "0"
+              thresholdValue: d 2
+              message: 0 missed payments in the last 24 months.
+          maxApprovableAmount: 30000
+          proposedInterestRate: 8.5
+          assessedAt: 2024-06-15T09:00:35Z
+        workflowProgress:
+          loanId: l1a2b3c4-0003-0003-0003-000000000001
+          overallStatus: COMPLETED
+          steps:
+            - stepNumber: 1
+              stepName: Retrieve Customer Profile  Customer API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:01Z
+              completedAt: 2024-06-15T09:00:02Z
+            - stepNumber: 2
+              stepName: Retrieve Customer Accounts  Accounts API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:02Z
+              completedAt: 2024-06-15T09:00:03Z
+            - stepNumber: 3
+              stepName: Retrieve Account Balance  Accounts API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:03Z
+              completedAt: 2024-06-15T09:00:04Z
+            - stepNumber: 4
+              stepName: Retrieve Transaction History  Accounts API
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:04Z
+              completedAt: 2024-06-15T09:00:05Z
+            - stepNumber: 5
+              stepName: Risk API  Compliance & Scoring Pipeline
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:05Z
+              completedAt: 2024-06-15T09:00:30Z
+            - stepNumber: 6
+              stepName: Eligibility Assessment
+              status: COMPLETED
+              startedAt: 2024-06-15T09:00:30Z
+              completedAt: 2024-06-15T09:00:35Z
+            - stepNumber: 7
+              stepName: Approval / Rejection Decision
+              status: PENDING
+            - stepNumber: 8
+              stepName: Payments API  Loan Disbursement
+              status: PENDING
+        approvedBy: null
+        rejectedBy: null
+        disbursementPaymentId: null
+        disbursementStatus: NOT_INITIATED
+        submittedAt: 2024-06-15T09:00:00Z
+        decidedAt: null
+        disbursedAt: null
+        updatedAt: 2024-06-15T09:00:35Z
+    LoanApplicationApprovedExample:
+      summary: Loan approved and disbursed
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        loanType: PERSONAL
+        requestedAmount: 25000
+        approvedAmount: 25000
+        currency: USD
+        tenorMonths: 36
+        interestRate: 8.5
+        purpose: Home renovation  kitchen remodel and roof replacement.
+        status: DISBURSED
+        eligibilityStatus: ELIGIBLE
+        riskScoreSummary:
+          riskScore: 42
+          riskLevel: MEDIUM
+          recommendation: APPROVE_WITH_CONDITIONS
+          creditScore: 720
+          creditBand: GOOD
+          kycPassed: true
+          sanctionsPassed: true
+          amlPassed: true
+          fraudPassed: true
+          assessedAt: 2024-06-15T09:00:30Z
+        approvedBy: officer-jane-doe-007
+        approvalNotes: Conditions met  customer provided salary slip as supporting
+          income proof.
+        rejectedBy: null
+        rejectionReason: null
+        disbursementPaymentId: p1a2b3c4-0004-0004-0004-000000000001
+        disbursementStatus: COMPLETED
+        submittedAt: 2024-06-15T09:00:00Z
+        decidedAt: 2024-06-16T11:30:00Z
+        disbursedAt: 2024-06-16T11:35:00Z
+        updatedAt: 2024-06-16T11:35:00Z
+    LoanApplicationRejectedExample:
+      summary: Loan rejected  low credit score
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000002
+        customerId: c1a2b3c4-0001-0001-0001-000000000008
+        disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000008
+        loanType: PERSONAL
+        requestedAmount: 15000
+        approvedAmount: null
+        currency: USD
+        tenorMonths: 24
+        interestRate: null
+        purpose: Medical expenses.
+        status: REJECTED
+        eligibilityStatus: INELIGIBLE
+        riskScoreSummary:
+          riskScore: 88
+          riskLevel: HIGH
+          recommendation: MANUAL_REVIEW
+          creditScore: 420
+          creditBand: POOR
+          kycPassed: true
+          sanctionsPassed: true
+          amlPassed: true
+          fraudPassed: false
+          assessedAt: 2024-06-15T10:00:30Z
+        approvedBy: null
+        rejectedBy: officer-john-smith-003
+        rejectionReason: LOW_CREDIT_SCORE
+        rejectionReasonDetail: Credit score of 420 (POOR) is below the minimum threshold of 580.
+        disbursementPaymentId: null
+        disbursementStatus: NOT_INITIATED
+        submittedAt: 2024-06-15T10:00:00Z
+        decidedAt: 2024-06-15T14:00:00Z
+        disbursedAt: null
+        updatedAt: 2024-06-15T14:00:00Z
+    EligibilityRequestExample:
+      summary: Trigger eligibility assessment for a loan
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        forceReassess: false
+    EligibilityEligibleExample:
+      summary: Eligibility  ELIGIBLE
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        eligibilityStatus: ELIGIBLE
+        ruleResults:
+          - rule: KYC_VERIFIED
+            passed: true
+            actualValue: VERIFIED
+            thresholdValue: VERIFIED
+            message: Customer KYC status is VERIFIED.
+          - rule: SANCTIONS_CLEAR
+            passed: true
+            actualValue: NO_MATCH
+            thresholdValue: NO_MATCH
+            message: No sanctions matches found on any watchlist.
+          - rule: AML_PASSED
+            passed: true
+            actualValue: PASS
+            thresholdValue: PASS
+            message: No AML indicators detected.
+          - rule: FRAUD_CHECK_PASSED
+            passed: true
+            actualValue: "0.07"
+            thresholdValue: < 0.50
+            message: Fraud probability 0.07 is below the rejection threshold.
+          - rule: CREDIT_SCORE_MINIMUM
+            passed: true
+            actualValue: "720"
+            thresholdValue: e 580
+            message: Credit score 720 meets the minimum threshold of 580.
+          - rule: RISK_RECOMMENDATION_ACCEPTABLE
+            passed: true
+            actualValue: APPROVE_WITH_CONDITIONS
+            thresholdValue: APPROVE or APPROVE_WITH_CONDITIONS
+            message: Risk recommendation is acceptable  conditions must be verified.
+          - rule: DEBT_TO_INCOME_RATIO
+            passed: true
+            actualValue: 31%
+            thresholdValue: d 40%
+            message: EMI of $787.02 is 31% of average monthly income $2,543.
+          - rule: MISSED_PAYMENT_THRESHOLD
+            passed: true
+            actualValue: "0"
+            thresholdValue: d 2
+            message: 0 missed payments in last 24 months.
+        maxApprovableAmount: 30000
+        proposedInterestRate: 8.5
+        assessedAt: 2024-06-15T09:00:35Z
+    EligibilityIneligibleExample:
+      summary: Eligibility  INELIGIBLE (multiple rule failures)
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000002
+        eligibilityStatus: INELIGIBLE
+        ruleResults:
+          - rule: CREDIT_SCORE_MINIMUM
+            passed: false
+            actualValue: "420"
+            thresholdValue: e 580
+            message: Credit score 420 (POOR) is below the minimum threshold of 580.
+          - rule: FRAUD_CHECK_PASSED
+            passed: false
+            actualValue: "0.74"
+            thresholdValue: < 0.50
+            message: Fraud probability 0.74 exceeds the rejection threshold.
+          - rule: MISSED_PAYMENT_THRESHOLD
+            passed: false
+            actualValue: "5"
+            thresholdValue: d 2
+            message: 5 missed payments in last 24 months exceeds the maximum of 2.
+        maxApprovableAmount: null
+        proposedInterestRate: null
+        assessedAt: 2024-06-15T10:00:35Z
+    LoanApprovalRequestExample:
+      summary: Standard loan approval
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        approvedBy: officer-jane-doe-007
+        approvedAmount: 25000
+        interestRate: 8.5
+        tenorMonths: 36
+        conditionsMet: true
+        approvalNotes: Conditions met  customer provided salary slip confirming income.
+        holdDisbursement: false
+    LoanConditionalApprovalExample:
+      summary: Conditional approval  hold disbursement pending collateral confirmation
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000003
+        approvedBy: officer-jane-doe-007
+        approvedAmount: 350000
+        interestRate: 6.25
+        tenorMonths: 240
+        conditionsMet: true
+        approvalNotes: Property valuation confirmed at $420,000. Mortgage approved.
+        holdDisbursement: true
+    LoanRejectionRiskExample:
+      summary: Rejection  high risk score
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000002
+        rejectedBy: officer-john-smith-003
+        reason: HIGH_RISK_SCORE
+        reasonDetail: >
+          Composite risk score of 88 (HIGH) and fraud probability of 0.74 exceed
+          acceptable thresholds. Income mismatch flag raised by fraud engine.
+        notifyCustomer: true
+    LoanRejectionKycExample:
+      summary: Rejection  KYC failure
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000009
+        rejectedBy: compliance-system-v2
+        reason: FAILED_SANCTIONS
+        reasonDetail: OFAC SDN list match confirmed. Application automatically rejected.
+        notifyCustomer: false
+    WorkflowProgressExample:
+      summary: Workflow in progress  step 5 running
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        overallStatus: IN_PROGRESS
+        steps:
+          - stepNumber: 1
+            stepName: Retrieve Customer Profile  Customer API
+            status: COMPLETED
+            startedAt: 2024-06-15T09:00:01Z
+            completedAt: 2024-06-15T09:00:02Z
+          - stepNumber: 2
+            stepName: Retrieve Customer Accounts  Accounts API
+            status: COMPLETED
+            startedAt: 2024-06-15T09:00:02Z
+            completedAt: 2024-06-15T09:00:03Z
+          - stepNumber: 3
+            stepName: Retrieve Account Balance  Accounts API
+            status: COMPLETED
+            startedAt: 2024-06-15T09:00:03Z
+            completedAt: 2024-06-15T09:00:04Z
+          - stepNumber: 4
+            stepName: Retrieve Transaction History  Accounts API
+            status: COMPLETED
+            startedAt: 2024-06-15T09:00:04Z
+            completedAt: 2024-06-15T09:00:05Z
+          - stepNumber: 5
+            stepName: Risk API  Compliance & Scoring Pipeline
+            status: IN_PROGRESS
+            startedAt: 2024-06-15T09:00:05Z
+            completedAt: null
+          - stepNumber: 6
+            stepName: Eligibility Assessment
+            status: PENDING
+          - stepNumber: 7
+            stepName: Approval / Rejection Decision
+            status: PENDING
+          - stepNumber: 8
+            stepName: Payments API  Loan Disbursement
+            status: PENDING
+    RepaymentScheduleExample:
+      summary: 36-month personal loan repayment schedule (first 3 installments)
+      value:
+        loanId: l1a2b3c4-0003-0003-0003-000000000001
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        principalAmount: 25000
+        interestRate: 8.5
+        tenorMonths: 36
+        emiAmount: 787.02
+        totalInterestPayable: 3332.72
+        totalRepaymentAmount: 28332.72
+        installments:
+          - installmentNumber: 1
+            dueDate: 2024-07-16
+            openingBalance: 25000
+            emiAmount: 787.02
+            principalComponent: 610.35
+            interestComponent: 176.67
+            closingBalance: 24389.65
+            status: PENDING
+          - installmentNumber: 2
+            dueDate: 2024-08-16
+            openingBalance: 24389.65
+            emiAmount: 787.02
+            principalComponent: 614.67
+            interestComponent: 172.35
+            closingBalance: 23774.98
+            status: PENDING
+          - installmentNumber: 3
+            dueDate: 2024-09-16
+            openingBalance: 23774.98
+            emiAmount: 787.02
+            principalComponent: 619.01
+            interestComponent: 168.01
+            closingBalance: 23155.97
+            status: PENDING

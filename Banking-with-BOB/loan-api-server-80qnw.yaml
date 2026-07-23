@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: loan-api-server-80qnw
+  namespace: Banking-with-BOB
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Loan API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: Banking-with-BOB:banking-with-bob-quota-80qnw:1.0
+  policy-sequence:
+    - $ref: Banking-with-BOB:banking-with-bob-freeflowpolicysequence-80qnw:1.0
+  capabilities:
+    tools:
+      - $ref: Banking-with-BOB:loan-api-tool-80qnw:1.0
