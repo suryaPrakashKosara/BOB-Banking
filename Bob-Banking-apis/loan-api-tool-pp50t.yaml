@@ -1,0 +1,633 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: loan-api-tool-pp50t
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  description: |
+    ## Overview
+    The **Loan API** is the central **workflow orchestrator** for the enterprise Banking
+    platform's loan lifecycle. It does not merely store loan data  it actively
+    coordinates a multi-step workflow spanning four upstream APIs to determine
+    loan eligibility and execute disbursement.
+
+    ## Eight-Step Orchestration Workflow
+
+    When a loan application is submitted via `POST /loan/apply`, the Loan API
+    executes the following sequence internally:
+
+    ```
+    Step 1  GET /customers/{customerId}
+              � Customer API: retrieve customer profile and KYC status
+
+    Step 2  GET /accounts/customers/{customerId}
+              � Accounts API: retrieve all accounts owned by the customer
+
+    Step 3  GET /accounts/{accountId}/balance
+              � Accounts API: retrieve account balance and average monthly balance
+
+    Step 4  GET /accounts/{accountId}/transactions/summary
+              � Accounts API: retrieve aggregated transaction history
+
+    Step 5  POST /risk/kyc/validate
+             POST /risk/sanctions/screen
+             POST /risk/aml/validate
+             POST /risk/fraud/analyze
+             POST /risk/credit-score/calculate
+             POST /risk/loan-risk-score
+              � Risk API: execute full six-check compliance and scoring pipeline
+
+    Step 6  POST /loan/eligibility
+              � Internal: compute eligibility from collected data and risk verdict
+
+    Step 7  POST /loan/approve  OR  POST /loan/reject
+              � Internal: record approval or rejection decision
+
+    Step 8  POST /payments/disbursements
+              � Payments API: disburse approved loan funds to the customer account
+    ```
+
+    **Gate rules:**
+    - Steps 14 must return data before Step 5 is invoked.
+    - Step 5 (`Risk API`) must return `recommendation: APPROVE` or
+      `APPROVE_WITH_CONDITIONS` before Step 6 may produce `ELIGIBLE`.
+    - Step 7 `approve` requires `eligibilityStatus: ELIGIBLE`.
+    - Step 8 is invoked automatically after approval. Manual approval
+      can optionally hold disbursement pending a further officer action.
+
+    ## Exposed REST Endpoints
+    | Method | Path               | Purpose                                              |
+    |--------|--------------------|------------------------------------------------------|
+    | POST   | /loan/apply        | Submit a new loan application (triggers Steps 15)   |
+    | GET    | /loan/{loanId}     | Retrieve a loan application record                   |
+    | POST   | /loan/eligibility  | Trigger or retrieve eligibility assessment (Step 6)  |
+    | POST   | /loan/approve      | Approve an eligible loan (Step 7  approve path)     |
+    | POST   | /loan/reject       | Reject a loan application (Step 7  reject path)     |
+
+    ## Cross-API Relationships
+    | API          | Consumed Endpoints                                         | Purpose                          |
+    |--------------|------------------------------------------------------------|----------------------------------|
+    | Customer API | `GET /customers/{customerId}`                              | Step 1  customer profile        |
+    | Accounts API | `GET /accounts/customers/{customerId}`                     | Step 2  list accounts           |
+    | Accounts API | `GET /accounts/{accountId}/balance`                        | Step 3  balance snapshot        |
+    | Accounts API | `GET /accounts/{accountId}/transactions/summary`           | Step 4  transaction metrics     |
+    | Risk API     | 6 endpoints (KYC � Sanctions � AML � Fraud � Credit � Risk) | Step 5  compliance & scoring   |
+    | Payments API | `POST /payments/disbursements`                             | Step 8  fund disbursement       |
+  labels:
+    api-spec: ./loan-api-spec.yml
+spec:
+  tools:
+    - name: applyForLoan
+      description: >
+        Creates a new loan application and immediately triggers the full
+
+        eight-step orchestration workflow in the background.
+
+
+        ### What happens internally on submission
+
+
+        | Step | Action                                  | API Called       |
+
+        |------|-----------------------------------------|------------------|
+
+        | 1    | Retrieve customer profile               | Customer API     |
+
+        | 2    | Retrieve customer accounts              | Accounts API     |
+
+        | 3    | Retrieve account balance                | Accounts API     |
+
+        | 4    | Retrieve transaction history summary    | Accounts API     |
+
+        | 5    | Execute Risk API pipeline (6 checks)    | Risk API         |
+
+
+        Steps 68 are triggered separately via `/loan/eligibility` and
+
+        `/loan/approve` or `/loan/reject`, allowing loan officers to
+
+        review the Risk API verdict before committing to a decision.
+
+
+        **Business rules:**
+
+        - `customerId` must exist in the Customer API.
+
+        - `disbursementAccountId` must belong to the same customer and be
+        ACTIVE.
+
+        - Customer KYC status must not be `FAILED` or `EXPIRED` at submission
+        time.
+
+        - Returns `202 Accepted`  the workflow runs asynchronously.
+          Poll `GET /loan/{loanId}` to track progress.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+            description: >
+              Applicant customer. Foreign key to Customer API.
+
+              The Loan API will call `GET /customers/{customerId}` internally as
+              Step 1.
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          disbursementAccountId:
+            type: string
+            format: uuid
+            description: >
+              Account to receive loan funds upon approval.
+
+              Foreign key to Accounts API. Must belong to `customerId` and be
+              ACTIVE.
+
+              Validated by Payments API via `POST
+              /accounts/{accountId}/validate` in Step 8.
+            example: a1b2c3d4-0002-0002-0002-000000000001
+          loanType:
+            type: string
+            description: Classification of the loan product.
+            enum: &a1
+              - PERSONAL
+              - MORTGAGE
+              - AUTO
+              - BUSINESS
+              - EDUCATION
+              - OVERDRAFT
+            example: PERSONAL
+          requestedAmount:
+            type: number
+            format: double
+            description: Loan principal requested. Must be > 0.
+            minimum: 1
+            example: 25000
+          currency:
+            type: string
+            description: ISO 4217 currency code.
+            example: USD
+          tenorMonths:
+            type: integer
+            description: Loan duration in months.
+            minimum: 1
+            maximum: 360
+            example: 36
+          purpose:
+            type: string
+            description: Human-readable description of the loan purpose.
+            maxLength: 500
+            example: Home renovation  kitchen remodel and roof replacement.
+          collateral:
+            type: object
+            description: Asset pledged as collateral against the loan.
+            properties:
+              collateralType:
+                type: string
+                enum:
+                  - PROPERTY
+                  - VEHICLE
+                  - SAVINGS
+                  - FIXED_DEPOSIT
+                  - GUARANTOR
+                  - NONE
+                example: PROPERTY
+              description:
+                type: string
+                example: Residential property at 123 Main Street, New York, NY 10001
+              estimatedValue:
+                type: number
+                format: double
+                example: 350000
+              currency:
+                type: string
+                example: USD
+              documentReference:
+                type: string
+                description: Reference to collateral document uploaded via Customer API.
+                example: d1a2b3c4-0005-0005-0005-000000000010
+          employerDetails:
+            type: object
+            description: Employer information to support income verification in Step 5.
+            properties:
+              employerName:
+                type: string
+                example: ACME Corporation
+              employmentType:
+                type: string
+                enum:
+                  - FULL_TIME
+                  - PART_TIME
+                  - CONTRACT
+                  - SELF_EMPLOYED
+                example: FULL_TIME
+              annualSalary:
+                type: number
+                format: double
+                example: 90000
+              currency:
+                type: string
+                example: USD
+              yearsEmployed:
+                type: number
+                format: double
+                example: 4.5
+        required:
+          - customerId
+          - disbursementAccountId
+          - loanType
+          - requestedAmount
+          - currency
+          - tenorMonths
+          - purpose
+      title: Submit a new loan application
+      x-api-binding:
+        operationPath: /loan/apply
+        operationMethod: POST
+        api:
+          $path: ./loan-api-spec.yml
+    - name: getLoanById
+      description: |
+        Returns the full loan record including current status, eligibility
+        assessment result, workflow step progress, risk score summary,
+        and  after disbursement  the active loan details.
+
+        **Use this endpoint to poll for workflow progress** after submitting
+        a loan application via `POST /loan/apply`.
+
+        The `workflowProgress` object shows the status of each of the
+        eight orchestration steps (PENDING / IN_PROGRESS / COMPLETED / FAILED).
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan application identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+        required:
+          - loanId
+      title: Retrieve a loan application or active loan record by ID
+      x-api-binding:
+        operationPath: /loan/{loanId}
+        operationMethod: GET
+        api:
+          $path: ./loan-api-spec.yml
+    - name: assessLoanEligibility
+      description: |
+        Executes **Step 6** of the workflow: computes the loan eligibility
+        verdict by consolidating the outputs from Steps 15.
+
+        ### Eligibility Logic
+
+        The eligibility engine evaluates:
+
+        | Input                          | Source           | Threshold / Rule                        |
+        |--------------------------------|------------------|-----------------------------------------|
+        | `kycStatus`                    | Customer API     | Must be `VERIFIED`                      |
+        | `sanctionsResult.passed`       | Risk API         | Must be `true`                          |
+        | `amlResult.passed`             | Risk API         | Must be `true`                          |
+        | `fraudResult.passed`           | Risk API         | Must be `true`                          |
+        | `creditScore.score`            | Risk API         | Must be e 580 (FAIR band or above)      |
+        | `riskScore.recommendation`     | Risk API         | Must be `APPROVE` or `APPROVE_WITH_CONDITIONS` |
+        | `availableBalance`             | Accounts API     | Must be e minimum balance threshold     |
+        | `averageMonthlyBalance`        | Accounts API     | Loan EMI must be d 40% of monthly income |
+        | `missedPaymentCount`           | Accounts API     | Must be d configurable maximum (default 2) |
+
+        **Result:** `ELIGIBLE` or `INELIGIBLE` with a list of failed rules.
+
+        This endpoint can also be called to **re-trigger** assessment if new
+        information is available (e.g., customer updates their KYC documents).
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            type: string
+            format: uuid
+            description: Loan application to assess.
+            example: l1a2b3c4-0003-0003-0003-000000000001
+          forceReassess:
+            type: boolean
+            description: |
+              Force a full re-execution of Steps 15 and re-assessment even if
+              a previous result exists. Use when the customer has updated KYC
+              documents or accounts since the original submission.
+            default: false
+        required:
+          - loanId
+      title: Trigger or re-trigger the loan eligibility assessment (Step 6)
+      x-api-binding:
+        operationPath: /loan/eligibility
+        operationMethod: POST
+        api:
+          $path: ./loan-api-spec.yml
+    - name: approveLoan
+      description: >
+        Executes **Step 7 (approve)** and immediately triggers **Step 8
+        (disbursement)**.
+
+
+        ### Pre-conditions (enforced by the API)
+
+        - Application status must be `UNDER_REVIEW`.
+
+        - `eligibilityStatus` must be `ELIGIBLE`.
+
+        - Risk API `recommendation` must be `APPROVE` or
+        `APPROVE_WITH_CONDITIONS`.
+
+        - For `APPROVE_WITH_CONDITIONS`: the `conditionsMet` flag in the request
+          body must be `true` (indicating officer has verified conditions are satisfied).
+
+        ### Step 8  Disbursement (automatic after approval)
+
+        After recording the approval, the Loan API calls the **Payments API**:
+
+        ```
+
+        POST /payments/disbursements
+
+        Body: { loanId, customerId, disbursementAccountId, amount, currency }
+
+        ```
+
+        The Payments API first validates the beneficiary account via
+
+        `POST /accounts/{accountId}/validate` on the **Accounts API** before
+
+        transferring funds. On payment success, the loan status transitions to
+        `DISBURSED`.
+
+
+        Returns `200` with the updated loan record including the
+        `disbursementPaymentId`.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+          approvedBy:
+            type: string
+            description: Officer ID or automated system reference that approved the loan.
+            example: officer-jane-doe-007
+          approvedAmount:
+            type: number
+            format: double
+            description: >
+              Approved loan amount. May differ from `requestedAmount` (partial
+              approval).
+            example: 25000
+          interestRate:
+            type: number
+            format: double
+            description: Annual interest rate percentage applied to the loan.
+            example: 8.5
+          tenorMonths:
+            type: integer
+            description: Final approved tenor in months. Defaults to requested tenor if
+              omitted.
+            example: 36
+          conditionsMet:
+            type: boolean
+            description: >
+              Required `true` when risk `recommendation` is
+              `APPROVE_WITH_CONDITIONS`.
+
+              Certifies that the officer has verified all conditions are
+              satisfied
+
+              (e.g., collateral pledged, co-signer confirmed).
+            default: false
+          approvalNotes:
+            type: string
+            description: Optional officer notes recorded against the approval decision.
+          holdDisbursement:
+            type: boolean
+            description: >
+              Set `true` to approve the loan without immediately triggering
+              disbursement.
+
+              Disbursement must then be triggered manually via `POST
+              /loan/{loanId}/disburse`.
+            default: false
+        required:
+          - loanId
+          - approvedBy
+          - approvedAmount
+          - interestRate
+      title: Approve a loan application and initiate fund disbursement (Steps 78)
+      x-api-binding:
+        operationPath: /loan/approve
+        operationMethod: POST
+        api:
+          $path: ./loan-api-spec.yml
+    - name: rejectLoan
+      description: >
+        Executes **Step 7 (reject)**. Records the rejection decision, reason,
+
+        and officer details. Transitions the application status to `REJECTED`.
+
+
+        **Pre-conditions:**
+
+        - Application must be in `UNDER_REVIEW` or `PENDING` status.
+
+        - Cannot reject an already `APPROVED`, `DISBURSED`, or `CLOSED`
+        application.
+
+
+        **No downstream API calls are made on rejection.**
+
+        The customer is notified via the notification service (out of scope for
+        this API).
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000002
+          rejectedBy:
+            type: string
+            description: Officer ID or system that issued the rejection.
+            example: officer-john-smith-003
+          reason:
+            type: string
+            description: Structured reason for loan rejection.
+            enum:
+              - FAILED_KYC
+              - FAILED_SANCTIONS
+              - FAILED_AML
+              - FRAUD_RISK
+              - LOW_CREDIT_SCORE
+              - HIGH_RISK_SCORE
+              - INSUFFICIENT_BALANCE
+              - HIGH_DEBT_TO_INCOME_RATIO
+              - MISSED_PAYMENT_HISTORY
+              - INCOMPLETE_DOCUMENTS
+              - MANUAL_OFFICER_DECISION
+              - OTHER
+            example: LOW_CREDIT_SCORE
+          reasonDetail:
+            type: string
+            description: Human-readable elaboration on the rejection reason.
+            example: Credit score of 420 (POOR) is below the minimum threshold of 580.
+          notifyCustomer:
+            type: boolean
+            description: Whether to send the customer a rejection notification.
+            default: true
+        required:
+          - loanId
+          - rejectedBy
+          - reason
+      title: Reject a loan application (Step 7  reject path)
+      x-api-binding:
+        operationPath: /loan/reject
+        operationMethod: POST
+        api:
+          $path: ./loan-api-spec.yml
+    - name: listLoans
+      description: |
+        Returns a paginated list of loan applications. Supports filtering by
+        customer, status, loan type, and date range. Intended for the internal
+        banking portal and service-to-service integrations.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Filter by customer (UUID v4 from Customer API).
+            x-parameter-location: query
+            type: string
+            format: uuid
+          status:
+            description: Filter by application status.
+            x-parameter-location: query
+            type: string
+            enum:
+              - PENDING
+              - UNDER_REVIEW
+              - ELIGIBLE
+              - INELIGIBLE
+              - APPROVED
+              - DISBURSED
+              - REJECTED
+              - CANCELLED
+              - CLOSED
+            example: UNDER_REVIEW
+          loanType:
+            description: Filter by loan type.
+            x-parameter-location: query
+            type: string
+            enum: *a1
+            example: PERSONAL
+          submittedFrom:
+            description: Filter by submission date  from (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-01-01
+          submittedTo:
+            description: Filter by submission date  to (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+            example: 2024-12-31
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      title: List loan applications with optional filters
+      x-api-binding:
+        operationPath: /loan
+        operationMethod: GET
+        api:
+          $path: ./loan-api-spec.yml
+    - name: getWorkflowStatus
+      description: |
+        Returns the status of each of the eight orchestration steps for the
+        given loan application. Useful for monitoring dashboards and debugging
+        stalled workflows.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan application identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+        required:
+          - loanId
+      title: Retrieve the step-by-step workflow progress for a loan application
+      x-api-binding:
+        operationPath: /loan/{loanId}/workflow-status
+        operationMethod: GET
+        api:
+          $path: ./loan-api-spec.yml
+    - name: disburseLoan
+      description: |
+        Manually triggers **Step 8** for approved loans where auto-disbursement
+        failed (e.g., the Payments API was temporarily unavailable).
+
+        **Pre-condition:** Application must be in `APPROVED` status with no
+        existing successful disbursement.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan application identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+          overrideDisbursementAccountId:
+            type: string
+            format: uuid
+            description: >
+              Override the disbursement account if the original account was
+              closed
+
+              or frozen since approval. Must belong to the same customer and be
+              ACTIVE.
+            nullable: true
+          disbursementNotes:
+            type: string
+        required:
+          - loanId
+      title: Retry or manually trigger loan disbursement (Step 8)
+      x-api-binding:
+        operationPath: /loan/{loanId}/disburse
+        operationMethod: POST
+        api:
+          $path: ./loan-api-spec.yml
+    - name: getRepaymentSchedule
+      description: Make a GET request to /loan/{loanId}/repayments
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan application identifier (UUID v4).
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+        required:
+          - loanId
+      title: Retrieve the repayment schedule for a disbursed loan
+      x-api-binding:
+        operationPath: /loan/{loanId}/repayments
+        operationMethod: GET
+        api:
+          $path: ./loan-api-spec.yml

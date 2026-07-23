@@ -1,0 +1,15 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: bob-banking-apis-freeflowpolicysequence-pp50t
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Bob-Banking-apis:invoke-pp50t:1.0
+  monitoring:
+    $ref: Bob-Banking-apis:telemetry-pp50t:1.0
