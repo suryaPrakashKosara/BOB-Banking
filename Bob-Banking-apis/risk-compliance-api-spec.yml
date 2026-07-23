@@ -1,0 +1,2369 @@
+openapi: 3.0.3
+info:
+  title: Risk & Compliance API
+  description: |
+    ## Overview
+    The **Risk & Compliance API** is the central compliance and risk intelligence
+    service for the enterprise Banking platform. It acts as a **pure service provider**
+     it does not own any customer or account data directly. Instead, it receives
+    enriched data snapshots from the **Customer API**, **Accounts API**, and
+    **Loan API**, executes a sequence of validation and scoring engines, and returns
+    structured risk verdicts consumed by the **Loan API** to make approval decisions.
+
+    ## Responsibilities
+    | Service              | Description                                                         |
+    |----------------------|---------------------------------------------------------------------|
+    | KYC Validation       | Verify customer identity using document and biometric checks        |
+    | AML Validation       | Screen for money-laundering patterns in transaction behaviour       |
+    | Fraud Detection      | Detect anomalous transaction patterns and application-level fraud   |
+    | Sanctions Screening  | Check customer against OFAC, UN, EU, and local regulatory watchlists |
+    | Credit Score         | Compute a 300850 credit score from financial behaviour data        |
+    | Loan Risk Score      | Generate a composite 0100 risk score with a recommendation verdict |
+
+    ## Canonical Risk Response
+    Every scoring endpoint returns a result that includes or can be reduced to:
+    ```json
+    {
+      "riskScore": 78,
+      "riskLevel": "MEDIUM",
+      "recommendation": "APPROVE_WITH_CONDITIONS"
+    }
+    ```
+
+    ## Orchestration Model
+    The Loan API acts as the **workflow orchestrator**. It collects data from the
+    Customer API and Accounts API, then calls this API in sequence:
+
+    ```
+    1. POST /risk/kyc/validate           � Customer profile snapshot
+    2. POST /risk/sanctions/screen       � Customer identity data
+    3. POST /risk/aml/validate           � Customer + transaction summary
+    4. POST /risk/fraud/analyze          � Transaction summary + loan context
+    5. POST /risk/credit-score/calculate � Customer + balances + transactions
+    6. POST /risk/loan-risk-score        � All above results aggregated
+    ```
+
+    All six checks must PASS before the Loan API may call its own approve endpoint.
+
+    ## Cross-API Relationships
+    | Upstream Provider | Data Supplied                                              |
+    |-------------------|------------------------------------------------------------|
+    | Customer API      | Customer profile, KYC status, national ID, address         |
+    | Accounts API      | Account balances, average monthly balance, transaction summary |
+    | Loan API          | Loan application details, requested amount, tenor          |
+
+    ## Write-Back Contracts
+    On completion of KYC and risk scoring, this API writes results back:
+    - `PUT /customers/{customerId}/kyc/status` on the **Customer API**
+    - `PATCH /customers/{customerId}/risk-category` on the **Customer API**
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+servers:
+  - url: https://risk-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/risk
+    description: Production
+tags:
+  - name: KYC
+    description: Know Your Customer identity verification.
+  - name: Sanctions
+    description: Regulatory watchlist and sanctions screening (OFAC, UN, EU, local).
+  - name: AML
+    description: Anti-Money Laundering pattern analysis and screening.
+  - name: Fraud
+    description: Transaction and application-level fraud detection.
+  - name: Credit Score
+    description: Credit score calculation (300850 range).
+  - name: Loan Risk Score
+    description: Composite loan risk score (0100) with recommendation verdict.
+  - name: Reports
+    description: Audit-grade compliance reports and assessment history.
+paths:
+  /risk/kyc/validate:
+    post:
+      tags:
+        - KYC
+      operationId: performKycValidation
+      summary: Perform KYC identity validation for a customer
+      description: >
+        Validates the identity of a customer using a snapshot of their profile
+
+        data supplied in the request body. The caller (Loan API) must first
+
+        retrieve the customer profile from the **Customer API** before calling
+
+        this endpoint.
+
+
+        **Checks performed:**
+
+        - Document authenticity (national ID, passport)
+
+        - Name and date-of-birth consistency
+
+        - Address proof verification
+
+        - Biometric liveness (if applicable)
+
+        - PEP (Politically Exposed Person) screening
+
+        - Adverse media scan
+
+
+        On a `PASS` result, this API writes back the KYC status to the Customer
+        API
+
+        via `PUT /customers/{customerId}/kyc/status`.
+
+
+        **Orchestration step:** 1 of 6
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KycValidationRequest"
+            examples:
+              standard:
+                $ref: "#/components/examples/KycValidationRequestExample"
+      responses:
+        "200":
+          description: KYC validation result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycValidationResult"
+              examples:
+                pass:
+                  $ref: "#/components/examples/KycValidationPassExample"
+                fail:
+                  $ref: "#/components/examples/KycValidationFailExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Customer not found in Customer API.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "422":
+          description: Insufficient identity data to perform validation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000422
+                code: INSUFFICIENT_IDENTITY_DATA
+                message: National ID and at least one address proof document are required.
+      security:
+        - BearerAuth:
+            - risk:kyc
+  /risk/kyc/{customerId}/status:
+    get:
+      tags:
+        - KYC
+      operationId: getKycStatus
+      summary: Retrieve the current KYC status of a customer
+      description: >
+        Returns the latest KYC verification record for the customer without
+
+        triggering a new validation. Used by the Loan API to check whether
+
+        a recent valid KYC record exists before deciding to re-trigger
+        validation.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: Current KYC status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycStatusSummary"
+              examples:
+                verified:
+                  $ref: "#/components/examples/KycStatusVerifiedExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/kyc/{customerId}/history:
+    get:
+      tags:
+        - KYC
+      operationId: getKycHistory
+      summary: Retrieve KYC validation history for a customer
+      description: |
+        Returns a paginated, chronological list of all KYC checks performed
+        for a customer. Used for regulatory audit trails.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated KYC history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycHistoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/sanctions/screen:
+    post:
+      tags:
+        - Sanctions
+      operationId: performSanctionsScreening
+      summary: Screen a customer against regulatory sanctions watchlists
+      description: >
+        Screens a customer against the following lists:
+
+        - **OFAC** (US Office of Foreign Assets Control)
+
+        - **UN Security Council** consolidated list
+
+        - **EU Consolidated Financial Sanctions List**
+
+        - **Local regulatory watchlists** (jurisdiction-specific)
+
+        - **PEP (Politically Exposed Persons)** database
+
+
+        A `MATCH` result on any CRITICAL list immediately blocks the loan
+        workflow.
+
+
+        **Orchestration step:** 2 of 6
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SanctionsScreeningRequest"
+            examples:
+              individual:
+                $ref: "#/components/examples/SanctionsScreeningRequestExample"
+      responses:
+        "200":
+          description: Sanctions screening result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SanctionsScreeningResult"
+              examples:
+                clear:
+                  $ref: "#/components/examples/SanctionsScreeningClearExample"
+                hit:
+                  $ref: "#/components/examples/SanctionsScreeningHitExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - risk:sanctions
+  /risk/sanctions/{customerId}/history:
+    get:
+      tags:
+        - Sanctions
+      operationId: getSanctionsHistory
+      summary: Retrieve sanctions screening history for a customer
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Sanctions screening history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SanctionsHistoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/aml/validate:
+    post:
+      tags:
+        - AML
+      operationId: performAmlValidation
+      summary: Perform Anti-Money Laundering validation
+      description: >
+        Analyses the customer's transaction behaviour for money laundering
+
+        indicators. The caller must supply a `TransactionSummary` snapshot
+
+        retrieved from `GET /accounts/{accountId}/transactions/summary`
+
+        on the **Accounts API**.
+
+
+        **AML checks performed:**
+
+        - Structuring / smurfing detection (many small transactions near
+        reporting threshold)
+
+        - Unusual large transaction frequency
+
+        - Rapid round-trip transfers
+
+        - Unusual counterparty geography
+
+        - High cash transaction ratio
+
+        - Transaction velocity anomalies
+
+
+        **Orchestration step:** 3 of 6
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmlValidationRequest"
+            examples:
+              standard:
+                $ref: "#/components/examples/AmlValidationRequestExample"
+      responses:
+        "200":
+          description: AML validation result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmlValidationResult"
+              examples:
+                clear:
+                  $ref: "#/components/examples/AmlValidationClearExample"
+                flagged:
+                  $ref: "#/components/examples/AmlValidationFlaggedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - risk:aml
+  /risk/aml/{customerId}/history:
+    get:
+      tags:
+        - AML
+      operationId: getAmlHistory
+      summary: Retrieve AML validation history for a customer
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated AML history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmlHistoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/fraud/analyze:
+    post:
+      tags:
+        - Fraud
+      operationId: performFraudAnalysis
+      summary: Perform fraud analysis on a loan application
+      description: >
+        Analyses the applicant's transaction history and the loan application
+
+        context to detect fraud indicators including:
+
+        - Loan stacking (multiple simultaneous applications across institutions)
+
+        - Application field inconsistencies (declared income vs transaction
+        credits)
+
+        - Velocity fraud (rapid successive applications)
+
+        - Device / IP fingerprint anomalies (when available)
+
+        - Unusual large inflows immediately before application
+
+        - Identity-mismatch patterns
+
+
+        **Orchestration step:** 4 of 6
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FraudAnalysisRequest"
+            examples:
+              standard:
+                $ref: "#/components/examples/FraudAnalysisRequestExample"
+      responses:
+        "200":
+          description: Fraud analysis result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FraudAnalysisResult"
+              examples:
+                clean:
+                  $ref: "#/components/examples/FraudAnalysisCleanExample"
+                flagged:
+                  $ref: "#/components/examples/FraudAnalysisFlaggedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - risk:fraud
+  /risk/fraud/{customerId}/history:
+    get:
+      tags:
+        - Fraud
+      operationId: getFraudHistory
+      summary: Retrieve fraud analysis history for a customer
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated fraud analysis history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FraudHistoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/credit-score/calculate:
+    post:
+      tags:
+        - Credit Score
+      operationId: calculateCreditScore
+      summary: Calculate a credit score for a loan applicant
+      description: >
+        Computes a credit score on the standard **300850 scale** using a
+
+        weighted combination of:
+
+        - Payment history (35%)  `missedPaymentCount`, `loanRepaymentCount`
+
+        - Amounts owed (30%)  `ledgerBalance`, `averageMonthlyBalance`,
+        `totalDebitAmount`
+
+        - Credit history length (15%)  account age derived from `openedAt`
+
+        - Credit mix (10%)  number and types of accounts
+
+        - New credit (10%)  recent loan applications
+
+
+        **Orchestration step:** 5 of 6
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditScoreRequest"
+            examples:
+              standard:
+                $ref: "#/components/examples/CreditScoreRequestExample"
+      responses:
+        "200":
+          description: Credit score result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditScoreResult"
+              examples:
+                good:
+                  $ref: "#/components/examples/CreditScoreGoodExample"
+                poor:
+                  $ref: "#/components/examples/CreditScorePoorExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      security:
+        - BearerAuth:
+            - risk:credit
+  /risk/credit-score/{customerId}/latest:
+    get:
+      tags:
+        - Credit Score
+      operationId: getLatestCreditScore
+      summary: Retrieve the most recent credit score for a customer
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: Latest credit score record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditScoreResult"
+              examples:
+                good:
+                  $ref: "#/components/examples/CreditScoreGoodExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/credit-score/{customerId}/history:
+    get:
+      tags:
+        - Credit Score
+      operationId: getCreditScoreHistory
+      summary: Retrieve credit score history for a customer
+      description: Returns paginated historical credit scores for trend analysis.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Credit score history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditScoreHistoryPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/loan-risk-score:
+    post:
+      tags:
+        - Loan Risk Score
+      operationId: generateLoanRiskScore
+      summary: Generate a composite loan risk score and recommendation
+      description: |
+        Aggregates the results of all preceding compliance and scoring steps
+        into a single **composite risk score (0100)** with a human-readable
+        risk level and an actionable recommendation verdict.
+
+        **This is the final gate before the Loan API may approve a loan.**
+
+        The caller must supply the result objects from all five preceding steps:
+        KYC, Sanctions, AML, Fraud, and Credit Score. Each result carries a
+        `passed` boolean  if any is `false`, the risk score engine will still
+        compute and return a score, but the `recommendation` will be `REJECT`.
+
+        ### Recommendation Logic
+        | Composite Score | Risk Level | Recommendation                     |
+        |-----------------|------------|------------------------------------|
+        | 0  30          | LOW        | `APPROVE`                          |
+        | 31  55         | MEDIUM     | `APPROVE`                          |
+        | 56  75         | MEDIUM     | `APPROVE_WITH_CONDITIONS`          |
+        | 76  89         | HIGH       | `MANUAL_REVIEW`                    |
+        | 90  100        | CRITICAL   | `REJECT`                           |
+        | Any CRITICAL flag | CRITICAL | `REJECT`                           |
+
+        **Orchestration step:** 6 of 6  final step.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanRiskScoreRequest"
+            examples:
+              mediumRisk:
+                $ref: "#/components/examples/LoanRiskScoreRequestExample"
+      responses:
+        "200":
+          description: |
+            Composite loan risk score and recommendation. The canonical response
+            shape is:
+            ```json
+            {
+              "riskScore": 78,
+              "riskLevel": "HIGH",
+              "recommendation": "MANUAL_REVIEW"
+            }
+            ```
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanRiskScoreResult"
+              examples:
+                medium:
+                  $ref: "#/components/examples/LoanRiskScoreMediumExample"
+                low:
+                  $ref: "#/components/examples/LoanRiskScoreLowExample"
+                high:
+                  $ref: "#/components/examples/LoanRiskScoreHighExample"
+                reject:
+                  $ref: "#/components/examples/LoanRiskScoreRejectExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: One or more required upstream results are missing or in an
+            incomplete state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+              example:
+                traceId: e3b0c442-0000-0000-0000-000000000422
+                code: INCOMPLETE_ASSESSMENT_DATA
+                message: >
+                  kycResult, sanctionsResult, amlResult, fraudResult, and
+                  creditScoreResult are all required to generate a loan risk
+                  score.
+      security:
+        - BearerAuth:
+            - risk:score
+  /risk/loan-risk-score/{applicationId}:
+    get:
+      tags:
+        - Loan Risk Score
+      operationId: getLoanRiskScore
+      summary: Retrieve a previously generated loan risk score by application ID
+      parameters:
+        - $ref: "#/components/parameters/ApplicationIdParam"
+      responses:
+        "200":
+          description: Loan risk score result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanRiskScoreResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:read
+  /risk/reports/customer/{customerId}:
+    get:
+      tags:
+        - Reports
+      operationId: getCustomerComplianceReport
+      summary: Retrieve a full compliance audit report for a customer
+      description: >
+        Returns a consolidated compliance summary including the latest results
+        of
+
+        KYC, sanctions, AML, fraud, credit score, and risk assessments for a
+
+        customer. Intended for regulatory reporting and internal audit use.
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: Customer compliance report.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerComplianceReport"
+              examples:
+                report:
+                  $ref: "#/components/examples/CustomerComplianceReportExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:reports
+  /risk/reports/application/{applicationId}:
+    get:
+      tags:
+        - Reports
+      operationId: getApplicationComplianceReport
+      summary: Retrieve a compliance report for a specific loan application
+      description: |
+        Returns the full set of compliance check results executed as part of the
+        loan eligibility workflow for a specific `applicationId`. Includes all
+        six orchestration steps and the final risk score verdict.
+      parameters:
+        - $ref: "#/components/parameters/ApplicationIdParam"
+      responses:
+        "200":
+          description: Application compliance report.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationComplianceReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+        - BearerAuth:
+            - risk:reports
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer token issued by the IBM API Connect OAuth provider.
+        Scopes:
+        - `risk:read`        read scores, statuses, and history
+        - `risk:kyc`         execute KYC validation
+        - `risk:sanctions`   execute sanctions screening
+        - `risk:aml`         execute AML validation
+        - `risk:fraud`       execute fraud analysis
+        - `risk:credit`      calculate credit score
+        - `risk:score`       generate composite loan risk score
+        - `risk:reports`     access compliance audit reports
+  parameters:
+    CustomerIdParam:
+      name: customerId
+      in: path
+      required: true
+      description: Unique customer identifier (UUID v4). Foreign key from Customer API.
+      schema:
+        type: string
+        format: uuid
+        example: c1a2b3c4-0001-0001-0001-000000000001
+    ApplicationIdParam:
+      name: applicationId
+      in: path
+      required: true
+      description: Unique loan application identifier (UUID v4). Foreign key from Loan API.
+      schema:
+        type: string
+        format: uuid
+        example: l1a2b3c4-0003-0003-0003-000000000001
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  schemas:
+    PassFailStatus:
+      type: string
+      description: Binary outcome of a single compliance check.
+      enum:
+        - PASS
+        - FAIL
+        - PENDING
+        - SKIPPED
+      example: PASS
+    RiskLevel:
+      type: string
+      description: |
+        Categorical risk classification.
+        - `LOW`       030 composite score
+        - `MEDIUM`    3175 composite score
+        - `HIGH`      7689 composite score
+        - `CRITICAL`  90100 or any blocking flag
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      example: MEDIUM
+    Recommendation:
+      type: string
+      description: >
+        Actionable recommendation produced by the risk score engine.
+
+        - `APPROVE`                   all checks pass, low-medium risk, proceed
+
+        - `APPROVE_WITH_CONDITIONS`   medium risk; secondary approval or
+        collateral required
+
+        - `MANUAL_REVIEW`             high risk; escalate to senior loan
+        officer
+
+        - `REJECT`                    critical risk, compliance failure, or
+        sanctions match
+      enum:
+        - APPROVE
+        - APPROVE_WITH_CONDITIONS
+        - MANUAL_REVIEW
+        - REJECT
+      example: APPROVE_WITH_CONDITIONS
+    SeverityLevel:
+      type: string
+      enum:
+        - INFO
+        - WARNING
+        - CRITICAL
+      example: WARNING
+    ComplianceFinding:
+      type: object
+      description: A single flag or issue raised during any compliance check.
+      properties:
+        code:
+          type: string
+          example: INCOME_MISMATCH
+        description:
+          type: string
+          example: Declared annual income exceeds average monthly credit by 3.2x.
+        severity:
+          $ref: "#/components/schemas/SeverityLevel"
+        source:
+          type: string
+          description: Engine or dataset that produced this finding.
+          example: fraud-engine-v4
+    ScoreFactor:
+      type: object
+      description: One weighted factor contributing to the credit or risk score.
+      properties:
+        factor:
+          type: string
+          example: PAYMENT_HISTORY
+        description:
+          type: string
+          example: 0 missed payments in the last 24 months.
+        impact:
+          type: string
+          enum:
+            - POSITIVE
+            - NEGATIVE
+            - NEUTRAL
+          example: POSITIVE
+        weightPct:
+          type: number
+          format: double
+          description: Percentage weight of this factor in the overall score (0100).
+          example: 35
+        scoreContribution:
+          type: number
+          format: double
+          description: Points contributed to the final score by this factor.
+          example: 280
+    CustomerProfileSnapshot:
+      type: object
+      description: |
+        Lightweight snapshot of customer identity data.
+        Source: Customer API `GET /customers/{customerId}`.
+      required:
+        - customerId
+        - firstName
+        - lastName
+        - dateOfBirth
+        - nationalId
+        - customerType
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          example: c1a2b3c4-0001-0001-0001-000000000001
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1985-06-15
+        nationalId:
+          type: string
+          example: ID-987654321
+        nationality:
+          type: string
+          description: ISO 3166-1 alpha-2 country code.
+          example: US
+        customerType:
+          type: string
+          enum:
+            - INDIVIDUAL
+            - CORPORATE
+            - SOLE_TRADER
+            - NON_PROFIT
+          example: INDIVIDUAL
+        employmentStatus:
+          type: string
+          enum:
+            - EMPLOYED
+            - SELF_EMPLOYED
+            - UNEMPLOYED
+            - RETIRED
+            - STUDENT
+          example: EMPLOYED
+        annualIncomeDeclared:
+          type: number
+          format: double
+          description: Annual income as declared by the customer.
+          example: 90000
+        address:
+          type: object
+          properties:
+            city:
+              type: string
+              example: New York
+            state:
+              type: string
+              example: NY
+            country:
+              type: string
+              example: US
+        kycStatus:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - VERIFIED
+            - FAILED
+            - EXPIRED
+          example: VERIFIED
+    AccountBalanceSnapshot:
+      type: object
+      description: |
+        Balance snapshot per account.
+        Source: Accounts API `GET /accounts/{accountId}/balance`.
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        accountType:
+          type: string
+          enum:
+            - SAVINGS
+            - CURRENT
+            - FIXED_DEPOSIT
+        currency:
+          type: string
+          example: USD
+        availableBalance:
+          type: number
+          format: double
+          example: 12450.75
+        ledgerBalance:
+          type: number
+          format: double
+          example: 12550.75
+        averageMonthlyBalance:
+          type: number
+          format: double
+          example: 11800
+        openedAt:
+          type: string
+          format: date-time
+    TransactionSummarySnapshot:
+      type: object
+      description: |
+        Pre-aggregated transaction metrics.
+        Source: Accounts API `GET /accounts/{accountId}/transactions/summary`.
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        periodFromDate:
+          type: string
+          format: date
+        periodToDate:
+          type: string
+          format: date
+        totalCreditAmount:
+          type: number
+          format: double
+          example: 85000
+        totalDebitAmount:
+          type: number
+          format: double
+          example: 63000
+        averageMonthlyCredit:
+          type: number
+          format: double
+          example: 7083.33
+        averageMonthlyDebit:
+          type: number
+          format: double
+          example: 5250
+        loanRepaymentCount:
+          type: integer
+          example: 12
+        loanRepaymentTotalAmount:
+          type: number
+          format: double
+          example: 12000
+        missedPaymentCount:
+          type: integer
+          example: 0
+        largeTransactionCount:
+          type: integer
+          example: 3
+        suspiciousTransactionCount:
+          type: integer
+          example: 0
+        distinctCounterpartyCount:
+          type: integer
+          example: 18
+        currency:
+          type: string
+          example: USD
+    LoanApplicationSnapshot:
+      type: object
+      description: |
+        Loan application context passed by the Loan API.
+        Source: Loan API internal application record.
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+          example: l1a2b3c4-0003-0003-0003-000000000001
+        loanType:
+          type: string
+          enum:
+            - PERSONAL
+            - MORTGAGE
+            - AUTO
+            - BUSINESS
+            - EDUCATION
+          example: PERSONAL
+        requestedAmount:
+          type: number
+          format: double
+          example: 25000
+        currency:
+          type: string
+          example: USD
+        tenorMonths:
+          type: integer
+          example: 36
+        purpose:
+          type: string
+          example: Home renovation
+        disbursementAccountId:
+          type: string
+          format: uuid
+    KycValidationRequest:
+      type: object
+      required:
+        - customerId
+        - applicationId
+        - customerProfile
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+          description: Loan application triggering this KYC check.
+        customerProfile:
+          $ref: "#/components/schemas/CustomerProfileSnapshot"
+        documentIds:
+          type: array
+          description: IDs of uploaded documents to validate. Retrieved from Customer API.
+          items:
+            type: string
+            format: uuid
+          example:
+            - d1a2b3c4-0005-0005-0005-000000000005
+            - d1a2b3c4-0005-0005-0005-000000000006
+        forceRevalidate:
+          type: boolean
+          description: Force a fresh check even if a valid recent KYC record exists.
+          default: false
+    KycValidationResult:
+      type: object
+      description: Result of KYC identity validation.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        passed:
+          type: boolean
+          description: "`true` if all mandatory KYC checks passed."
+        verificationLevel:
+          type: string
+          enum:
+            - NONE
+            - BASIC
+            - ENHANCED
+            - FULL
+          example: FULL
+        checksPerformed:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycCheckResult"
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceFinding"
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2026-06-15T10:00:00Z
+        performedAt:
+          type: string
+          format: date-time
+    KycCheckResult:
+      type: object
+      properties:
+        checkType:
+          type: string
+          enum:
+            - IDENTITY_DOCUMENT
+            - ADDRESS_PROOF
+            - BIOMETRIC
+            - PEP_SCREENING
+            - ADVERSE_MEDIA
+          example: IDENTITY_DOCUMENT
+        result:
+          $ref: "#/components/schemas/PassFailStatus"
+        performedAt:
+          type: string
+          format: date-time
+        performedBy:
+          type: string
+          example: kyc-engine-v3
+    KycStatusSummary:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        passed:
+          type: boolean
+        verificationLevel:
+          type: string
+          enum:
+            - NONE
+            - BASIC
+            - ENHANCED
+            - FULL
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastCheckedAt:
+          type: string
+          format: date-time
+    KycHistoryPage:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycValidationResult"
+    SanctionsScreeningRequest:
+      type: object
+      required:
+        - customerId
+        - applicationId
+        - customerProfile
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        customerProfile:
+          $ref: "#/components/schemas/CustomerProfileSnapshot"
+        listsToScreen:
+          type: array
+          description: Specific watchlists to screen against. Defaults to ALL if omitted.
+          items:
+            type: string
+            enum:
+              - OFAC
+              - UN
+              - EU
+              - LOCAL
+              - PEP
+          example:
+            - OFAC
+            - UN
+            - EU
+            - LOCAL
+            - PEP
+    SanctionsScreeningResult:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        passed:
+          type: boolean
+          description: "`true` if no CRITICAL list match was found."
+        overallMatchLevel:
+          type: string
+          enum:
+            - NO_MATCH
+            - POSSIBLE_MATCH
+            - CONFIRMED_MATCH
+          example: NO_MATCH
+        listResults:
+          type: array
+          description: Per-list screening result.
+          items:
+            $ref: "#/components/schemas/SanctionsListResult"
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceFinding"
+        screenedAt:
+          type: string
+          format: date-time
+    SanctionsListResult:
+      type: object
+      properties:
+        listName:
+          type: string
+          enum:
+            - OFAC
+            - UN
+            - EU
+            - LOCAL
+            - PEP
+          example: OFAC
+        matchLevel:
+          type: string
+          enum:
+            - NO_MATCH
+            - POSSIBLE_MATCH
+            - CONFIRMED_MATCH
+          example: NO_MATCH
+        matchedEntries:
+          type: array
+          description: Matched watchlist entries (empty if NO_MATCH).
+          items:
+            $ref: "#/components/schemas/SanctionsMatchEntry"
+    SanctionsMatchEntry:
+      type: object
+      properties:
+        entryId:
+          type: string
+          example: OFAC-SDN-00123
+        entryName:
+          type: string
+        matchScore:
+          type: number
+          format: double
+          description: Fuzzy match confidence (01).
+          example: 0.95
+        matchedFields:
+          type: array
+          items:
+            type: string
+          example:
+            - FULL_NAME
+            - DATE_OF_BIRTH
+    SanctionsHistoryPage:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/SanctionsScreeningResult"
+    AmlValidationRequest:
+      type: object
+      required:
+        - customerId
+        - applicationId
+        - customerProfile
+        - transactionSummaries
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        customerProfile:
+          $ref: "#/components/schemas/CustomerProfileSnapshot"
+        transactionSummaries:
+          type: array
+          description: One summary per account. Source  Accounts API.
+          items:
+            $ref: "#/components/schemas/TransactionSummarySnapshot"
+        lookbackMonths:
+          type: integer
+          description: Number of months of transaction history to consider.
+          default: 24
+          example: 24
+    AmlValidationResult:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        passed:
+          type: boolean
+        amlRiskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        indicators:
+          type: array
+          description: AML-specific indicators detected.
+          items:
+            $ref: "#/components/schemas/AmlIndicator"
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceFinding"
+        performedAt:
+          type: string
+          format: date-time
+    AmlIndicator:
+      type: object
+      description: A specific AML behavioural pattern detected.
+      properties:
+        indicatorCode:
+          type: string
+          enum:
+            - STRUCTURING
+            - RAPID_ROUND_TRIP
+            - UNUSUAL_LARGE_TRANSACTIONS
+            - HIGH_CASH_RATIO
+            - VELOCITY_ANOMALY
+            - UNUSUAL_GEOGRAPHY
+            - SMURFING
+          example: STRUCTURING
+        description:
+          type: string
+          example: Multiple sub-threshold transactions detected within 48 hours.
+        severity:
+          $ref: "#/components/schemas/SeverityLevel"
+        detectedAt:
+          type: string
+          format: date-time
+    AmlHistoryPage:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/AmlValidationResult"
+    FraudAnalysisRequest:
+      type: object
+      required:
+        - customerId
+        - applicationId
+        - customerProfile
+        - loanApplication
+        - transactionSummaries
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        customerProfile:
+          $ref: "#/components/schemas/CustomerProfileSnapshot"
+        loanApplication:
+          $ref: "#/components/schemas/LoanApplicationSnapshot"
+        transactionSummaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionSummarySnapshot"
+        accountBalances:
+          type: array
+          description: Balance snapshots. Source  Accounts API.
+          items:
+            $ref: "#/components/schemas/AccountBalanceSnapshot"
+    FraudAnalysisResult:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        passed:
+          type: boolean
+        fraudProbabilityScore:
+          type: number
+          format: double
+          description: Probability of fraud. 0.0 = no risk, 1.0 = confirmed fraud.
+          example: 0.07
+        fraudRiskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        fraudFlags:
+          type: array
+          items:
+            $ref: "#/components/schemas/FraudFlag"
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceFinding"
+        analyzedAt:
+          type: string
+          format: date-time
+    FraudFlag:
+      type: object
+      properties:
+        flagCode:
+          type: string
+          enum:
+            - LOAN_STACKING
+            - INCOME_MISMATCH
+            - VELOCITY_FRAUD
+            - UNUSUAL_LARGE_INFLOW_BEFORE_APPLICATION
+            - IDENTITY_MISMATCH
+            - DEVICE_ANOMALY
+          example: INCOME_MISMATCH
+        description:
+          type: string
+          example: Declared annual income is 3.2x higher than average monthly credit * 12.
+        severity:
+          $ref: "#/components/schemas/SeverityLevel"
+    FraudHistoryPage:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/FraudAnalysisResult"
+    CreditScoreRequest:
+      type: object
+      required:
+        - customerId
+        - applicationId
+        - customerProfile
+        - accountBalances
+        - transactionSummaries
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        customerProfile:
+          $ref: "#/components/schemas/CustomerProfileSnapshot"
+        loanApplication:
+          $ref: "#/components/schemas/LoanApplicationSnapshot"
+        accountBalances:
+          type: array
+          description: Balance snapshots for all customer accounts. Source  Accounts API.
+          items:
+            $ref: "#/components/schemas/AccountBalanceSnapshot"
+        transactionSummaries:
+          type: array
+          description: Transaction summaries for all customer accounts. Source  Accounts
+            API.
+          items:
+            $ref: "#/components/schemas/TransactionSummarySnapshot"
+    CreditScoreResult:
+      type: object
+      description: >
+        Credit score on the standard 300850 scale with banding and factor
+        breakdown.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+          nullable: true
+        score:
+          type: integer
+          description: Credit score on the 300850 scale.
+          minimum: 300
+          maximum: 850
+          example: 720
+        band:
+          type: string
+          description: |
+            Credit band classification.
+            - `POOR`      300579
+            - `FAIR`      580669
+            - `GOOD`      670739
+            - `VERY_GOOD` 740799
+            - `EXCELLENT` 800850
+          enum:
+            - POOR
+            - FAIR
+            - GOOD
+            - VERY_GOOD
+            - EXCELLENT
+          example: GOOD
+        passed:
+          type: boolean
+          description: "`true` if score >= minimum threshold (default 580  FAIR or above)."
+        factors:
+          type: array
+          description: Weighted factors contributing to this score.
+          items:
+            $ref: "#/components/schemas/ScoreFactor"
+        calculatedAt:
+          type: string
+          format: date-time
+    CreditScoreHistoryPage:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreditScoreResult"
+    LoanRiskScoreRequest:
+      type: object
+      required:
+        - customerId
+        - applicationId
+        - loanApplication
+        - kycResult
+        - sanctionsResult
+        - amlResult
+        - fraudResult
+        - creditScoreResult
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          description: Foreign key to Customer API.
+        applicationId:
+          type: string
+          format: uuid
+          description: Foreign key to Loan API.
+        loanApplication:
+          $ref: "#/components/schemas/LoanApplicationSnapshot"
+        kycResult:
+          $ref: "#/components/schemas/KycValidationResult"
+          description: Result from step 1  KYC validation.
+        sanctionsResult:
+          $ref: "#/components/schemas/SanctionsScreeningResult"
+          description: Result from step 2  Sanctions screening.
+        amlResult:
+          $ref: "#/components/schemas/AmlValidationResult"
+          description: Result from step 3  AML validation.
+        fraudResult:
+          $ref: "#/components/schemas/FraudAnalysisResult"
+          description: Result from step 4  Fraud analysis.
+        creditScoreResult:
+          $ref: "#/components/schemas/CreditScoreResult"
+          description: Result from step 5  Credit score calculation.
+    LoanRiskScoreResult:
+      type: object
+      description: |
+        Composite risk score with recommendation.
+        The canonical response shape returned to the Loan API:
+        ```json
+        {
+          "riskScore": 78,
+          "riskLevel": "HIGH",
+          "recommendation": "MANUAL_REVIEW"
+        }
+        ```
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+          description: Loan application reference. Foreign key to Loan API.
+        riskScore:
+          type: integer
+          description: Composite risk score on a 0100 scale. Higher = more risk.
+          minimum: 0
+          maximum: 100
+          example: 78
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        recommendation:
+          $ref: "#/components/schemas/Recommendation"
+        recommendationReason:
+          type: string
+          description: Human-readable justification for the recommendation.
+          example: >
+            Credit score is GOOD (720). AML and fraud checks passed. Risk score
+            of 78 falls in the HIGH band requiring manager sign-off.
+        componentScores:
+          $ref: "#/components/schemas/RiskComponentScores"
+        blockingFlags:
+          type: array
+          description: Any CRITICAL flags that override the score and force REJECT.
+          items:
+            $ref: "#/components/schemas/ComplianceFinding"
+        generatedAt:
+          type: string
+          format: date-time
+    RiskComponentScores:
+      type: object
+      description: >
+        Individual weighted score contributions feeding into the composite risk
+        score.
+
+        Each component score is 0100 before weighting.
+      properties:
+        kycScore:
+          type: number
+          format: double
+          description: KYC component score (weight 15%).
+          example: 10
+        sanctionsScore:
+          type: number
+          format: double
+          description: Sanctions component score (weight 20%). Zero = clear.
+          example: 0
+        amlScore:
+          type: number
+          format: double
+          description: AML component score (weight 20%).
+          example: 18
+        fraudScore:
+          type: number
+          format: double
+          description: Fraud component score (weight 20%).
+          example: 14
+        creditScore:
+          type: number
+          format: double
+          description: Credit component score (weight 25%). Inverted  lower credit score
+            = higher risk contribution.
+          example: 36
+        compositeFormula:
+          type: string
+          description: Formula used to compute the final score.
+          example: >
+            riskScore = (kyc*0.15) + (sanctions*0.20) + (aml*0.20) +
+            (fraud*0.20) + (credit*0.25)
+    CustomerComplianceReport:
+      type: object
+      description: Consolidated compliance status for a customer across all check types.
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        reportGeneratedAt:
+          type: string
+          format: date-time
+        latestKyc:
+          $ref: "#/components/schemas/KycValidationResult"
+        latestSanctions:
+          $ref: "#/components/schemas/SanctionsScreeningResult"
+        latestAml:
+          $ref: "#/components/schemas/AmlValidationResult"
+        latestFraud:
+          $ref: "#/components/schemas/FraudAnalysisResult"
+        latestCreditScore:
+          $ref: "#/components/schemas/CreditScoreResult"
+        overallRiskCategory:
+          $ref: "#/components/schemas/RiskLevel"
+    ApplicationComplianceReport:
+      type: object
+      description: Full compliance check results for one loan application  all six steps.
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        reportGeneratedAt:
+          type: string
+          format: date-time
+        kycResult:
+          $ref: "#/components/schemas/KycValidationResult"
+        sanctionsResult:
+          $ref: "#/components/schemas/SanctionsScreeningResult"
+        amlResult:
+          $ref: "#/components/schemas/AmlValidationResult"
+        fraudResult:
+          $ref: "#/components/schemas/FraudAnalysisResult"
+        creditScoreResult:
+          $ref: "#/components/schemas/CreditScoreResult"
+        loanRiskScoreResult:
+          $ref: "#/components/schemas/LoanRiskScoreResult"
+    ApiError:
+      type: object
+      description: Standard error envelope for all 4xx / 5xx responses.
+      properties:
+        traceId:
+          type: string
+          format: uuid
+          example: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Request payload contains invalid fields.
+        details:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: customerId
+        message:
+          type: string
+          example: Must be a valid UUID.
+  responses:
+    BadRequest:
+      description: 400 Bad Request  request payload failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: e3b0c442-98fc-1c14-9afb-f4c8996fb924
+            code: VALIDATION_ERROR
+            message: Request payload contains invalid fields.
+            details:
+              - field: customerId
+                message: Must be a valid UUID.
+    Unauthorized:
+      description: 401 Unauthorized  missing or invalid JWT Bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000401
+            code: UNAUTHORIZED
+            message: A valid Bearer token is required.
+    Forbidden:
+      description: 403 Forbidden  valid token but insufficient scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000403
+            code: INSUFFICIENT_SCOPE
+            message: The token does not have the required scope for this operation.
+    NotFound:
+      description: 404 Not Found  resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            traceId: a1b2c3d4-0000-0000-0000-000000000404
+            code: RESOURCE_NOT_FOUND
+            message: The requested resource was not found.
+  examples:
+    KycValidationRequestExample:
+      summary: KYC validation request with customer profile snapshot
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        customerProfile:
+          customerId: c1a2b3c4-0001-0001-0001-000000000001
+          firstName: Jane
+          lastName: Doe
+          dateOfBirth: 1985-06-15
+          nationalId: ID-987654321
+          nationality: US
+          customerType: INDIVIDUAL
+          employmentStatus: EMPLOYED
+          annualIncomeDeclared: 90000
+          address:
+            city: New York
+            state: NY
+            country: US
+          kycStatus: PENDING
+        documentIds:
+          - d1a2b3c4-0005-0005-0005-000000000005
+          - d1a2b3c4-0005-0005-0005-000000000006
+        forceRevalidate: false
+    KycValidationPassExample:
+      summary: KYC validation  PASS
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        passed: true
+        verificationLevel: FULL
+        checksPerformed:
+          - checkType: IDENTITY_DOCUMENT
+            result: PASS
+            performedAt: 2024-06-15T10:00:00Z
+            performedBy: kyc-engine-v3
+          - checkType: ADDRESS_PROOF
+            result: PASS
+            performedAt: 2024-06-15T10:00:30Z
+            performedBy: kyc-engine-v3
+          - checkType: PEP_SCREENING
+            result: PASS
+            performedAt: 2024-06-15T10:01:00Z
+            performedBy: kyc-engine-v3
+          - checkType: ADVERSE_MEDIA
+            result: PASS
+            performedAt: 2024-06-15T10:01:30Z
+            performedBy: kyc-engine-v3
+        findings: []
+        expiresAt: 2026-06-15T10:00:00Z
+        performedAt: 2024-06-15T10:02:00Z
+    KycValidationFailExample:
+      summary: KYC validation  FAIL (document mismatch)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000002
+        applicationId: l1a2b3c4-0003-0003-0003-000000000002
+        passed: false
+        verificationLevel: BASIC
+        checksPerformed:
+          - checkType: IDENTITY_DOCUMENT
+            result: FAIL
+            performedAt: 2024-06-15T10:00:00Z
+            performedBy: kyc-engine-v3
+        findings:
+          - code: NAME_MISMATCH
+            description: Name on national ID does not match registered name.
+            severity: CRITICAL
+            source: kyc-engine-v3
+        expiresAt: null
+        performedAt: 2024-06-15T10:01:00Z
+    KycStatusVerifiedExample:
+      summary: KYC status  VERIFIED
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        passed: true
+        verificationLevel: FULL
+        expiresAt: 2026-06-15T10:00:00Z
+        lastCheckedAt: 2024-06-15T10:02:00Z
+    SanctionsScreeningRequestExample:
+      summary: Sanctions screening request
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        customerProfile:
+          customerId: c1a2b3c4-0001-0001-0001-000000000001
+          firstName: Jane
+          lastName: Doe
+          dateOfBirth: 1985-06-15
+          nationalId: ID-987654321
+          nationality: US
+          customerType: INDIVIDUAL
+        listsToScreen:
+          - OFAC
+          - UN
+          - EU
+          - LOCAL
+          - PEP
+    SanctionsScreeningClearExample:
+      summary: Sanctions screening  NO_MATCH (clear)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        passed: true
+        overallMatchLevel: NO_MATCH
+        listResults:
+          - listName: OFAC
+            matchLevel: NO_MATCH
+            matchedEntries: []
+          - listName: UN
+            matchLevel: NO_MATCH
+            matchedEntries: []
+          - listName: EU
+            matchLevel: NO_MATCH
+            matchedEntries: []
+          - listName: LOCAL
+            matchLevel: NO_MATCH
+            matchedEntries: []
+          - listName: PEP
+            matchLevel: NO_MATCH
+            matchedEntries: []
+        findings: []
+        screenedAt: 2024-06-15T10:03:00Z
+    SanctionsScreeningHitExample:
+      summary: Sanctions screening  CONFIRMED_MATCH on OFAC
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000009
+        applicationId: l1a2b3c4-0003-0003-0003-000000000009
+        passed: false
+        overallMatchLevel: CONFIRMED_MATCH
+        listResults:
+          - listName: OFAC
+            matchLevel: CONFIRMED_MATCH
+            matchedEntries:
+              - entryId: OFAC-SDN-00123
+                entryName: Jane M. Doe
+                matchScore: 0.95
+                matchedFields:
+                  - FULL_NAME
+                  - DATE_OF_BIRTH
+        findings:
+          - code: OFAC_SANCTIONS_MATCH
+            description: Customer name and date of birth match an OFAC SDN list entry.
+            severity: CRITICAL
+            source: sanctions-engine-v2
+        screenedAt: 2024-06-15T10:03:00Z
+    AmlValidationRequestExample:
+      summary: AML validation request with transaction summary
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        customerProfile:
+          customerId: c1a2b3c4-0001-0001-0001-000000000001
+          firstName: Jane
+          lastName: Doe
+          nationality: US
+          customerType: INDIVIDUAL
+          employmentStatus: EMPLOYED
+        transactionSummaries:
+          - accountId: a1b2c3d4-0002-0002-0002-000000000001
+            periodFromDate: 2023-01-01
+            periodToDate: 2024-12-31
+            totalCreditAmount: 85000
+            totalDebitAmount: 63000
+            averageMonthlyCredit: 7083.33
+            averageMonthlyDebit: 5250
+            loanRepaymentCount: 12
+            missedPaymentCount: 0
+            largeTransactionCount: 3
+            suspiciousTransactionCount: 0
+            distinctCounterpartyCount: 18
+            currency: USD
+        lookbackMonths: 24
+    AmlValidationClearExample:
+      summary: AML validation  PASS (no indicators)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        passed: true
+        amlRiskLevel: LOW
+        indicators: []
+        findings: []
+        performedAt: 2024-06-15T10:04:00Z
+    AmlValidationFlaggedExample:
+      summary: AML validation  FAIL (structuring detected)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000005
+        applicationId: l1a2b3c4-0003-0003-0003-000000000005
+        passed: false
+        amlRiskLevel: HIGH
+        indicators:
+          - indicatorCode: STRUCTURING
+            description: 14 transactions just below the $10,000 reporting threshold detected
+              in 30 days.
+            severity: CRITICAL
+            detectedAt: 2024-06-15T10:04:00Z
+        findings:
+          - code: AML_STRUCTURING_DETECTED
+            description: Potential cash structuring pattern violates BSA reporting
+              requirements.
+            severity: CRITICAL
+            source: aml-engine-v3
+        performedAt: 2024-06-15T10:04:30Z
+    FraudAnalysisRequestExample:
+      summary: Fraud analysis request
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        customerProfile:
+          customerId: c1a2b3c4-0001-0001-0001-000000000001
+          firstName: Jane
+          lastName: Doe
+          employmentStatus: EMPLOYED
+          annualIncomeDeclared: 90000
+          customerType: INDIVIDUAL
+        loanApplication:
+          applicationId: l1a2b3c4-0003-0003-0003-000000000001
+          loanType: PERSONAL
+          requestedAmount: 25000
+          currency: USD
+          tenorMonths: 36
+          purpose: Home renovation
+          disbursementAccountId: a1b2c3d4-0002-0002-0002-000000000001
+        transactionSummaries:
+          - accountId: a1b2c3d4-0002-0002-0002-000000000001
+            periodFromDate: 2023-01-01
+            periodToDate: 2024-12-31
+            averageMonthlyCredit: 7083.33
+            missedPaymentCount: 0
+            suspiciousTransactionCount: 0
+            currency: USD
+        accountBalances:
+          - accountId: a1b2c3d4-0002-0002-0002-000000000001
+            accountType: SAVINGS
+            currency: USD
+            availableBalance: 12450.75
+            averageMonthlyBalance: 11800
+    FraudAnalysisCleanExample:
+      summary: Fraud analysis  PASS (clean)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        passed: true
+        fraudProbabilityScore: 0.07
+        fraudRiskLevel: LOW
+        fraudFlags: []
+        findings: []
+        analyzedAt: 2024-06-15T10:05:00Z
+    FraudAnalysisFlaggedExample:
+      summary: Fraud analysis  FAIL (income mismatch)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000007
+        applicationId: l1a2b3c4-0003-0003-0003-000000000007
+        passed: false
+        fraudProbabilityScore: 0.74
+        fraudRiskLevel: HIGH
+        fraudFlags:
+          - flagCode: INCOME_MISMATCH
+            description: Declared annual income ($90,000) is 3.2x higher than annualised
+              transaction credits ($28,000).
+            severity: CRITICAL
+        findings:
+          - code: FRAUD_INCOME_INCONSISTENCY
+            description: Significant discrepancy between declared income and actual
+              transaction inflows.
+            severity: CRITICAL
+            source: fraud-engine-v4
+        analyzedAt: 2024-06-15T10:05:30Z
+    CreditScoreRequestExample:
+      summary: Credit score calculation request
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        customerProfile:
+          customerId: c1a2b3c4-0001-0001-0001-000000000001
+          firstName: Jane
+          lastName: Doe
+          employmentStatus: EMPLOYED
+          annualIncomeDeclared: 90000
+          customerType: INDIVIDUAL
+        loanApplication:
+          applicationId: l1a2b3c4-0003-0003-0003-000000000001
+          loanType: PERSONAL
+          requestedAmount: 25000
+          currency: USD
+          tenorMonths: 36
+        accountBalances:
+          - accountId: a1b2c3d4-0002-0002-0002-000000000001
+            accountType: SAVINGS
+            currency: USD
+            availableBalance: 12450.75
+            ledgerBalance: 12550.75
+            averageMonthlyBalance: 11800
+            openedAt: 2020-01-15T09:30:00Z
+        transactionSummaries:
+          - accountId: a1b2c3d4-0002-0002-0002-000000000001
+            periodFromDate: 2023-01-01
+            periodToDate: 2024-12-31
+            averageMonthlyCredit: 7083.33
+            loanRepaymentCount: 12
+            loanRepaymentTotalAmount: 12000
+            missedPaymentCount: 0
+            currency: USD
+    CreditScoreGoodExample:
+      summary: Credit score  GOOD band (720)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        score: 720
+        band: GOOD
+        passed: true
+        factors:
+          - factor: PAYMENT_HISTORY
+            description: 0 missed payments in the last 24 months.
+            impact: POSITIVE
+            weightPct: 35
+            scoreContribution: 280
+          - factor: AMOUNTS_OWED
+            description: Credit utilisation is 12% of available balance.
+            impact: POSITIVE
+            weightPct: 30
+            scoreContribution: 218
+          - factor: CREDIT_HISTORY_LENGTH
+            description: Oldest account is 4.4 years old.
+            impact: POSITIVE
+            weightPct: 15
+            scoreContribution: 108
+          - factor: CREDIT_MIX
+            description: Has Savings and Fixed Deposit accounts.
+            impact: NEUTRAL
+            weightPct: 10
+            scoreContribution: 72
+          - factor: NEW_CREDIT
+            description: One new application in the last 12 months.
+            impact: NEGATIVE
+            weightPct: 10
+            scoreContribution: 42
+        calculatedAt: 2024-06-15T10:06:00Z
+    CreditScorePoorExample:
+      summary: Credit score  POOR band (420)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000008
+        applicationId: l1a2b3c4-0003-0003-0003-000000000008
+        score: 420
+        band: POOR
+        passed: false
+        factors:
+          - factor: PAYMENT_HISTORY
+            description: 5 missed payments in the last 24 months.
+            impact: NEGATIVE
+            weightPct: 35
+            scoreContribution: 98
+          - factor: AMOUNTS_OWED
+            description: High debit-to-credit ratio of 0.91.
+            impact: NEGATIVE
+            weightPct: 30
+            scoreContribution: 92
+        calculatedAt: 2024-06-15T10:06:00Z
+    LoanRiskScoreRequestExample:
+      summary: Loan risk score request (all 5 upstream results supplied)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        loanApplication:
+          applicationId: l1a2b3c4-0003-0003-0003-000000000001
+          loanType: PERSONAL
+          requestedAmount: 25000
+          currency: USD
+          tenorMonths: 36
+        kycResult:
+          passed: true
+          verificationLevel: FULL
+        sanctionsResult:
+          passed: true
+          overallMatchLevel: NO_MATCH
+        amlResult:
+          passed: true
+          amlRiskLevel: LOW
+        fraudResult:
+          passed: true
+          fraudProbabilityScore: 0.07
+          fraudRiskLevel: LOW
+        creditScoreResult:
+          score: 720
+          band: GOOD
+          passed: true
+    LoanRiskScoreMediumExample:
+      summary: Risk score 42  MEDIUM  APPROVE_WITH_CONDITIONS
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000001
+        riskScore: 42
+        riskLevel: MEDIUM
+        recommendation: APPROVE_WITH_CONDITIONS
+        recommendationReason: >
+          All compliance checks passed. Credit score is GOOD (720). Risk score
+          of 42 falls in the MEDIUM band. Loan may be approved subject to
+          secondary collateral or a co-signer requirement.
+        componentScores:
+          kycScore: 5
+          sanctionsScore: 0
+          amlScore: 8
+          fraudScore: 7
+          creditScore: 22
+          compositeFormula: >
+            riskScore = (kyc*0.15) + (sanctions*0.20) + (aml*0.20) +
+            (fraud*0.20) + (credit*0.25)
+        blockingFlags: []
+        generatedAt: 2024-06-15T10:07:00Z
+    LoanRiskScoreLowExample:
+      summary: Risk score 18  LOW  APPROVE
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        applicationId: l1a2b3c4-0003-0003-0003-000000000011
+        riskScore: 18
+        riskLevel: LOW
+        recommendation: APPROVE
+        recommendationReason: >
+          All checks passed. Excellent credit score (810). Zero AML or fraud
+          flags. Low risk  proceed with standard approval.
+        componentScores:
+          kycScore: 2
+          sanctionsScore: 0
+          amlScore: 3
+          fraudScore: 3
+          creditScore: 10
+        blockingFlags: []
+        generatedAt: 2024-06-15T10:07:00Z
+    LoanRiskScoreHighExample:
+      summary: Risk score 78  HIGH  MANUAL_REVIEW (matches the specified example)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000003
+        applicationId: l1a2b3c4-0003-0003-0003-000000000003
+        riskScore: 78
+        riskLevel: HIGH
+        recommendation: MANUAL_REVIEW
+        recommendationReason: >
+          KYC and sanctions passed. AML shows elevated large-transaction count.
+          Credit score is FAIR (640). Risk score of 78 falls in the HIGH band
+          and requires manager sign-off before approval.
+        componentScores:
+          kycScore: 8
+          sanctionsScore: 0
+          amlScore: 16
+          fraudScore: 18
+          creditScore: 36
+        blockingFlags: []
+        generatedAt: 2024-06-15T10:07:00Z
+    LoanRiskScoreRejectExample:
+      summary: Risk score 95  CRITICAL  REJECT (sanctions match)
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000009
+        applicationId: l1a2b3c4-0003-0003-0003-000000000009
+        riskScore: 95
+        riskLevel: CRITICAL
+        recommendation: REJECT
+        recommendationReason: >
+          OFAC sanctions match detected. Application automatically rejected.
+          Customer must not be approved for any credit facility until compliance
+          clearance is obtained.
+        componentScores:
+          kycScore: 15
+          sanctionsScore: 20
+          amlScore: 20
+          fraudScore: 20
+          creditScore: 20
+        blockingFlags:
+          - code: OFAC_SANCTIONS_MATCH
+            description: Customer name and date of birth match an OFAC SDN list entry.
+            severity: CRITICAL
+            source: sanctions-engine-v2
+        generatedAt: 2024-06-15T10:07:00Z
+    CustomerComplianceReportExample:
+      summary: Full compliance report for a customer
+      value:
+        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        reportGeneratedAt: 2024-06-15T10:10:00Z
+        latestKyc:
+          passed: true
+          verificationLevel: FULL
+          performedAt: 2024-06-15T10:02:00Z
+        latestSanctions:
+          passed: true
+          overallMatchLevel: NO_MATCH
+          screenedAt: 2024-06-15T10:03:00Z
+        latestAml:
+          passed: true
+          amlRiskLevel: LOW
+          performedAt: 2024-06-15T10:04:00Z
+        latestFraud:
+          passed: true
+          fraudProbabilityScore: 0.07
+          fraudRiskLevel: LOW
+          analyzedAt: 2024-06-15T10:05:00Z
+        latestCreditScore:
+          score: 720
+          band: GOOD
+          passed: true
+          calculatedAt: 2024-06-15T10:06:00Z
+        overallRiskCategory: LOW

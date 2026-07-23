@@ -29,6 +29,20 @@
       "contentHash": "d1e82886753a773b"
     },
     {
+      "id": "2217b803-ae52-4966-959a-4de10e686adb:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/bob-banking-apis-quota-1r6dm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784798853061,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "bob-banking-apis-quota-1r6dm",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "12aa7fa0c0497988"
+    },
+    {
       "id": "26e26458-6091-4190-b877-49b064733a7c:0",
       "projectId": "E98FqKoH",
       "filePath": "Bob-Banking-apis/.project-index",
@@ -50,6 +64,20 @@
       "namespace": "Bob-Banking-apis",
       "version": "1.0",
       "contentHash": "14e479ffb89ca028"
+    },
+    {
+      "id": "324f4ef9-6e72-42fb-9699-204190ddd6be:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/risk-compliance-api-tool-1r6dm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784798854025,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "risk-compliance-api-tool-1r6dm",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "dd88a98a943d78c7"
     },
     {
       "id": "3d61a4f6-2291-43d1-8ce6-f75a342ae8af:0",
@@ -92,6 +120,34 @@
       "namespace": "Bob-Banking-apis",
       "version": "1.0",
       "contentHash": "3f34dbfb840a5db4"
+    },
+    {
+      "id": "562023da-47c0-4db1-ad26-fe81a2555412:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/risk-compliance-api-server-1r6dm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784798855020,
+      "schemaVersion": 1,
+      "kind": "MCPServer",
+      "name": "risk-compliance-api-server-1r6dm",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "1463662f7f440408"
+    },
+    {
+      "id": "580bb187-5ac1-4cf3-9ab0-ad90e6b401e6:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/telemetry-1r6dm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784798850866,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "telemetry-1r6dm",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "134f36df19256a3a"
     },
     {
       "id": "69c14ac7-357b-4dba-8708-34f42895a712:0",
@@ -238,6 +294,20 @@
       "schemaVersion": 1
     },
     {
+      "id": "b54c125c-ad5d-4213-83e4-cdc5d8d37bf2:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/bob-banking-apis-freeflowpolicysequence-1r6dm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784798852105,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "bob-banking-apis-freeflowpolicysequence-1r6dm",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "78af949d727dc660"
+    },
+    {
       "id": "c52183ff-0f3e-4515-9fc9-6dce243feef5:0",
       "projectId": "E98FqKoH",
       "filePath": "Bob-Banking-apis/bob-banking-apis-quota-zp324.yaml",
@@ -301,9 +371,44 @@
       "namespace": "Bob-Banking-apis",
       "version": "1.0",
       "contentHash": "b964d08fec01572d"
+    },
+    {
+      "id": "f7b16d70-6c13-421e-a511-137e7c9d5e16:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/risk-compliance-api-spec.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1784798848545,
+      "schemaVersion": 1
+    },
+    {
+      "id": "fd60c233-9b8b-4dfd-8036-cbedf5c5f4f1:0",
+      "projectId": "E98FqKoH",
+      "filePath": "Bob-Banking-apis/invoke-1r6dm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1784798849933,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "invoke-1r6dm",
+      "namespace": "Bob-Banking-apis",
+      "version": "1.0",
+      "contentHash": "7ebed5a430308c54"
     }
   ],
   "edges": [
+    {
+      "id": "003983e1-c93b-4ea5-887d-81c47ef8998a",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "562023da-47c0-4db1-ad26-fe81a2555412:0",
+      "targetNodeId": "324f4ef9-6e72-42fb-9699-204190ddd6be:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:risk-compliance-api-tool-1r6dm:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784798855072,
+      "lastValidated": 1784798855072
+    },
     {
       "id": "057bc849-5c53-45ff-a6fe-edffe3e4a59d",
       "projectId": "E98FqKoH",
@@ -425,6 +530,42 @@
       "lastValidated": 1784798756416
     },
     {
+      "id": "6442adc3-9c97-4289-8f66-f0cc6f333cf0",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "562023da-47c0-4db1-ad26-fe81a2555412:0",
+      "targetNodeId": "2217b803-ae52-4966-959a-4de10e686adb:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:bob-banking-apis-quota-1r6dm:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784798855072,
+      "lastValidated": 1784798855072
+    },
+    {
+      "id": "76be6182-730f-4539-a7d7-a7c43b0a3b55",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "b54c125c-ad5d-4213-83e4-cdc5d8d37bf2:0",
+      "targetNodeId": "fd60c233-9b8b-4dfd-8036-cbedf5c5f4f1:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:invoke-1r6dm:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784798852130,
+      "lastValidated": 1784798852130
+    },
+    {
+      "id": "7700b55f-25bb-4777-b106-95645d187633",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "562023da-47c0-4db1-ad26-fe81a2555412:0",
+      "targetNodeId": "b54c125c-ad5d-4213-83e4-cdc5d8d37bf2:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:bob-banking-apis-freeflowpolicysequence-1r6dm:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784798855072,
+      "lastValidated": 1784798855072
+    },
+    {
       "id": "9b66a190-8d41-4ef5-bc47-94f7b63b0dfc",
       "projectId": "E98FqKoH",
       "sourceNodeId": "1f0fa3bb-4149-4805-b884-f41909c20d7d:0",
@@ -449,6 +590,18 @@
       "lastValidated": 1784792299049
     },
     {
+      "id": "c0a58421-7175-4e21-a743-0427228e04f1",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "b54c125c-ad5d-4213-83e4-cdc5d8d37bf2:0",
+      "targetNodeId": "580bb187-5ac1-4cf3-9ab0-ad90e6b401e6:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Bob-Banking-apis:telemetry-1r6dm:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1784798852130,
+      "lastValidated": 1784798852130
+    },
+    {
       "id": "c1d19f68-1dd3-4a2b-a529-2a5b628e3a3c",
       "projectId": "E98FqKoH",
       "sourceNodeId": "6b8c8de2-6087-4169-8cbe-e6e37dfce872:0",
@@ -459,6 +612,18 @@
       "isValid": true,
       "createdAt": 1784798752556,
       "lastValidated": 1784798752556
+    },
+    {
+      "id": "c2449bd6-9e54-4806-9542-6073d369ec57",
+      "projectId": "E98FqKoH",
+      "sourceNodeId": "324f4ef9-6e72-42fb-9699-204190ddd6be:0",
+      "targetNodeId": "f7b16d70-6c13-421e-a511-137e7c9d5e16:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./risk-compliance-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1784798854064,
+      "lastValidated": 1784798854064
     },
     {
       "id": "c2a7eba0-f21e-4a1c-bd63-88b922316867",

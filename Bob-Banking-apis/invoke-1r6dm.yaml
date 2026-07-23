@@ -1,0 +1,23 @@
+kind: Invoke
+apiVersion: api.ibm.com/v1
+metadata:
+  name: invoke-1r6dm
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  endpoint:
+    http:
+      target:
+        tlsClientProfile: sample-tls-client-profile:1.0.0
+        url: "'https://risk-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/risk'
+          & $pathAndQuery()"
+        urlType: jsonata
+        persistentConnections: false
+        timeout: 30
+        decompressResponse: true
+        followRedirects: false
+        chunkedUpload: false

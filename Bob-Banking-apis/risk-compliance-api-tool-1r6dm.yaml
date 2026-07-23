@@ -1,0 +1,1387 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-compliance-api-tool-1r6dm
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  description: |
+    ## Overview
+    The **Risk & Compliance API** is the central compliance and risk intelligence
+    service for the enterprise Banking platform. It acts as a **pure service provider**
+     it does not own any customer or account data directly. Instead, it receives
+    enriched data snapshots from the **Customer API**, **Accounts API**, and
+    **Loan API**, executes a sequence of validation and scoring engines, and returns
+    structured risk verdicts consumed by the **Loan API** to make approval decisions.
+
+    ## Responsibilities
+    | Service              | Description                                                         |
+    |----------------------|---------------------------------------------------------------------|
+    | KYC Validation       | Verify customer identity using document and biometric checks        |
+    | AML Validation       | Screen for money-laundering patterns in transaction behaviour       |
+    | Fraud Detection      | Detect anomalous transaction patterns and application-level fraud   |
+    | Sanctions Screening  | Check customer against OFAC, UN, EU, and local regulatory watchlists |
+    | Credit Score         | Compute a 300850 credit score from financial behaviour data        |
+    | Loan Risk Score      | Generate a composite 0100 risk score with a recommendation verdict |
+
+    ## Canonical Risk Response
+    Every scoring endpoint returns a result that includes or can be reduced to:
+    ```json
+    {
+      "riskScore": 78,
+      "riskLevel": "MEDIUM",
+      "recommendation": "APPROVE_WITH_CONDITIONS"
+    }
+    ```
+
+    ## Orchestration Model
+    The Loan API acts as the **workflow orchestrator**. It collects data from the
+    Customer API and Accounts API, then calls this API in sequence:
+
+    ```
+    1. POST /risk/kyc/validate           � Customer profile snapshot
+    2. POST /risk/sanctions/screen       � Customer identity data
+    3. POST /risk/aml/validate           � Customer + transaction summary
+    4. POST /risk/fraud/analyze          � Transaction summary + loan context
+    5. POST /risk/credit-score/calculate � Customer + balances + transactions
+    6. POST /risk/loan-risk-score        � All above results aggregated
+    ```
+
+    All six checks must PASS before the Loan API may call its own approve endpoint.
+
+    ## Cross-API Relationships
+    | Upstream Provider | Data Supplied                                              |
+    |-------------------|------------------------------------------------------------|
+    | Customer API      | Customer profile, KYC status, national ID, address         |
+    | Accounts API      | Account balances, average monthly balance, transaction summary |
+    | Loan API          | Loan application details, requested amount, tenor          |
+
+    ## Write-Back Contracts
+    On completion of KYC and risk scoring, this API writes results back:
+    - `PUT /customers/{customerId}/kyc/status` on the **Customer API**
+    - `PATCH /customers/{customerId}/risk-category` on the **Customer API**
+  labels:
+    api-spec: ./risk-compliance-api-spec.yml
+spec:
+  tools:
+    - name: performKycValidation
+      description: >
+        Validates the identity of a customer using a snapshot of their profile
+
+        data supplied in the request body. The caller (Loan API) must first
+
+        retrieve the customer profile from the **Customer API** before calling
+
+        this endpoint.
+
+
+        **Checks performed:**
+
+        - Document authenticity (national ID, passport)
+
+        - Name and date-of-birth consistency
+
+        - Address proof verification
+
+        - Biometric liveness (if applicable)
+
+        - PEP (Politically Exposed Person) screening
+
+        - Adverse media scan
+
+
+        On a `PASS` result, this API writes back the KYC status to the Customer
+        API
+
+        via `PUT /customers/{customerId}/kyc/status`.
+
+
+        **Orchestration step:** 1 of 6
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+          applicationId:
+            type: string
+            format: uuid
+            description: Loan application triggering this KYC check.
+          customerProfile:
+            type: object
+            description: |
+              Lightweight snapshot of customer identity data.
+              Source: Customer API `GET /customers/{customerId}`.
+            required: &a1
+              - customerId
+              - firstName
+              - lastName
+              - dateOfBirth
+              - nationalId
+              - customerType
+            properties:
+              customerId: &a2
+                type: string
+                format: uuid
+                example: c1a2b3c4-0001-0001-0001-000000000001
+              firstName: &a3
+                type: string
+                example: Jane
+              lastName: &a4
+                type: string
+                example: Doe
+              dateOfBirth: &a5
+                type: string
+                format: date
+                example: 1985-06-15
+              nationalId: &a6
+                type: string
+                example: ID-987654321
+              nationality: &a7
+                type: string
+                description: ISO 3166-1 alpha-2 country code.
+                example: US
+              customerType: &a8
+                type: string
+                enum:
+                  - INDIVIDUAL
+                  - CORPORATE
+                  - SOLE_TRADER
+                  - NON_PROFIT
+                example: INDIVIDUAL
+              employmentStatus: &a9
+                type: string
+                enum:
+                  - EMPLOYED
+                  - SELF_EMPLOYED
+                  - UNEMPLOYED
+                  - RETIRED
+                  - STUDENT
+                example: EMPLOYED
+              annualIncomeDeclared: &a10
+                type: number
+                format: double
+                description: Annual income as declared by the customer.
+                example: 90000
+              address:
+                type: object
+                properties:
+                  city: &a11
+                    type: string
+                    example: New York
+                  state: &a12
+                    type: string
+                    example: NY
+                  country: &a13
+                    type: string
+                    example: US
+              kycStatus: &a14
+                type: string
+                enum:
+                  - PENDING
+                  - IN_PROGRESS
+                  - VERIFIED
+                  - FAILED
+                  - EXPIRED
+                example: VERIFIED
+          documentIds:
+            type: array
+            description: IDs of uploaded documents to validate. Retrieved from Customer API.
+            items:
+              type: string
+              format: uuid
+            example:
+              - d1a2b3c4-0005-0005-0005-000000000005
+              - d1a2b3c4-0005-0005-0005-000000000006
+          forceRevalidate:
+            type: boolean
+            description: Force a fresh check even if a valid recent KYC record exists.
+            default: false
+        required:
+          - customerId
+          - applicationId
+          - customerProfile
+      title: Perform KYC identity validation for a customer
+      x-api-binding:
+        operationPath: /risk/kyc/validate
+        operationMethod: POST
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getKycStatus
+      description: >
+        Returns the latest KYC verification record for the customer without
+
+        triggering a new validation. Used by the Loan API to check whether
+
+        a recent valid KYC record exists before deciding to re-trigger
+        validation.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+        required:
+          - customerId
+      title: Retrieve the current KYC status of a customer
+      x-api-binding:
+        operationPath: /risk/kyc/{customerId}/status
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getKycHistory
+      description: |
+        Returns a paginated, chronological list of all KYC checks performed
+        for a customer. Used for regulatory audit trails.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        required:
+          - customerId
+      title: Retrieve KYC validation history for a customer
+      x-api-binding:
+        operationPath: /risk/kyc/{customerId}/history
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: performSanctionsScreening
+      description: >
+        Screens a customer against the following lists:
+
+        - **OFAC** (US Office of Foreign Assets Control)
+
+        - **UN Security Council** consolidated list
+
+        - **EU Consolidated Financial Sanctions List**
+
+        - **Local regulatory watchlists** (jurisdiction-specific)
+
+        - **PEP (Politically Exposed Persons)** database
+
+
+        A `MATCH` result on any CRITICAL list immediately blocks the loan
+        workflow.
+
+
+        **Orchestration step:** 2 of 6
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+          applicationId:
+            type: string
+            format: uuid
+          customerProfile:
+            type: object
+            description: |
+              Lightweight snapshot of customer identity data.
+              Source: Customer API `GET /customers/{customerId}`.
+            required: *a1
+            properties:
+              customerId: *a2
+              firstName: *a3
+              lastName: *a4
+              dateOfBirth: *a5
+              nationalId: *a6
+              nationality: *a7
+              customerType: *a8
+              employmentStatus: *a9
+              annualIncomeDeclared: *a10
+              address:
+                type: object
+                properties:
+                  city: *a11
+                  state: *a12
+                  country: *a13
+              kycStatus: *a14
+          listsToScreen:
+            type: array
+            description: Specific watchlists to screen against. Defaults to ALL if omitted.
+            items:
+              type: string
+              enum:
+                - OFAC
+                - UN
+                - EU
+                - LOCAL
+                - PEP
+            example:
+              - OFAC
+              - UN
+              - EU
+              - LOCAL
+              - PEP
+        required:
+          - customerId
+          - applicationId
+          - customerProfile
+      title: Screen a customer against regulatory sanctions watchlists
+      x-api-binding:
+        operationPath: /risk/sanctions/screen
+        operationMethod: POST
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getSanctionsHistory
+      description: Make a GET request to /risk/sanctions/{customerId}/history
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        required:
+          - customerId
+      title: Retrieve sanctions screening history for a customer
+      x-api-binding:
+        operationPath: /risk/sanctions/{customerId}/history
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: performAmlValidation
+      description: >
+        Analyses the customer's transaction behaviour for money laundering
+
+        indicators. The caller must supply a `TransactionSummary` snapshot
+
+        retrieved from `GET /accounts/{accountId}/transactions/summary`
+
+        on the **Accounts API**.
+
+
+        **AML checks performed:**
+
+        - Structuring / smurfing detection (many small transactions near
+        reporting threshold)
+
+        - Unusual large transaction frequency
+
+        - Rapid round-trip transfers
+
+        - Unusual counterparty geography
+
+        - High cash transaction ratio
+
+        - Transaction velocity anomalies
+
+
+        **Orchestration step:** 3 of 6
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+          applicationId:
+            type: string
+            format: uuid
+          customerProfile:
+            type: object
+            description: |
+              Lightweight snapshot of customer identity data.
+              Source: Customer API `GET /customers/{customerId}`.
+            required: *a1
+            properties:
+              customerId: *a2
+              firstName: *a3
+              lastName: *a4
+              dateOfBirth: *a5
+              nationalId: *a6
+              nationality: *a7
+              customerType: *a8
+              employmentStatus: *a9
+              annualIncomeDeclared: *a10
+              address:
+                type: object
+                properties:
+                  city: *a11
+                  state: *a12
+                  country: *a13
+              kycStatus: *a14
+          transactionSummaries:
+            type: array
+            description: One summary per account. Source  Accounts API.
+            items:
+              type: object
+              description: >
+                Pre-aggregated transaction metrics.
+
+                Source: Accounts API `GET
+                /accounts/{accountId}/transactions/summary`.
+              properties:
+                accountId: &a15
+                  type: string
+                  format: uuid
+                periodFromDate: &a16
+                  type: string
+                  format: date
+                periodToDate: &a17
+                  type: string
+                  format: date
+                totalCreditAmount: &a18
+                  type: number
+                  format: double
+                  example: 85000
+                totalDebitAmount: &a19
+                  type: number
+                  format: double
+                  example: 63000
+                averageMonthlyCredit: &a20
+                  type: number
+                  format: double
+                  example: 7083.33
+                averageMonthlyDebit: &a21
+                  type: number
+                  format: double
+                  example: 5250
+                loanRepaymentCount: &a22
+                  type: integer
+                  example: 12
+                loanRepaymentTotalAmount: &a23
+                  type: number
+                  format: double
+                  example: 12000
+                missedPaymentCount: &a24
+                  type: integer
+                  example: 0
+                largeTransactionCount: &a25
+                  type: integer
+                  example: 3
+                suspiciousTransactionCount: &a26
+                  type: integer
+                  example: 0
+                distinctCounterpartyCount: &a27
+                  type: integer
+                  example: 18
+                currency: &a28
+                  type: string
+                  example: USD
+          lookbackMonths:
+            type: integer
+            description: Number of months of transaction history to consider.
+            default: 24
+            example: 24
+        required:
+          - customerId
+          - applicationId
+          - customerProfile
+          - transactionSummaries
+      title: Perform Anti-Money Laundering validation
+      x-api-binding:
+        operationPath: /risk/aml/validate
+        operationMethod: POST
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getAmlHistory
+      description: Make a GET request to /risk/aml/{customerId}/history
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        required:
+          - customerId
+      title: Retrieve AML validation history for a customer
+      x-api-binding:
+        operationPath: /risk/aml/{customerId}/history
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: performFraudAnalysis
+      description: >
+        Analyses the applicant's transaction history and the loan application
+
+        context to detect fraud indicators including:
+
+        - Loan stacking (multiple simultaneous applications across institutions)
+
+        - Application field inconsistencies (declared income vs transaction
+        credits)
+
+        - Velocity fraud (rapid successive applications)
+
+        - Device / IP fingerprint anomalies (when available)
+
+        - Unusual large inflows immediately before application
+
+        - Identity-mismatch patterns
+
+
+        **Orchestration step:** 4 of 6
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+          applicationId:
+            type: string
+            format: uuid
+          customerProfile:
+            type: object
+            description: |
+              Lightweight snapshot of customer identity data.
+              Source: Customer API `GET /customers/{customerId}`.
+            required: *a1
+            properties:
+              customerId: *a2
+              firstName: *a3
+              lastName: *a4
+              dateOfBirth: *a5
+              nationalId: *a6
+              nationality: *a7
+              customerType: *a8
+              employmentStatus: *a9
+              annualIncomeDeclared: *a10
+              address:
+                type: object
+                properties:
+                  city: *a11
+                  state: *a12
+                  country: *a13
+              kycStatus: *a14
+          loanApplication:
+            type: object
+            description: |
+              Loan application context passed by the Loan API.
+              Source: Loan API internal application record.
+            properties:
+              applicationId: &a29
+                type: string
+                format: uuid
+                example: l1a2b3c4-0003-0003-0003-000000000001
+              loanType: &a30
+                type: string
+                enum:
+                  - PERSONAL
+                  - MORTGAGE
+                  - AUTO
+                  - BUSINESS
+                  - EDUCATION
+                example: PERSONAL
+              requestedAmount: &a31
+                type: number
+                format: double
+                example: 25000
+              currency: &a32
+                type: string
+                example: USD
+              tenorMonths: &a33
+                type: integer
+                example: 36
+              purpose: &a34
+                type: string
+                example: Home renovation
+              disbursementAccountId: &a35
+                type: string
+                format: uuid
+          transactionSummaries:
+            type: array
+            items:
+              type: object
+              description: >
+                Pre-aggregated transaction metrics.
+
+                Source: Accounts API `GET
+                /accounts/{accountId}/transactions/summary`.
+              properties:
+                accountId: *a15
+                periodFromDate: *a16
+                periodToDate: *a17
+                totalCreditAmount: *a18
+                totalDebitAmount: *a19
+                averageMonthlyCredit: *a20
+                averageMonthlyDebit: *a21
+                loanRepaymentCount: *a22
+                loanRepaymentTotalAmount: *a23
+                missedPaymentCount: *a24
+                largeTransactionCount: *a25
+                suspiciousTransactionCount: *a26
+                distinctCounterpartyCount: *a27
+                currency: *a28
+          accountBalances:
+            type: array
+            description: Balance snapshots. Source  Accounts API.
+            items:
+              type: object
+              description: |
+                Balance snapshot per account.
+                Source: Accounts API `GET /accounts/{accountId}/balance`.
+              properties:
+                accountId: &a36
+                  type: string
+                  format: uuid
+                accountType: &a37
+                  type: string
+                  enum:
+                    - SAVINGS
+                    - CURRENT
+                    - FIXED_DEPOSIT
+                currency: &a38
+                  type: string
+                  example: USD
+                availableBalance: &a39
+                  type: number
+                  format: double
+                  example: 12450.75
+                ledgerBalance: &a40
+                  type: number
+                  format: double
+                  example: 12550.75
+                averageMonthlyBalance: &a41
+                  type: number
+                  format: double
+                  example: 11800
+                openedAt: &a42
+                  type: string
+                  format: date-time
+        required:
+          - customerId
+          - applicationId
+          - customerProfile
+          - loanApplication
+          - transactionSummaries
+      title: Perform fraud analysis on a loan application
+      x-api-binding:
+        operationPath: /risk/fraud/analyze
+        operationMethod: POST
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getFraudHistory
+      description: Make a GET request to /risk/fraud/{customerId}/history
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        required:
+          - customerId
+      title: Retrieve fraud analysis history for a customer
+      x-api-binding:
+        operationPath: /risk/fraud/{customerId}/history
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: calculateCreditScore
+      description: >
+        Computes a credit score on the standard **300850 scale** using a
+
+        weighted combination of:
+
+        - Payment history (35%)  `missedPaymentCount`, `loanRepaymentCount`
+
+        - Amounts owed (30%)  `ledgerBalance`, `averageMonthlyBalance`,
+        `totalDebitAmount`
+
+        - Credit history length (15%)  account age derived from `openedAt`
+
+        - Credit mix (10%)  number and types of accounts
+
+        - New credit (10%)  recent loan applications
+
+
+        **Orchestration step:** 5 of 6
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+          applicationId:
+            type: string
+            format: uuid
+          customerProfile:
+            type: object
+            description: |
+              Lightweight snapshot of customer identity data.
+              Source: Customer API `GET /customers/{customerId}`.
+            required: *a1
+            properties:
+              customerId: *a2
+              firstName: *a3
+              lastName: *a4
+              dateOfBirth: *a5
+              nationalId: *a6
+              nationality: *a7
+              customerType: *a8
+              employmentStatus: *a9
+              annualIncomeDeclared: *a10
+              address:
+                type: object
+                properties:
+                  city: *a11
+                  state: *a12
+                  country: *a13
+              kycStatus: *a14
+          loanApplication:
+            type: object
+            description: |
+              Loan application context passed by the Loan API.
+              Source: Loan API internal application record.
+            properties:
+              applicationId: *a29
+              loanType: *a30
+              requestedAmount: *a31
+              currency: *a32
+              tenorMonths: *a33
+              purpose: *a34
+              disbursementAccountId: *a35
+          accountBalances:
+            type: array
+            description: Balance snapshots for all customer accounts. Source  Accounts API.
+            items:
+              type: object
+              description: |
+                Balance snapshot per account.
+                Source: Accounts API `GET /accounts/{accountId}/balance`.
+              properties:
+                accountId: *a36
+                accountType: *a37
+                currency: *a38
+                availableBalance: *a39
+                ledgerBalance: *a40
+                averageMonthlyBalance: *a41
+                openedAt: *a42
+          transactionSummaries:
+            type: array
+            description: Transaction summaries for all customer accounts. Source  Accounts
+              API.
+            items:
+              type: object
+              description: >
+                Pre-aggregated transaction metrics.
+
+                Source: Accounts API `GET
+                /accounts/{accountId}/transactions/summary`.
+              properties:
+                accountId: *a15
+                periodFromDate: *a16
+                periodToDate: *a17
+                totalCreditAmount: *a18
+                totalDebitAmount: *a19
+                averageMonthlyCredit: *a20
+                averageMonthlyDebit: *a21
+                loanRepaymentCount: *a22
+                loanRepaymentTotalAmount: *a23
+                missedPaymentCount: *a24
+                largeTransactionCount: *a25
+                suspiciousTransactionCount: *a26
+                distinctCounterpartyCount: *a27
+                currency: *a28
+        required:
+          - customerId
+          - applicationId
+          - customerProfile
+          - accountBalances
+          - transactionSummaries
+      title: Calculate a credit score for a loan applicant
+      x-api-binding:
+        operationPath: /risk/credit-score/calculate
+        operationMethod: POST
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getLatestCreditScore
+      description: Make a GET request to /risk/credit-score/{customerId}/latest
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+        required:
+          - customerId
+      title: Retrieve the most recent credit score for a customer
+      x-api-binding:
+        operationPath: /risk/credit-score/{customerId}/latest
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getCreditScoreHistory
+      description: Returns paginated historical credit scores for trend analysis.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+          page:
+            description: page parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: pageSize parameter
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        required:
+          - customerId
+      title: Retrieve credit score history for a customer
+      x-api-binding:
+        operationPath: /risk/credit-score/{customerId}/history
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: generateLoanRiskScore
+      description: |
+        Aggregates the results of all preceding compliance and scoring steps
+        into a single **composite risk score (0100)** with a human-readable
+        risk level and an actionable recommendation verdict.
+
+        **This is the final gate before the Loan API may approve a loan.**
+
+        The caller must supply the result objects from all five preceding steps:
+        KYC, Sanctions, AML, Fraud, and Credit Score. Each result carries a
+        `passed` boolean  if any is `false`, the risk score engine will still
+        compute and return a score, but the `recommendation` will be `REJECT`.
+
+        ### Recommendation Logic
+        | Composite Score | Risk Level | Recommendation                     |
+        |-----------------|------------|------------------------------------|
+        | 0  30          | LOW        | `APPROVE`                          |
+        | 31  55         | MEDIUM     | `APPROVE`                          |
+        | 56  75         | MEDIUM     | `APPROVE_WITH_CONDITIONS`          |
+        | 76  89         | HIGH       | `MANUAL_REVIEW`                    |
+        | 90  100        | CRITICAL   | `REJECT`                           |
+        | Any CRITICAL flag | CRITICAL | `REJECT`                           |
+
+        **Orchestration step:** 6 of 6  final step.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: string
+            format: uuid
+            description: Foreign key to Customer API.
+          applicationId:
+            type: string
+            format: uuid
+            description: Foreign key to Loan API.
+          loanApplication:
+            type: object
+            description: |
+              Loan application context passed by the Loan API.
+              Source: Loan API internal application record.
+            properties:
+              applicationId: *a29
+              loanType: *a30
+              requestedAmount: *a31
+              currency: *a32
+              tenorMonths: *a33
+              purpose: *a34
+              disbursementAccountId: *a35
+          kycResult:
+            type: object
+            description: Result of KYC identity validation.
+            properties:
+              customerId:
+                type: string
+                format: uuid
+              applicationId:
+                type: string
+                format: uuid
+              passed:
+                type: boolean
+                description: "`true` if all mandatory KYC checks passed."
+              verificationLevel:
+                type: string
+                enum:
+                  - NONE
+                  - BASIC
+                  - ENHANCED
+                  - FULL
+                example: FULL
+              checksPerformed:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    checkType:
+                      type: string
+                      enum:
+                        - IDENTITY_DOCUMENT
+                        - ADDRESS_PROOF
+                        - BIOMETRIC
+                        - PEP_SCREENING
+                        - ADVERSE_MEDIA
+                      example: IDENTITY_DOCUMENT
+                    result:
+                      type: string
+                      description: Binary outcome of a single compliance check.
+                      enum:
+                        - PASS
+                        - FAIL
+                        - PENDING
+                        - SKIPPED
+                      example: PASS
+                    performedAt:
+                      type: string
+                      format: date-time
+                    performedBy:
+                      type: string
+                      example: kyc-engine-v3
+              findings:
+                type: array
+                items:
+                  type: object
+                  description: A single flag or issue raised during any compliance check.
+                  properties:
+                    code: &a43
+                      type: string
+                      example: INCOME_MISMATCH
+                    description: &a44
+                      type: string
+                      example: Declared annual income exceeds average monthly credit by 3.2x.
+                    severity: &a45
+                      type: string
+                      enum:
+                        - INFO
+                        - WARNING
+                        - CRITICAL
+                      example: WARNING
+                    source: &a46
+                      type: string
+                      description: Engine or dataset that produced this finding.
+                      example: fraud-engine-v4
+              expiresAt:
+                type: string
+                format: date-time
+                nullable: true
+                example: 2026-06-15T10:00:00Z
+              performedAt:
+                type: string
+                format: date-time
+          sanctionsResult:
+            type: object
+            properties:
+              customerId:
+                type: string
+                format: uuid
+              applicationId:
+                type: string
+                format: uuid
+              passed:
+                type: boolean
+                description: "`true` if no CRITICAL list match was found."
+              overallMatchLevel:
+                type: string
+                enum:
+                  - NO_MATCH
+                  - POSSIBLE_MATCH
+                  - CONFIRMED_MATCH
+                example: NO_MATCH
+              listResults:
+                type: array
+                description: Per-list screening result.
+                items:
+                  type: object
+                  properties:
+                    listName:
+                      type: string
+                      enum:
+                        - OFAC
+                        - UN
+                        - EU
+                        - LOCAL
+                        - PEP
+                      example: OFAC
+                    matchLevel:
+                      type: string
+                      enum:
+                        - NO_MATCH
+                        - POSSIBLE_MATCH
+                        - CONFIRMED_MATCH
+                      example: NO_MATCH
+                    matchedEntries:
+                      type: array
+                      description: Matched watchlist entries (empty if NO_MATCH).
+                      items:
+                        type: object
+                        properties:
+                          entryId:
+                            type: string
+                            example: OFAC-SDN-00123
+                          entryName:
+                            type: string
+                          matchScore:
+                            type: number
+                            format: double
+                            description: Fuzzy match confidence (01).
+                            example: 0.95
+                          matchedFields:
+                            type: array
+                            items:
+                              type: string
+                            example:
+                              - FULL_NAME
+                              - DATE_OF_BIRTH
+              findings:
+                type: array
+                items:
+                  type: object
+                  description: A single flag or issue raised during any compliance check.
+                  properties:
+                    code: *a43
+                    description: *a44
+                    severity: *a45
+                    source: *a46
+              screenedAt:
+                type: string
+                format: date-time
+          amlResult:
+            type: object
+            properties:
+              customerId:
+                type: string
+                format: uuid
+              applicationId:
+                type: string
+                format: uuid
+              passed:
+                type: boolean
+              amlRiskLevel: &a47
+                type: string
+                description: |
+                  Categorical risk classification.
+                  - `LOW`       030 composite score
+                  - `MEDIUM`    3175 composite score
+                  - `HIGH`      7689 composite score
+                  - `CRITICAL`  90100 or any blocking flag
+                enum:
+                  - LOW
+                  - MEDIUM
+                  - HIGH
+                  - CRITICAL
+                example: MEDIUM
+              indicators:
+                type: array
+                description: AML-specific indicators detected.
+                items:
+                  type: object
+                  description: A specific AML behavioural pattern detected.
+                  properties:
+                    indicatorCode:
+                      type: string
+                      enum:
+                        - STRUCTURING
+                        - RAPID_ROUND_TRIP
+                        - UNUSUAL_LARGE_TRANSACTIONS
+                        - HIGH_CASH_RATIO
+                        - VELOCITY_ANOMALY
+                        - UNUSUAL_GEOGRAPHY
+                        - SMURFING
+                      example: STRUCTURING
+                    description:
+                      type: string
+                      example: Multiple sub-threshold transactions detected within 48 hours.
+                    severity: *a45
+                    detectedAt:
+                      type: string
+                      format: date-time
+              findings:
+                type: array
+                items:
+                  type: object
+                  description: A single flag or issue raised during any compliance check.
+                  properties:
+                    code: *a43
+                    description: *a44
+                    severity: *a45
+                    source: *a46
+              performedAt:
+                type: string
+                format: date-time
+          fraudResult:
+            type: object
+            properties:
+              customerId:
+                type: string
+                format: uuid
+              applicationId:
+                type: string
+                format: uuid
+              passed:
+                type: boolean
+              fraudProbabilityScore:
+                type: number
+                format: double
+                description: Probability of fraud. 0.0 = no risk, 1.0 = confirmed fraud.
+                example: 0.07
+              fraudRiskLevel: *a47
+              fraudFlags:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    flagCode:
+                      type: string
+                      enum:
+                        - LOAN_STACKING
+                        - INCOME_MISMATCH
+                        - VELOCITY_FRAUD
+                        - UNUSUAL_LARGE_INFLOW_BEFORE_APPLICATION
+                        - IDENTITY_MISMATCH
+                        - DEVICE_ANOMALY
+                      example: INCOME_MISMATCH
+                    description:
+                      type: string
+                      example: Declared annual income is 3.2x higher than average monthly credit * 12.
+                    severity: *a45
+              findings:
+                type: array
+                items:
+                  type: object
+                  description: A single flag or issue raised during any compliance check.
+                  properties:
+                    code: *a43
+                    description: *a44
+                    severity: *a45
+                    source: *a46
+              analyzedAt:
+                type: string
+                format: date-time
+          creditScoreResult:
+            type: object
+            description: >
+              Credit score on the standard 300850 scale with banding and factor
+              breakdown.
+            properties:
+              customerId:
+                type: string
+                format: uuid
+              applicationId:
+                type: string
+                format: uuid
+                nullable: true
+              score:
+                type: integer
+                description: Credit score on the 300850 scale.
+                minimum: 300
+                maximum: 850
+                example: 720
+              band:
+                type: string
+                description: |
+                  Credit band classification.
+                  - `POOR`      300579
+                  - `FAIR`      580669
+                  - `GOOD`      670739
+                  - `VERY_GOOD` 740799
+                  - `EXCELLENT` 800850
+                enum:
+                  - POOR
+                  - FAIR
+                  - GOOD
+                  - VERY_GOOD
+                  - EXCELLENT
+                example: GOOD
+              passed:
+                type: boolean
+                description: "`true` if score >= minimum threshold (default 580  FAIR or
+                  above)."
+              factors:
+                type: array
+                description: Weighted factors contributing to this score.
+                items:
+                  type: object
+                  description: One weighted factor contributing to the credit or risk score.
+                  properties:
+                    factor:
+                      type: string
+                      example: PAYMENT_HISTORY
+                    description:
+                      type: string
+                      example: 0 missed payments in the last 24 months.
+                    impact:
+                      type: string
+                      enum:
+                        - POSITIVE
+                        - NEGATIVE
+                        - NEUTRAL
+                      example: POSITIVE
+                    weightPct:
+                      type: number
+                      format: double
+                      description: Percentage weight of this factor in the overall score (0100).
+                      example: 35
+                    scoreContribution:
+                      type: number
+                      format: double
+                      description: Points contributed to the final score by this factor.
+                      example: 280
+              calculatedAt:
+                type: string
+                format: date-time
+        required:
+          - customerId
+          - applicationId
+          - loanApplication
+          - kycResult
+          - sanctionsResult
+          - amlResult
+          - fraudResult
+          - creditScoreResult
+      title: Generate a composite loan risk score and recommendation
+      x-api-binding:
+        operationPath: /risk/loan-risk-score
+        operationMethod: POST
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getLoanRiskScore
+      description: Make a GET request to /risk/loan-risk-score/{applicationId}
+      inputSchema:
+        type: object
+        properties:
+          applicationId:
+            description: Unique loan application identifier (UUID v4). Foreign key from Loan
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+        required:
+          - applicationId
+      title: Retrieve a previously generated loan risk score by application ID
+      x-api-binding:
+        operationPath: /risk/loan-risk-score/{applicationId}
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getCustomerComplianceReport
+      description: >
+        Returns a consolidated compliance summary including the latest results
+        of
+
+        KYC, sanctions, AML, fraud, credit score, and risk assessments for a
+
+        customer. Intended for regulatory reporting and internal audit use.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (UUID v4). Foreign key from Customer
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: c1a2b3c4-0001-0001-0001-000000000001
+        required:
+          - customerId
+      title: Retrieve a full compliance audit report for a customer
+      x-api-binding:
+        operationPath: /risk/reports/customer/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
+    - name: getApplicationComplianceReport
+      description: |
+        Returns the full set of compliance check results executed as part of the
+        loan eligibility workflow for a specific `applicationId`. Includes all
+        six orchestration steps and the final risk score verdict.
+      inputSchema:
+        type: object
+        properties:
+          applicationId:
+            description: Unique loan application identifier (UUID v4). Foreign key from Loan
+              API.
+            x-parameter-location: path
+            type: string
+            format: uuid
+            example: l1a2b3c4-0003-0003-0003-000000000001
+        required:
+          - applicationId
+      title: Retrieve a compliance report for a specific loan application
+      x-api-binding:
+        operationPath: /risk/reports/application/{applicationId}
+        operationMethod: GET
+        api:
+          $path: ./risk-compliance-api-spec.yml
