@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-and-compliance-api-server-a9pe4
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Risk and Compliance API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: Banking-APIs:banking-apis-quota-a9pe4:1.0
+  policy-sequence:
+    - $ref: Banking-APIs:banking-apis-freeflowpolicysequence-a9pe4:1.0
+  capabilities:
+    tools:
+      - $ref: Banking-APIs:risk-and-compliance-api-tool-a9pe4:1.0

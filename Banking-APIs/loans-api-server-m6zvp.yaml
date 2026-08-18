@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: loans-api-server-m6zvp
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Loans API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: Banking-APIs:banking-apis-quota-m6zvp:1.0
+  policy-sequence:
+    - $ref: Banking-APIs:banking-apis-freeflowpolicysequence-m6zvp:1.0
+  capabilities:
+    tools:
+      - $ref: Banking-APIs:loans-api-tool-m6zvp:1.0

@@ -1,0 +1,826 @@
+openapi: 3.0.3
+info:
+  title: Risk and Compliance API
+  description: Enterprise Banking Risk and Compliance API. Provides risk
+    assessment, fraud detection, compliance checks, and credit scoring.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+x-ibm-name: risk-compliance-api
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  type: rest
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  buffering: true
+  properties:
+    - name: target-url
+      value: https://risk-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+      description: Base URL of the Risk and Compliance microservice backend.
+      encoded: false
+  activity-log:
+    enabled: true
+    content: activity
+    error-content: payload
+  assembly:
+    execute:
+      - invoke:
+          version: 2.0.0
+          title: Invoke Risk Backend
+          target-url: $(target-url)$(request.path)?$(request.search)
+          verb: keep
+          timeout: 60
+          follow-redirects: false
+          compression: false
+          inject-proxy-headers: true
+          stop-on-error:
+            - ConnectionError
+            - OperationError
+    catch:
+      - errors:
+          - ConnectionError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 503 Response
+              actions:
+                - set: message.status.code
+                  value: 503
+                  type: number
+                - set: message.body
+                  value: '{"code":503,"message":"Risk service temporarily unavailable."}'
+                  type: string
+      - errors:
+          - OperationError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 502 Response
+              actions:
+                - set: message.status.code
+                  value: 502
+                  type: number
+                - set: message.body
+                  value: '{"code":502,"message":"Bad gateway. Upstream returned an invalid
+                    response."}'
+                  type: string
+servers:
+  - url: https://risk-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+    description: Production
+tags:
+  - name: Risk
+    description: Risk assessment and scoring for customers.
+  - name: Credit
+    description: Credit score retrieval.
+  - name: Compliance
+    description: KYC and AML compliance profile retrieval.
+paths:
+  /risk:
+    get:
+      tags:
+        - Risk
+      summary: List all risk evaluations
+      description: Returns all risk evaluations. Optionally filter by riskCategory,
+        status, kycStatus, or sanctionsCheck.
+      operationId: listRisk
+      parameters:
+        - name: riskCategory
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - UNDER_REVIEW
+              - ESCALATED
+              - CLOSED
+        - name: kycStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - VERIFIED
+              - PENDING
+              - REJECTED
+              - EXPIRED
+        - name: sanctionsCheck
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - CLEAR
+              - FLAGGED
+              - PENDING
+      responses:
+        "200":
+          description: List of risk evaluations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskEvaluationList"
+              examples:
+                ListExample:
+                  $ref: "#/components/examples/RiskListExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/evaluate:
+    post:
+      tags:
+        - Risk
+      summary: Evaluate risk
+      description: >
+        Triggers a fresh risk evaluation for a customer. Only customerId is
+        required. Optional fields (creditScore, kycStatus, amlScore, fraudScore,
+        sanctionsCheck) override the defaults used in scoring. Auto-computes
+        riskScore, riskCategory, flags, status, and nextReviewDate.
+      operationId: evaluateRisk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiskEvaluateRequest"
+            examples:
+              MinimalRequest:
+                $ref: "#/components/examples/EvaluateRequestMinimal"
+              FullRequest:
+                $ref: "#/components/examples/EvaluateRequestFull"
+      responses:
+        "201":
+          description: Freshly computed risk evaluation with enrichment metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskEvaluationEnriched"
+              examples:
+                EvaluateResponse:
+                  $ref: "#/components/examples/EvaluateResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/{customerId}:
+    get:
+      tags:
+        - Risk
+      summary: Get customer risk profile
+      description: Returns the current risk evaluation record for a specific customer,
+        including risk score, category, AML score, fraud score, KYC status, and
+        flags.
+      operationId: getRisk
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: Customer risk evaluation record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskEvaluation"
+              examples:
+                LowRisk:
+                  $ref: "#/components/examples/RiskLowExample"
+                HighRisk:
+                  $ref: "#/components/examples/RiskHighExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /credit-score/{customerId}:
+    get:
+      tags:
+        - Credit
+      summary: Calculate credit score
+      description: Returns the credit score and credit band for a customer derived
+        from their risk evaluation data.
+      operationId: getCreditScore
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: Credit score result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditScore"
+              examples:
+                Good:
+                  $ref: "#/components/examples/CreditGoodExample"
+                Poor:
+                  $ref: "#/components/examples/CreditPoorExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /kyc/{customerId}:
+    get:
+      tags:
+        - Compliance
+      summary: Get account risk profile
+      description: Returns the KYC status, verification type, documents verified, and
+        compliance profile for a customer.
+      operationId: getKYC
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: KYC compliance profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KYCRecord"
+              examples:
+                Verified:
+                  $ref: "#/components/examples/KycVerifiedExample"
+                Pending:
+                  $ref: "#/components/examples/KycPendingExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /aml/{customerId}:
+    get:
+      tags:
+        - Compliance
+      summary: Submit fraud detection request
+      description: Returns the AML assessment, sanctions check result, fraud score,
+        and compliance flags for a customer.
+      operationId: getAML
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        "200":
+          description: AML and fraud assessment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AMLRecord"
+              examples:
+                Clear:
+                  $ref: "#/components/examples/AmlClearExample"
+                Flagged:
+                  $ref: "#/components/examples/AmlFlaggedExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: RS256 JWT issued by the bank identity provider.
+  parameters:
+    CustomerIdParam:
+      name: customerId
+      in: path
+      required: true
+      description: Unique customer identifier (integer, range 1001-1020).
+      schema:
+        type: integer
+      example: 1001
+  schemas:
+    RiskEvaluation:
+      type: object
+      properties:
+        evaluationId:
+          type: integer
+          example: 4001
+        customerId:
+          type: integer
+          example: 1001
+        creditScore:
+          type: integer
+          example: 780
+        kycStatus:
+          type: string
+          enum:
+            - VERIFIED
+            - PENDING
+            - REJECTED
+            - EXPIRED
+          example: VERIFIED
+        amlScore:
+          type: number
+          format: double
+          example: 5
+        fraudScore:
+          type: number
+          format: double
+          example: 3
+        sanctionsCheck:
+          type: string
+          enum:
+            - CLEAR
+            - FLAGGED
+            - PENDING
+          example: CLEAR
+        riskScore:
+          type: number
+          format: double
+          example: 8.5
+        riskCategory:
+          type: string
+          enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
+          example: LOW
+        evaluationDate:
+          type: string
+          format: date
+          example: 2024-01-15
+        nextReviewDate:
+          type: string
+          format: date
+          example: 2025-01-15
+        flags:
+          type: array
+          items:
+            type: string
+          example: []
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - UNDER_REVIEW
+            - ESCALATED
+            - CLOSED
+          example: ACTIVE
+        remarks:
+          type: string
+          nullable: true
+          example: Low-risk retail customer
+    RiskEvaluationEnriched:
+      allOf:
+        - $ref: "#/components/schemas/RiskEvaluation"
+        - type: object
+          properties:
+            enrichment:
+              type: object
+              properties:
+                accountSummary:
+                  type: object
+                  properties:
+                    accountCount:
+                      type: integer
+                      example: 0
+                    totalBalance:
+                      type: number
+                      example: 0
+                    frozenAccount:
+                      type: boolean
+                      example: false
+                loanSummary:
+                  type: object
+                  properties:
+                    loanCount:
+                      type: integer
+                      example: 0
+                    activeLoans:
+                      type: integer
+                      example: 0
+                    totalLoanAmount:
+                      type: number
+                      example: 0
+    RiskEvaluationList:
+      type: object
+      properties:
+        evaluations:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskEvaluation"
+        total:
+          type: integer
+          example: 20
+    RiskEvaluateRequest:
+      type: object
+      required:
+        - customerId
+      properties:
+        customerId:
+          type: integer
+          description: Customer to evaluate (must be in range 1001-1020).
+          example: 1001
+        creditScore:
+          type: integer
+          description: Override credit score. Default 700 if omitted.
+          example: 780
+        kycStatus:
+          type: string
+          enum:
+            - VERIFIED
+            - PENDING
+            - REJECTED
+            - EXPIRED
+          description: Override KYC status. Default PENDING if omitted.
+          example: VERIFIED
+        amlScore:
+          type: number
+          format: double
+          description: Override AML score (0-100). Default 10.0 if omitted.
+          example: 5
+        fraudScore:
+          type: number
+          format: double
+          description: Override fraud score (0-100). Default 8.0 if omitted.
+          example: 3
+        sanctionsCheck:
+          type: string
+          enum:
+            - CLEAR
+            - FLAGGED
+            - PENDING
+          description: Override sanctions check result. Default PENDING if omitted.
+          example: CLEAR
+        remarks:
+          type: string
+          example: Triggered by loan application.
+    CreditScore:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          example: 1001
+        creditScore:
+          type: integer
+          example: 780
+        creditBand:
+          type: string
+          enum:
+            - EXCELLENT
+            - GOOD
+            - FAIR
+            - POOR
+            - VERY_POOR
+          example: GOOD
+        evaluationDate:
+          type: string
+          format: date
+          example: 2024-01-15
+        bureau:
+          type: string
+          example: CIBIL
+        trend:
+          type: string
+          example: STABLE
+        remarks:
+          type: string
+          nullable: true
+          example: Low-risk retail customer
+    KYCRecord:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          example: 1001
+        kycStatus:
+          type: string
+          enum:
+            - VERIFIED
+            - PENDING
+            - REJECTED
+            - EXPIRED
+          example: VERIFIED
+        kycType:
+          type: string
+          enum:
+            - FULL
+            - SIMPLIFIED
+            - ENHANCED
+          example: FULL
+        verifiedDate:
+          type: string
+          format: date
+          nullable: true
+          example: 2024-01-15
+        expiryDate:
+          type: string
+          format: date
+          example: 2025-01-15
+        documents:
+          type: array
+          items:
+            type: string
+          example:
+            - AADHAAR
+            - PAN
+        remarks:
+          type: string
+          nullable: true
+          example: Low-risk retail customer
+    AMLRecord:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          example: 1001
+        amlScore:
+          type: number
+          format: double
+          example: 5
+        amlStatus:
+          type: string
+          enum:
+            - CLEAR
+            - UNDER_REVIEW
+            - FLAGGED
+            - BLOCKED
+          example: CLEAR
+        sanctionsCheck:
+          type: string
+          enum:
+            - CLEAR
+            - FLAGGED
+            - PENDING
+          example: CLEAR
+        pep:
+          type: boolean
+          example: false
+        evaluationDate:
+          type: string
+          format: date
+          example: 2024-01-15
+        flags:
+          type: array
+          items:
+            type: string
+          example: []
+        remarks:
+          type: string
+          nullable: true
+          example: Low-risk retail customer
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: No risk evaluation found for customer 9999.
+        status:
+          type: integer
+          example: 404
+  responses:
+    BadRequest:
+      description: Bad Request  request body is missing or not valid JSON.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: Request body must be valid JSON.
+            status: 400
+    Unauthorized:
+      description: Unauthorized. A valid Bearer token is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: Authentication token is missing or invalid.
+            status: 401
+    NotFound:
+      description: Not Found. Customer does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: No risk evaluation found for customer 9999.
+            status: 404
+    InternalServerError:
+      description: Internal Server Error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: An unexpected error occurred. Please try again later.
+            status: 500
+  examples:
+    RiskListExample:
+      summary: List with two sample records
+      value:
+        evaluations:
+          - evaluationId: 4001
+            customerId: 1001
+            creditScore: 780
+            kycStatus: VERIFIED
+            amlScore: 5
+            fraudScore: 3
+            sanctionsCheck: CLEAR
+            riskScore: 8.5
+            riskCategory: LOW
+            evaluationDate: 2024-01-15
+            nextReviewDate: 2025-01-15
+            flags: []
+            status: ACTIVE
+            remarks: Low-risk retail customer
+          - evaluationId: 4016
+            customerId: 1016
+            creditScore: 510
+            kycStatus: VERIFIED
+            amlScore: 72
+            fraudScore: 68
+            sanctionsCheck: FLAGGED
+            riskScore: 81.5
+            riskCategory: CRITICAL
+            evaluationDate: 2024-08-01
+            nextReviewDate: 2024-09-01
+            flags:
+              - HIGH_AML
+              - HIGH_FRAUD
+              - SANCTIONS_FLAG
+            status: ESCALATED
+            remarks: Sanctions hit  account frozen
+        total: 20
+    RiskLowExample:
+      summary: Low risk customer (1001)
+      value:
+        evaluationId: 4001
+        customerId: 1001
+        creditScore: 780
+        kycStatus: VERIFIED
+        amlScore: 5
+        fraudScore: 3
+        sanctionsCheck: CLEAR
+        riskScore: 8.5
+        riskCategory: LOW
+        evaluationDate: 2024-01-15
+        nextReviewDate: 2025-01-15
+        flags: []
+        status: ACTIVE
+        remarks: Low-risk retail customer
+    RiskHighExample:
+      summary: Critical risk customer with sanctions flag (1016)
+      value:
+        evaluationId: 4016
+        customerId: 1016
+        creditScore: 510
+        kycStatus: VERIFIED
+        amlScore: 72
+        fraudScore: 68
+        sanctionsCheck: FLAGGED
+        riskScore: 81.5
+        riskCategory: CRITICAL
+        evaluationDate: 2024-08-01
+        nextReviewDate: 2024-09-01
+        flags:
+          - HIGH_AML
+          - HIGH_FRAUD
+          - SANCTIONS_FLAG
+        status: ESCALATED
+        remarks: Sanctions hit  account frozen
+    EvaluateRequestMinimal:
+      summary: Minimal  only customerId required
+      value:
+        customerId: 1001
+    EvaluateRequestFull:
+      summary: Full override of all scoring inputs
+      value:
+        customerId: 1001
+        creditScore: 780
+        kycStatus: VERIFIED
+        amlScore: 5
+        fraudScore: 3
+        sanctionsCheck: CLEAR
+        remarks: Triggered by loan application.
+    EvaluateResponseExample:
+      summary: Fresh evaluation result with enrichment
+      value:
+        evaluationId: 4001
+        customerId: 1001
+        creditScore: 780
+        kycStatus: VERIFIED
+        amlScore: 5
+        fraudScore: 3
+        sanctionsCheck: CLEAR
+        riskScore: 8.5
+        riskCategory: LOW
+        evaluationDate: 2024-01-15
+        nextReviewDate: 2025-01-15
+        flags: []
+        status: ACTIVE
+        remarks: Triggered by loan application.
+        enrichment:
+          accountSummary:
+            accountCount: 0
+            totalBalance: 0
+            frozenAccount: false
+          loanSummary:
+            loanCount: 0
+            activeLoans: 0
+            totalLoanAmount: 0
+    CreditGoodExample:
+      summary: Good credit score (customer 1001)
+      value:
+        customerId: 1001
+        creditScore: 780
+        creditBand: GOOD
+        evaluationDate: 2024-01-15
+        bureau: CIBIL
+        trend: STABLE
+        remarks: Low-risk retail customer
+    CreditPoorExample:
+      summary: Poor credit score (customer 1016)
+      value:
+        customerId: 1016
+        creditScore: 510
+        creditBand: POOR
+        evaluationDate: 2024-08-01
+        bureau: CIBIL
+        trend: DECLINING
+        remarks: Sanctions hit  account frozen
+    KycVerifiedExample:
+      summary: KYC verified customer (1001)
+      value:
+        customerId: 1001
+        kycStatus: VERIFIED
+        kycType: FULL
+        verifiedDate: 2024-01-15
+        expiryDate: 2025-01-15
+        documents:
+          - AADHAAR
+          - PAN
+        remarks: Low-risk retail customer
+    KycPendingExample:
+      summary: KYC pending customer (1006)
+      value:
+        customerId: 1006
+        kycStatus: PENDING
+        kycType: FULL
+        verifiedDate: null
+        expiryDate: 2024-06-10
+        documents:
+          - AADHAAR
+        remarks: KYC documents awaited
+    AmlClearExample:
+      summary: Clean AML record (customer 1001)
+      value:
+        customerId: 1001
+        amlScore: 5
+        amlStatus: CLEAR
+        sanctionsCheck: CLEAR
+        pep: false
+        evaluationDate: 2024-01-15
+        flags: []
+        remarks: Low-risk retail customer
+    AmlFlaggedExample:
+      summary: Sanctions-flagged customer (1016)
+      value:
+        customerId: 1016
+        amlScore: 72
+        amlStatus: BLOCKED
+        sanctionsCheck: FLAGGED
+        pep: false
+        evaluationDate: 2024-08-01
+        flags:
+          - HIGH_AML
+          - SANCTIONS_FLAG
+        remarks: Sanctions hit  account frozen

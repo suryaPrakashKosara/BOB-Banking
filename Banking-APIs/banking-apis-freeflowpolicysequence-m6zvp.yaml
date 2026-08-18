@@ -1,0 +1,18 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-apis-freeflowpolicysequence-m6zvp
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Banking-APIs:ExtractIdentity-4NWUI:1.0
+    - $ref: Banking-APIs:Authenticate-ask9Z:1.0
+    - $ref: Banking-APIs:Authorize-NxLlk:1.0
+    - $ref: Banking-APIs:invoke-m6zvp:1.0
+  monitoring:
+    $ref: Banking-APIs:telemetry-m6zvp:1.0

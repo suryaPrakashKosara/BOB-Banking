@@ -1,0 +1,188 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-and-compliance-api-tool-a9pe4
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Risk and Compliance API. Provides risk
+    assessment, fraud detection, compliance checks, and credit scoring.
+  labels:
+    api-spec: ./risk-and-compliance-api-spec.yml
+spec:
+  tools:
+    - name: listRisk
+      description: Returns all risk evaluations. Optionally filter by riskCategory,
+        status, kycStatus, or sanctionsCheck.
+      inputSchema:
+        type: object
+        properties:
+          riskCategory:
+            description: riskCategory parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+          status:
+            description: status parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - ACTIVE
+              - UNDER_REVIEW
+              - ESCALATED
+              - CLOSED
+          kycStatus:
+            description: kycStatus parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - VERIFIED
+              - PENDING
+              - REJECTED
+              - EXPIRED
+          sanctionsCheck:
+            description: sanctionsCheck parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - CLEAR
+              - FLAGGED
+              - PENDING
+      title: List all risk evaluations
+      x-api-binding:
+        operationPath: /risk
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: evaluateRisk
+      description: >
+        Triggers a fresh risk evaluation for a customer. Only customerId is
+        required. Optional fields (creditScore, kycStatus, amlScore, fraudScore,
+        sanctionsCheck) override the defaults used in scoring. Auto-computes
+        riskScore, riskCategory, flags, status, and nextReviewDate.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: integer
+            description: Customer to evaluate (must be in range 1001-1020).
+            example: 1001
+          creditScore:
+            type: integer
+            description: Override credit score. Default 700 if omitted.
+            example: 780
+          kycStatus:
+            type: string
+            enum:
+              - VERIFIED
+              - PENDING
+              - REJECTED
+              - EXPIRED
+            description: Override KYC status. Default PENDING if omitted.
+            example: VERIFIED
+          amlScore:
+            type: number
+            format: double
+            description: Override AML score (0-100). Default 10.0 if omitted.
+            example: 5
+          fraudScore:
+            type: number
+            format: double
+            description: Override fraud score (0-100). Default 8.0 if omitted.
+            example: 3
+          sanctionsCheck:
+            type: string
+            enum:
+              - CLEAR
+              - FLAGGED
+              - PENDING
+            description: Override sanctions check result. Default PENDING if omitted.
+            example: CLEAR
+          remarks:
+            type: string
+            example: Triggered by loan application.
+        required:
+          - customerId
+      title: Evaluate risk
+      x-api-binding:
+        operationPath: /risk/evaluate
+        operationMethod: POST
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: getRisk
+      description: Returns the current risk evaluation record for a specific customer,
+        including risk score, category, AML score, fraud score, KYC status, and
+        flags.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (integer, range 1001-1020).
+            x-parameter-location: path
+            type: integer
+        required:
+          - customerId
+      title: Get customer risk profile
+      x-api-binding:
+        operationPath: /risk/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: getCreditScore
+      description: Returns the credit score and credit band for a customer derived
+        from their risk evaluation data.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (integer, range 1001-1020).
+            x-parameter-location: path
+            type: integer
+        required:
+          - customerId
+      title: Calculate credit score
+      x-api-binding:
+        operationPath: /credit-score/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: getKYC
+      description: Returns the KYC status, verification type, documents verified, and
+        compliance profile for a customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (integer, range 1001-1020).
+            x-parameter-location: path
+            type: integer
+        required:
+          - customerId
+      title: Get account risk profile
+      x-api-binding:
+        operationPath: /kyc/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: getAML
+      description: Returns the AML assessment, sanctions check result, fraud score,
+        and compliance flags for a customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (integer, range 1001-1020).
+            x-parameter-location: path
+            type: integer
+        required:
+          - customerId
+      title: Submit fraud detection request
+      x-api-binding:
+        operationPath: /aml/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml

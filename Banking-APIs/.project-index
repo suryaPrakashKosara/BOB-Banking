@@ -24,6 +24,43 @@
       "schemaVersion": 1
     },
     {
+      "id": "0d1ab2ec-ff3b-4286-84b3-aba2c7a3110f:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/risk-and-compliance-api-tool-a9pe4.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025243257,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "risk-and-compliance-api-tool-a9pe4",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "cf352b097f18540e"
+    },
+    {
+      "id": "0dec55aa-3e6e-4f0f-8e57-c33a2ee519b6:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Authorize-NxLlk.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025180500,
+      "schemaVersion": 1,
+      "kind": "Authorize",
+      "name": "Authorize-NxLlk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "f178d7467ae96b38"
+    },
+    {
+      "id": "10bf37c1-35eb-4c1a-bcad-94c2846f29c7:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/loans-api-spec.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1787024724250,
+      "schemaVersion": 1
+    },
+    {
       "id": "1a541e70-a505-445c-be24-2c775095464d:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/banking-apis-quota-yyuqo.yaml",
@@ -61,6 +98,62 @@
       "schemaVersion": 1
     },
     {
+      "id": "353efe88-812e-4431-9031-866e022b5bb2:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/ExtractIdentity-4NWUI.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024951312,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-4NWUI",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "2d77bf1bcbcee77f"
+    },
+    {
+      "id": "38e3c7c4-2c4f-4da3-8496-bae521805cca:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-apis-freeflowpolicysequence-a9pe4.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025241085,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "banking-apis-freeflowpolicysequence-a9pe4",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "fd0808313899b03b"
+    },
+    {
+      "id": "3aabb546-146f-4ce9-a201-9ae0f486ada2:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/telemetry-m6zvp.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024727478,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "telemetry-m6zvp",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "851c732a450c04cc"
+    },
+    {
+      "id": "651da4df-382c-4bc5-a04e-fdae21ae3070:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-apis-quota-a9pe4.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025242034,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "banking-apis-quota-a9pe4",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "b57ef834e96eba06"
+    },
+    {
       "id": "71e0aaff-ba64-4c9f-b392-b30b19d6a045:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/ExtractIdentity-1MRBS.yml",
@@ -73,6 +166,43 @@
       "namespace": "Banking-APIs",
       "version": "1.0",
       "contentHash": "6e7bf13023031f83"
+    },
+    {
+      "id": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/risk-and-compliance-api-spec.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1787025237255,
+      "schemaVersion": 1
+    },
+    {
+      "id": "83aff239-f4f8-486b-b1d3-14c94fb642b1:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-apis-quota-m6zvp.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024730010,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "banking-apis-quota-m6zvp",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "e270956eb2b8c2f2"
+    },
+    {
+      "id": "a1eea635-41aa-4f51-ba88-9b7cbe0aeb19:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/invoke-a9pe4.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025238847,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "invoke-a9pe4",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "828c514e4363d6f6"
     },
     {
       "id": "a2114d5d-be9f-4c59-8f02-646d37b22983:0",
@@ -117,6 +247,20 @@
       "contentHash": "1a81b994e432728f"
     },
     {
+      "id": "b45436c6-6e1a-4b24-8124-16eff3131c8c:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/invoke-m6zvp.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024726068,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "invoke-m6zvp",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "97897a358c12fd68"
+    },
+    {
       "id": "bd1ea8f4-9da0-4da3-b8dc-4795cd066eca:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/Redact-VjMhK.yml",
@@ -129,6 +273,34 @@
       "namespace": "Banking-APIs",
       "version": "1.0",
       "contentHash": "785b262f69148be0"
+    },
+    {
+      "id": "bdd95ad8-3621-4fc8-9d23-75257ce386d5:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/loans-api-tool-m6zvp.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024731436,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "loans-api-tool-m6zvp",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "ed3161d549681444"
+    },
+    {
+      "id": "c16095d1-6834-4c1c-a358-862e189648f6:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/loans-api-server-m6zvp.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024732498,
+      "schemaVersion": 1,
+      "kind": "MCPServer",
+      "name": "loans-api-server-m6zvp",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "052ffe85c58b8943"
     },
     {
       "id": "cafa0f51-73ba-404c-856f-7bee6b6e6cc0:0",
@@ -145,6 +317,20 @@
       "contentHash": "becc64e423201e00"
     },
     {
+      "id": "cc44b6b6-e55c-493a-a630-124affce28fe:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Authenticate-ask9Z.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025004031,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-ask9Z",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "fbd8cb121c4a9778"
+    },
+    {
       "id": "cfcb54e4-674a-4a5a-a076-8c2e79d16a9b:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/telemetry-yyuqo.yaml",
@@ -159,6 +345,34 @@
       "contentHash": "2f09de5a892c6a44"
     },
     {
+      "id": "deddd59e-8a35-4a69-b891-6319d7d05e68:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/telemetry-a9pe4.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025240111,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "telemetry-a9pe4",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "3f7b9980c2e5dfa1"
+    },
+    {
+      "id": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-apis-freeflowpolicysequence-m6zvp.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787024867215,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "banking-apis-freeflowpolicysequence-m6zvp",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "998a03162a19196e"
+    },
+    {
       "id": "e75737d6-1283-4317-b8fb-42a0498d688e:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/Parse-uVfdi.yml",
@@ -171,9 +385,47 @@
       "namespace": "Banking-APIs",
       "version": "1.0",
       "contentHash": "585f85e267a7ba6e"
+    },
+    {
+      "id": "f211c304-4a12-461e-88da-3ffb6bb635fb:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/risk-and-compliance-api-server-a9pe4.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787025244680,
+      "schemaVersion": 1,
+      "kind": "MCPServer",
+      "name": "risk-and-compliance-api-server-a9pe4",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "d3538fc96757c25c"
     }
   ],
   "edges": [
+    {
+      "id": "12f3be9f-d197-467a-bfa1-0262aa39a14b",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "f211c304-4a12-461e-88da-3ffb6bb635fb:0",
+      "targetNodeId": "651da4df-382c-4bc5-a04e-fdae21ae3070:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-apis-quota-a9pe4:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787025244698,
+      "lastValidated": 1787025244698
+    },
+    {
+      "id": "138eb609-31e9-4d1c-b128-1bedb9078c81",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "c16095d1-6834-4c1c-a358-862e189648f6:0",
+      "targetNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-apis-freeflowpolicysequence-m6zvp:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024732504,
+      "lastValidated": 1787024867257
+    },
     {
       "id": "1e79121b-f7fe-4ad3-99e1-5f36c5acac75",
       "projectId": "QTef5wyU",
@@ -185,6 +437,78 @@
       "isValid": true,
       "createdAt": 1787021542414,
       "lastValidated": 1787022129163
+    },
+    {
+      "id": "224aaeb9-e072-450b-9635-26b1cb148b09",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "c16095d1-6834-4c1c-a358-862e189648f6:0",
+      "targetNodeId": "bdd95ad8-3621-4fc8-9d23-75257ce386d5:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:loans-api-tool-m6zvp:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024732504,
+      "lastValidated": 1787024732504
+    },
+    {
+      "id": "26f18f77-288f-4e88-a092-8419d45b7fe0",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "3aabb546-146f-4ce9-a201-9ae0f486ada2:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:telemetry-m6zvp:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024728609,
+      "lastValidated": 1787024728609
+    },
+    {
+      "id": "3e4b503c-ac8a-463a-8482-6317dee63214",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "c16095d1-6834-4c1c-a358-862e189648f6:0",
+      "targetNodeId": "83aff239-f4f8-486b-b1d3-14c94fb642b1:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-apis-quota-m6zvp:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024732504,
+      "lastValidated": 1787024732504
+    },
+    {
+      "id": "46e7892d-2e05-40f6-961b-70626a3f24e1",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "38e3c7c4-2c4f-4da3-8496-bae521805cca:0",
+      "targetNodeId": "a1eea635-41aa-4f51-ba88-9b7cbe0aeb19:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:invoke-a9pe4:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787025241102,
+      "lastValidated": 1787025241102
+    },
+    {
+      "id": "4878adda-e248-4ce4-bd27-ae7d402cbb2c",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "f211c304-4a12-461e-88da-3ffb6bb635fb:0",
+      "targetNodeId": "38e3c7c4-2c4f-4da3-8496-bae521805cca:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-apis-freeflowpolicysequence-a9pe4:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787025244698,
+      "lastValidated": 1787025244698
+    },
+    {
+      "id": "4c10994f-691d-4738-9c4e-691f29982060",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "cc44b6b6-e55c-493a-a630-124affce28fe:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Authenticate-ask9Z:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024858739,
+      "lastValidated": 1787025004035
     },
     {
       "id": "5f4c61c9-2b1b-4233-86f1-a19ab8f63962",
@@ -209,6 +533,30 @@
       "isValid": true,
       "createdAt": 1787021386348,
       "lastValidated": 1787021386348
+    },
+    {
+      "id": "66ddca6f-5323-4c95-aff9-f9ae5eeaf7f3",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "353efe88-812e-4431-9031-866e022b5bb2:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:ExtractIdentity-4NWUI:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024850697,
+      "lastValidated": 1787024951317
+    },
+    {
+      "id": "777a8128-223d-458d-ae35-314c4cecc069",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "0d1ab2ec-ff3b-4286-84b3-aba2c7a3110f:0",
+      "targetNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./risk-and-compliance-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1787025243275,
+      "lastValidated": 1787025243275
     },
     {
       "id": "7ac73401-41cb-4579-b606-4e665980a288",
@@ -247,6 +595,30 @@
       "lastValidated": 1787021386348
     },
     {
+      "id": "85ef0d53-2757-438a-bcd2-7e25cf39bc39",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "f211c304-4a12-461e-88da-3ffb6bb635fb:0",
+      "targetNodeId": "0d1ab2ec-ff3b-4286-84b3-aba2c7a3110f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:risk-and-compliance-api-tool-a9pe4:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787025244698,
+      "lastValidated": 1787025244698
+    },
+    {
+      "id": "864888c1-28e7-4f23-b27a-91dd7c4b5d3c",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "0dec55aa-3e6e-4f0f-8e57-c33a2ee519b6:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Authorize-NxLlk:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024867236,
+      "lastValidated": 1787025180504
+    },
+    {
       "id": "a29a2829-c068-48a2-8c64-e9c524d2c458",
       "projectId": "QTef5wyU",
       "sourceNodeId": "1ab67752-812b-4ba4-8610-6bc29cc6fea6:0",
@@ -257,6 +629,42 @@
       "isValid": true,
       "createdAt": 1787021511972,
       "lastValidated": 1787021531248
+    },
+    {
+      "id": "b4e90b2b-e01c-4a20-bc03-0c351d3e91d4",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "b45436c6-6e1a-4b24-8124-16eff3131c8c:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:invoke-m6zvp:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787024728609,
+      "lastValidated": 1787024728609
+    },
+    {
+      "id": "b643836c-ff3e-4a4f-b5c9-4ac4fdd43e83",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "38e3c7c4-2c4f-4da3-8496-bae521805cca:0",
+      "targetNodeId": "deddd59e-8a35-4a69-b891-6319d7d05e68:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:telemetry-a9pe4:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787025241102,
+      "lastValidated": 1787025241102
+    },
+    {
+      "id": "bd9631e9-cac7-4720-8f3f-0e69a2b906c3",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "bdd95ad8-3621-4fc8-9d23-75257ce386d5:0",
+      "targetNodeId": "10bf37c1-35eb-4c1a-bcad-94c2846f29c7:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./loans-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1787024731447,
+      "lastValidated": 1787024731447
     },
     {
       "id": "d52664f7-6f7c-4fad-a27a-b94ad2c01c6f",
