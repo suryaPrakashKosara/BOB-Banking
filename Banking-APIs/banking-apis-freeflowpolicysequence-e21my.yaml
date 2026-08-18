@@ -1,0 +1,18 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-apis-freeflowpolicysequence-e21my
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Banking-APIs:ExtractIdentity-jouiN:1.0
+    - $ref: Banking-APIs:Authenticate-5lPM7:1.0
+    - $ref: Banking-APIs:Authorize-MPEwk:1.0
+    - $ref: Banking-APIs:invoke-e21my:1.0
+  monitoring:
+    $ref: Banking-APIs:telemetry-e21my:1.0

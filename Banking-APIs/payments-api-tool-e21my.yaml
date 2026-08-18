@@ -1,0 +1,257 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: payments-api-tool-e21my
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Payments API. Orchestrates payment processing,
+    transaction lookup, and loan-linked payment queries across the banking
+    platform.
+  labels:
+    api-spec: ./payments-api-spec.yml
+spec:
+  tools:
+    - name: listPayments
+      description: >
+        Returns all payments. Optionally filter by customerId, accountId,
+        loanId, paymentType, status, currency, or channel.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: customerId parameter
+            x-parameter-location: query
+            type: integer
+          accountId:
+            description: accountId parameter
+            x-parameter-location: query
+            type: integer
+          loanId:
+            description: loanId parameter
+            x-parameter-location: query
+            type: integer
+          paymentType:
+            description: paymentType parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - NEFT
+              - IMPS
+              - RTGS
+              - UPI
+              - EMI
+              - LOAN_DISBURSEMENT
+              - BILL_PAYMENT
+              - TRANSFER
+              - WITHDRAWAL
+              - DEPOSIT
+          status:
+            description: status parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - PENDING
+              - PROCESSING
+              - COMPLETED
+              - FAILED
+              - REVERSED
+          currency:
+            description: currency parameter
+            x-parameter-location: query
+            type: string
+          channel:
+            description: channel parameter
+            x-parameter-location: query
+            type: string
+            enum:
+              - MOBILE
+              - INTERNET
+              - BRANCH
+              - ATM
+              - API
+              - UPI
+      title: List payments
+      x-api-binding:
+        operationPath: /payments
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: createPayment
+      description: >
+        Creates and processes a new payment. Customer and account are validated
+        before processing. CRITICAL-risk customers are blocked. Payment
+        auto-transitions PENDING � PROCESSING � COMPLETED synchronously.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: integer
+            description: Customer initiating the payment (range 1001-1020).
+            example: 1001
+          accountId:
+            type: integer
+            description: Account to debit (range 2001-2032).
+            example: 2001
+          loanId:
+            type: integer
+            nullable: true
+            description: Associated loan ID for EMI payments.
+            example: 3001
+          paymentType:
+            type: string
+            enum:
+              - NEFT
+              - IMPS
+              - RTGS
+              - UPI
+              - EMI
+              - LOAN_DISBURSEMENT
+              - BILL_PAYMENT
+              - TRANSFER
+              - WITHDRAWAL
+              - DEPOSIT
+            example: UPI
+          amount:
+            type: number
+            format: double
+            example: 500
+          currency:
+            type: string
+            default: INR
+            example: INR
+          receiverName:
+            type: string
+            example: Swiggy
+          receiverAccount:
+            type: string
+            example: swiggy@upi
+          senderName:
+            type: string
+            example: Aarav Sharma
+          senderAccount:
+            type: string
+            example: ACCT2001
+          transactionRef:
+            type: string
+            description: Auto-generated if omitted.
+            example: TXN-UPI-ABC12345
+          paymentDate:
+            type: string
+            format: date-time
+            example: 2024-06-01T10:00:00
+          remarks:
+            type: string
+            example: Food order
+          channel:
+            type: string
+            enum:
+              - MOBILE
+              - INTERNET
+              - BRANCH
+              - ATM
+              - API
+              - UPI
+            default: API
+            example: MOBILE
+        required:
+          - customerId
+          - accountId
+          - paymentType
+          - amount
+          - receiverName
+          - receiverAccount
+      title: Submit payment
+      x-api-binding:
+        operationPath: /payments
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getPayment
+      description: Returns the full payment record for the given paymentId (range
+        5001-5040 for seed data).
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier (integer, range 5001-5040 for seed data).
+            x-parameter-location: path
+            type: integer
+        required:
+          - paymentId
+      title: Get payment by ID
+      x-api-binding:
+        operationPath: /payments/{paymentId}
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getTransaction
+      description: Returns the payment record for the given transactionId (range
+        6001-6040 for seed data).
+      inputSchema:
+        type: object
+        properties:
+          transactionId:
+            description: Unique transaction identifier (integer).
+            x-parameter-location: path
+            type: integer
+        required:
+          - transactionId
+      title: Get payment by transaction ID
+      x-api-binding:
+        operationPath: /transactions/{transactionId}
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getCustomerPayments
+      description: Returns all payments for a customer with a summary of totals
+        (completed, pending, failed, total amount).
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (integer, range 1001-1020).
+            x-parameter-location: path
+            type: integer
+        required:
+          - customerId
+      title: Get payments by customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/payments
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getAccountTransactions
+      description: Returns all transactions for a bank account with debit/credit totals.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (integer, range 2001-2032).
+            x-parameter-location: path
+            type: integer
+        required:
+          - accountId
+      title: Get transactions by account
+      x-api-binding:
+        operationPath: /accounts/{accountId}/transactions
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getLoanPayments
+      description: Returns all payments (EMI and disbursements) linked to a specific loan.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan identifier (integer, range 3001-3015).
+            x-parameter-location: path
+            type: integer
+        required:
+          - loanId
+      title: Get payments by loan
+      x-api-binding:
+        operationPath: /loans/{loanId}/payments
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml

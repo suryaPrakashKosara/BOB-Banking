@@ -1,0 +1,20 @@
+kind: Authenticate
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authenticate-5lPM7
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: Banking-APIs
+  operation:
+    oauth2:
+      providers:
+        - verify-joy
+      audClaim: []
+      introspectionCredential:
+        idHeader: ''
+        secretHeader: ''

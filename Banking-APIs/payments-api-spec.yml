@@ -216,7 +216,7 @@ paths:
         - Payments
       summary: Get payment by ID
       description: Returns the full payment record for the given paymentId (range
-        50015040 for seed data).
+        5001-5040 for seed data).
       operationId: getPayment
       parameters:
         - $ref: "#/components/parameters/PaymentIdParam"
@@ -242,7 +242,7 @@ paths:
         - Transactions
       summary: Get payment by transaction ID
       description: Returns the payment record for the given transactionId (range
-        60016040 for seed data).
+        6001-6040 for seed data).
       operationId: getTransaction
       parameters:
         - name: transactionId
