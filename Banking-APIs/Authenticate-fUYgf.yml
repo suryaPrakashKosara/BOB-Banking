@@ -1,7 +1,7 @@
 kind: Authenticate
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authenticate-ask9Z
+  name: Authenticate-fUYgf
   namespace: Banking-APIs
   version: '1.0'
   tags: []

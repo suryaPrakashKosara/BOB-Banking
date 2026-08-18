@@ -1,7 +1,7 @@
-kind: Authenticate
+kind: Authorize
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authenticate-ask9Z
+  name: Authorize-VVk4a
   namespace: Banking-APIs
   version: '1.0'
   tags: []
@@ -12,5 +12,8 @@ spec:
   namespace: Banking-APIs
   operation:
     oauth2:
-      providers:
-        - verify-joy
+      issClaim: sub
+      requiredScopes:
+        - provider: verify-joy
+          scopes:
+            - customer

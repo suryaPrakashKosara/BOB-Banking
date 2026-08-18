@@ -1,0 +1,15 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-apis-freeflowpolicysequence-hg0qj
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Banking-APIs:invoke-hg0qj:1.0
+  monitoring:
+    $ref: Banking-APIs:telemetry-hg0qj:1.0

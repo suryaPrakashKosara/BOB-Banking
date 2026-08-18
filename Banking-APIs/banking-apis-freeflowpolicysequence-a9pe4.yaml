@@ -3,13 +3,16 @@ apiVersion: api.ibm.com/v1
 metadata:
   name: banking-apis-freeflowpolicysequence-a9pe4
   namespace: Banking-APIs
-  version: "1.0"
+  version: '1.0'
   tags: []
   labels:
     gatewayTypes:
       - nano
 spec:
   main:
+    - $ref: Banking-APIs:ExtractIdentity-ULSBH:1.0
+    - $ref: Banking-APIs:Authenticate-fUYgf:1.0
+    - $ref: Banking-APIs:Authorize-VVk4a:1.0
     - $ref: Banking-APIs:invoke-a9pe4:1.0
   monitoring:
     $ref: Banking-APIs:telemetry-a9pe4:1.0

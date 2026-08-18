@@ -1,7 +1,7 @@
-kind: Authenticate
+kind: ExtractIdentity
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authenticate-ask9Z
+  name: ExtractIdentity-ULSBH
   namespace: Banking-APIs
   version: '1.0'
   tags: []
@@ -10,7 +10,7 @@ metadata:
       - nano
 spec:
   namespace: Banking-APIs
-  operation:
+  credentialType:
     oauth2:
-      providers:
-        - verify-joy
+      httpHeader:
+        name: Authorization

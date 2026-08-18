@@ -1,0 +1,824 @@
+openapi: 3.0.3
+info:
+  title: Payments API
+  description: Enterprise Banking Payments API. Orchestrates payment processing,
+    transaction lookup, and loan-linked payment queries across the banking
+    platform.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+x-ibm-name: payments-api
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  type: rest
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  buffering: true
+  properties:
+    - name: target-url
+      value: https://payments-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+      description: Base URL of the Payments microservice backend.
+      encoded: false
+  activity-log:
+    enabled: true
+    content: activity
+    error-content: payload
+  assembly:
+    execute:
+      - invoke:
+          version: 2.0.0
+          title: Invoke Payments Backend
+          target-url: $(target-url)$(request.path)?$(request.search)
+          verb: keep
+          timeout: 60
+          follow-redirects: false
+          compression: false
+          inject-proxy-headers: true
+          stop-on-error:
+            - ConnectionError
+            - OperationError
+    catch:
+      - errors:
+          - ConnectionError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 503 Response
+              actions:
+                - set: message.status.code
+                  value: 503
+                  type: number
+                - set: message.body
+                  value: '{"code":503,"message":"Payments service temporarily unavailable."}'
+                  type: string
+      - errors:
+          - OperationError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 502 Response
+              actions:
+                - set: message.status.code
+                  value: 502
+                  type: number
+                - set: message.body
+                  value: '{"code":502,"message":"Bad gateway. Upstream returned an invalid
+                    response."}'
+                  type: string
+servers:
+  - url: https://payments-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+    description: Production
+tags:
+  - name: Payments
+    description: Payment creation and lookup.
+  - name: Transactions
+    description: Transaction-level lookup.
+  - name: Customer
+    description: Payments grouped by customer.
+  - name: Account
+    description: Transactions grouped by account.
+  - name: Loan
+    description: Payments linked to a loan.
+paths:
+  /payments:
+    get:
+      tags:
+        - Payments
+      summary: List payments
+      description: >
+        Returns all payments. Optionally filter by customerId, accountId,
+        loanId, paymentType, status, currency, or channel.
+      operationId: listPayments
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1001
+        - name: accountId
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 2001
+        - name: loanId
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 3001
+        - name: paymentType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - NEFT
+              - IMPS
+              - RTGS
+              - UPI
+              - EMI
+              - LOAN_DISBURSEMENT
+              - BILL_PAYMENT
+              - TRANSFER
+              - WITHDRAWAL
+              - DEPOSIT
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - PROCESSING
+              - COMPLETED
+              - FAILED
+              - REVERSED
+        - name: currency
+          in: query
+          required: false
+          schema:
+            type: string
+          example: INR
+        - name: channel
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - MOBILE
+              - INTERNET
+              - BRANCH
+              - ATM
+              - API
+              - UPI
+      responses:
+        "200":
+          description: List of payments with total count.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentList"
+              examples:
+                ListExample:
+                  $ref: "#/components/examples/PaymentListExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Payments
+      summary: Submit payment
+      description: >
+        Creates and processes a new payment. Customer and account are validated
+        before processing. CRITICAL-risk customers are blocked. Payment
+        auto-transitions PENDING � PROCESSING � COMPLETED synchronously.
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentCreate"
+            examples:
+              UpiExample:
+                $ref: "#/components/examples/PaymentCreateExample"
+      responses:
+        "201":
+          description: Payment created and completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                CreatedExample:
+                  $ref: "#/components/examples/PaymentResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /payments/{paymentId}:
+    get:
+      tags:
+        - Payments
+      summary: Get payment by ID
+      description: Returns the full payment record for the given paymentId (range
+        50015040 for seed data).
+      operationId: getPayment
+      parameters:
+        - $ref: "#/components/parameters/PaymentIdParam"
+      responses:
+        "200":
+          description: Payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                Example:
+                  $ref: "#/components/examples/PaymentResponseExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get payment by transaction ID
+      description: Returns the payment record for the given transactionId (range
+        60016040 for seed data).
+      operationId: getTransaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Unique transaction identifier (integer).
+          schema:
+            type: integer
+          example: 6001
+      responses:
+        "200":
+          description: Payment record matching the transaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+              examples:
+                Example:
+                  $ref: "#/components/examples/PaymentResponseExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /customers/{customerId}/payments:
+    get:
+      tags:
+        - Customer
+      summary: Get payments by customer
+      description: Returns all payments for a customer with a summary of totals
+        (completed, pending, failed, total amount).
+      operationId: getCustomerPayments
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: Unique customer identifier (integer, range 1001-1020).
+          schema:
+            type: integer
+          example: 1001
+      responses:
+        "200":
+          description: Customer payment summary with full payment list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPaymentSummary"
+              examples:
+                Example:
+                  $ref: "#/components/examples/CustomerPaymentSummaryExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /accounts/{accountId}/transactions:
+    get:
+      tags:
+        - Account
+      summary: Get transactions by account
+      description: Returns all transactions for a bank account with debit/credit totals.
+      operationId: getAccountTransactions
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: Unique account identifier (integer, range 2001-2032).
+          schema:
+            type: integer
+          example: 2001
+      responses:
+        "200":
+          description: Account transaction summary with full transaction list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountTransactionSummary"
+              examples:
+                Example:
+                  $ref: "#/components/examples/AccountTransactionSummaryExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /loans/{loanId}/payments:
+    get:
+      tags:
+        - Loan
+      summary: Get payments by loan
+      description: Returns all payments (EMI and disbursements) linked to a specific loan.
+      operationId: getLoanPayments
+      parameters:
+        - name: loanId
+          in: path
+          required: true
+          description: Unique loan identifier (integer, range 3001-3015).
+          schema:
+            type: integer
+          example: 3001
+      responses:
+        "200":
+          description: Loan payment list with total count.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanPaymentList"
+              examples:
+                Example:
+                  $ref: "#/components/examples/LoanPaymentListExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  parameters:
+    PaymentIdParam:
+      name: paymentId
+      in: path
+      required: true
+      description: Unique payment identifier (integer, range 5001-5040 for seed data).
+      schema:
+        type: integer
+      example: 5001
+  schemas:
+    Payment:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+          example: 5001
+        transactionId:
+          type: integer
+          example: 6001
+        customerId:
+          type: integer
+          example: 1001
+        accountId:
+          type: integer
+          example: 2001
+        loanId:
+          type: integer
+          nullable: true
+          example: 3001
+        paymentType:
+          type: string
+          enum:
+            - NEFT
+            - IMPS
+            - RTGS
+            - UPI
+            - EMI
+            - LOAN_DISBURSEMENT
+            - BILL_PAYMENT
+            - TRANSFER
+            - WITHDRAWAL
+            - DEPOSIT
+          example: EMI
+        amount:
+          type: number
+          format: double
+          example: 21695.58
+        currency:
+          type: string
+          example: INR
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - COMPLETED
+            - FAILED
+            - REVERSED
+          example: COMPLETED
+        transactionRef:
+          type: string
+          example: TXN-EMI-3001-6009
+        senderName:
+          type: string
+          example: Aarav Sharma
+        senderAccount:
+          type: string
+          example: ACCT2001
+        receiverName:
+          type: string
+          example: Agentic Bank EMI
+        receiverAccount:
+          type: string
+          example: AGBK-EMI-POOL
+        paymentDate:
+          type: string
+          format: date-time
+          example: 2024-01-05T08:00:00
+        remarks:
+          type: string
+          nullable: true
+          example: EMI Jan-2024
+        channel:
+          type: string
+          enum:
+            - MOBILE
+            - INTERNET
+            - BRANCH
+            - ATM
+            - API
+            - UPI
+          example: MOBILE
+    PaymentCreate:
+      type: object
+      required:
+        - customerId
+        - accountId
+        - paymentType
+        - amount
+        - receiverName
+        - receiverAccount
+      properties:
+        customerId:
+          type: integer
+          description: Customer initiating the payment (range 1001-1020).
+          example: 1001
+        accountId:
+          type: integer
+          description: Account to debit (range 2001-2032).
+          example: 2001
+        loanId:
+          type: integer
+          nullable: true
+          description: Associated loan ID for EMI payments.
+          example: 3001
+        paymentType:
+          type: string
+          enum:
+            - NEFT
+            - IMPS
+            - RTGS
+            - UPI
+            - EMI
+            - LOAN_DISBURSEMENT
+            - BILL_PAYMENT
+            - TRANSFER
+            - WITHDRAWAL
+            - DEPOSIT
+          example: UPI
+        amount:
+          type: number
+          format: double
+          example: 500
+        currency:
+          type: string
+          default: INR
+          example: INR
+        receiverName:
+          type: string
+          example: Swiggy
+        receiverAccount:
+          type: string
+          example: swiggy@upi
+        senderName:
+          type: string
+          example: Aarav Sharma
+        senderAccount:
+          type: string
+          example: ACCT2001
+        transactionRef:
+          type: string
+          description: Auto-generated if omitted.
+          example: TXN-UPI-ABC12345
+        paymentDate:
+          type: string
+          format: date-time
+          example: 2024-06-01T10:00:00
+        remarks:
+          type: string
+          example: Food order
+        channel:
+          type: string
+          enum:
+            - MOBILE
+            - INTERNET
+            - BRANCH
+            - ATM
+            - API
+            - UPI
+          default: API
+          example: MOBILE
+    PaymentList:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        total:
+          type: integer
+          example: 40
+    CustomerPaymentSummary:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          example: 1001
+        totalTransactions:
+          type: integer
+          example: 4
+        completed:
+          type: integer
+          example: 4
+        pending:
+          type: integer
+          example: 0
+        failed:
+          type: integer
+          example: 0
+        totalAmount:
+          type: number
+          format: double
+          example: 2565086.74
+        currency:
+          type: string
+          example: INR
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+    AccountTransactionSummary:
+      type: object
+      properties:
+        accountId:
+          type: integer
+          example: 2001
+        totalTransactions:
+          type: integer
+          example: 4
+        totalCredits:
+          type: number
+          format: double
+          example: 0
+        totalDebits:
+          type: number
+          format: double
+          example: 2565086.74
+        currency:
+          type: string
+          example: INR
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+    LoanPaymentList:
+      type: object
+      properties:
+        loanId:
+          type: integer
+          example: 3001
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        total:
+          type: integer
+          example: 4
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Payment 9999 not found.
+        status:
+          type: integer
+          example: 404
+  responses:
+    BadRequest:
+      description: Bad Request  request body is missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: Request body must be valid JSON.
+            status: 400
+    Unauthorized:
+      description: Unauthorized. A valid Bearer token is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: Authentication token is missing or invalid.
+            status: 401
+    NotFound:
+      description: Not Found. The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: Payment 9999 not found.
+            status: 404
+    InternalServerError:
+      description: Internal Server Error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: An unexpected error occurred. Please try again later.
+            status: 500
+  examples:
+    PaymentListExample:
+      summary: List of payments (two sample records)
+      value:
+        payments:
+          - paymentId: 5001
+            transactionId: 6001
+            customerId: 1001
+            accountId: 2001
+            loanId: 3001
+            paymentType: LOAN_DISBURSEMENT
+            amount: 2500000
+            currency: INR
+            status: COMPLETED
+            transactionRef: TXN-LD-3001-6001
+            senderName: Agentic Bank
+            senderAccount: AGBK0000001
+            receiverName: Aarav Sharma
+            receiverAccount: ACCT2001
+            paymentDate: 2022-02-01T09:00:00
+            remarks: Home loan disbursement
+            channel: API
+          - paymentId: 5009
+            transactionId: 6009
+            customerId: 1001
+            accountId: 2001
+            loanId: 3001
+            paymentType: EMI
+            amount: 21695.58
+            currency: INR
+            status: COMPLETED
+            transactionRef: TXN-EMI-3001-6009
+            senderName: Aarav Sharma
+            senderAccount: ACCT2001
+            receiverName: Agentic Bank EMI
+            receiverAccount: AGBK-EMI-POOL
+            paymentDate: 2024-01-05T08:00:00
+            remarks: EMI Jan-2024
+            channel: MOBILE
+        total: 40
+    PaymentCreateExample:
+      summary: Create a UPI payment
+      value:
+        customerId: 1001
+        accountId: 2001
+        paymentType: UPI
+        amount: 500
+        currency: INR
+        receiverName: Swiggy
+        receiverAccount: swiggy@upi
+        remarks: Food order
+        channel: MOBILE
+    PaymentResponseExample:
+      summary: Completed payment record
+      value:
+        paymentId: 5001
+        transactionId: 6001
+        customerId: 1001
+        accountId: 2001
+        loanId: 3001
+        paymentType: LOAN_DISBURSEMENT
+        amount: 2500000
+        currency: INR
+        status: COMPLETED
+        transactionRef: TXN-LD-3001-6001
+        senderName: Agentic Bank
+        senderAccount: AGBK0000001
+        receiverName: Aarav Sharma
+        receiverAccount: ACCT2001
+        paymentDate: 2022-02-01T09:00:00
+        remarks: Home loan disbursement
+        channel: API
+    CustomerPaymentSummaryExample:
+      summary: Payment summary for customer 1001
+      value:
+        customerId: 1001
+        totalTransactions: 4
+        completed: 4
+        pending: 0
+        failed: 0
+        totalAmount: 2565086.74
+        currency: INR
+        payments:
+          - paymentId: 5001
+            transactionId: 6001
+            customerId: 1001
+            accountId: 2001
+            loanId: 3001
+            paymentType: LOAN_DISBURSEMENT
+            amount: 2500000
+            currency: INR
+            status: COMPLETED
+            transactionRef: TXN-LD-3001-6001
+            senderName: Agentic Bank
+            senderAccount: AGBK0000001
+            receiverName: Aarav Sharma
+            receiverAccount: ACCT2001
+            paymentDate: 2022-02-01T09:00:00
+            remarks: Home loan disbursement
+            channel: API
+    AccountTransactionSummaryExample:
+      summary: Transaction summary for account 2001
+      value:
+        accountId: 2001
+        totalTransactions: 4
+        totalCredits: 0
+        totalDebits: 2565086.74
+        currency: INR
+        transactions:
+          - paymentId: 5001
+            transactionId: 6001
+            customerId: 1001
+            accountId: 2001
+            loanId: 3001
+            paymentType: LOAN_DISBURSEMENT
+            amount: 2500000
+            currency: INR
+            status: COMPLETED
+            transactionRef: TXN-LD-3001-6001
+            senderName: Agentic Bank
+            senderAccount: AGBK0000001
+            receiverName: Aarav Sharma
+            receiverAccount: ACCT2001
+            paymentDate: 2022-02-01T09:00:00
+            remarks: Home loan disbursement
+            channel: API
+    LoanPaymentListExample:
+      summary: Payments linked to loan 3001
+      value:
+        loanId: 3001
+        payments:
+          - paymentId: 5001
+            transactionId: 6001
+            customerId: 1001
+            accountId: 2001
+            loanId: 3001
+            paymentType: LOAN_DISBURSEMENT
+            amount: 2500000
+            currency: INR
+            status: COMPLETED
+            transactionRef: TXN-LD-3001-6001
+            senderName: Agentic Bank
+            senderAccount: AGBK0000001
+            receiverName: Aarav Sharma
+            receiverAccount: ACCT2001
+            paymentDate: 2022-02-01T09:00:00
+            remarks: Home loan disbursement
+            channel: API
+          - paymentId: 5009
+            transactionId: 6009
+            customerId: 1001
+            accountId: 2001
+            loanId: 3001
+            paymentType: EMI
+            amount: 21695.58
+            currency: INR
+            status: COMPLETED
+            transactionRef: TXN-EMI-3001-6009
+            senderName: Aarav Sharma
+            senderAccount: ACCT2001
+            receiverName: Agentic Bank EMI
+            receiverAccount: AGBK-EMI-POOL
+            paymentDate: 2024-01-05T08:00:00
+            remarks: EMI Jan-2024
+            channel: MOBILE
+        total: 4

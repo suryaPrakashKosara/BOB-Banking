@@ -14,7 +14,3 @@ spec:
     oauth2:
       providers:
         - verify-joy
-      audClaim: []
-      introspectionCredential:
-        idHeader: ''
-        secretHeader: ''
