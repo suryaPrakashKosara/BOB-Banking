@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-and-compliance-api-server-g7rpk
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Risk and Compliance API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: BOB-Banking:bob-banking-quota-g7rpk:1.0
+  policy-sequence:
+    - $ref: BOB-Banking:bob-banking-freeflowpolicysequence-g7rpk:1.0
+  capabilities:
+    tools:
+      - $ref: BOB-Banking:risk-and-compliance-api-tool-g7rpk:1.0

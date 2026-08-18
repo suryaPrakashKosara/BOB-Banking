@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-accounts-management-api-server-tlba5
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Banking Accounts Management API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: BOB-Banking:bob-banking-quota-tlba5:1.0
+  policy-sequence:
+    - $ref: BOB-Banking:bob-banking-freeflowpolicysequence-tlba5:1.0
+  capabilities:
+    tools:
+      - $ref: BOB-Banking:banking-accounts-management-api-tool-tlba5:1.0

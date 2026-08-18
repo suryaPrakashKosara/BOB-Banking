@@ -1,0 +1,15 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: bob-banking-freeflowpolicysequence-g7rpk
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: BOB-Banking:invoke-g7rpk:1.0
+  monitoring:
+    $ref: BOB-Banking:telemetry-g7rpk:1.0

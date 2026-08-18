@@ -1,0 +1,172 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: payments-api-tool-ijyib
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Payments API. Orchestrates payment processing,
+    internal transfers, account validation, and loan disbursements across the
+    banking platform.
+  labels:
+    api-spec: ./payments-api-spec.yml
+spec:
+  tools:
+    - name: listPayments
+      description: Returns a paginated list of payment records. Supports filtering by
+        status, payment type, and date range.
+      inputSchema:
+        type: object
+        properties:
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          status:
+            description: Filter by payment status.
+            x-parameter-location: query
+            type: string
+            enum:
+              - PENDING
+              - VALIDATED
+              - PROCESSING
+              - COMPLETED
+              - FAILED
+              - REJECTED
+              - REVERSED
+              - CANCELLED
+          paymentType:
+            description: Filter by payment type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - DOMESTIC
+              - INTERNATIONAL
+              - INTERNAL_TRANSFER
+              - LOAN_DISBURSEMENT
+              - DIRECT_DEBIT
+              - STANDING_ORDER
+          customerId:
+            description: Filter payments by originating customer identifier.
+            x-parameter-location: query
+            type: string
+            minLength: 1
+            maxLength: 64
+          fromDate:
+            description: Filter payments submitted on or after this date (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+          toDate:
+            description: Filter payments submitted on or before this date (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+      title: List payments
+      x-api-binding:
+        operationPath: /payments
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: submitPayment
+      description: Submits a new payment instruction. The Payments API validates the
+        source account via the Accounts API and screens the payment via the Risk
+        API before processing.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Submit payment
+      x-api-binding:
+        operationPath: /payments
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getPayment
+      description: Returns the full record for a single payment.
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - paymentId
+      title: Get payment
+      x-api-binding:
+        operationPath: /payments/{paymentId}
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: getPaymentStatus
+      description: Returns the current processing status and status history for a payment.
+      inputSchema:
+        type: object
+        properties:
+          paymentId:
+            description: Unique payment identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - paymentId
+      title: Get payment status
+      x-api-binding:
+        operationPath: /payments/{paymentId}/status
+        operationMethod: GET
+        api:
+          $path: ./payments-api-spec.yml
+    - name: submitInternalTransfer
+      description: Transfers funds between two accounts held within the same banking
+        platform. Validates both the source and destination accounts via the
+        Accounts API before posting the debit and credit.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Submit internal transfer
+      x-api-binding:
+        operationPath: /payments/internal-transfer
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: validatePayment
+      description: Performs pre-payment validation including account status checks via
+        the Accounts API and fraud screening via the Risk API. Returns a
+        validation verdict before the payment is committed.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Validate payment
+      x-api-binding:
+        operationPath: /payments/validate
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml
+    - name: submitDisbursement
+      description: Disburses approved loan funds to the customer disbursement account.
+        Called exclusively by the Loans API after a loan is approved. Validates
+        the destination account via the Accounts API and runs a final fraud
+        check via the Risk API before transferring funds.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Submit loan disbursement
+      x-api-binding:
+        operationPath: /payments/disbursement
+        operationMethod: POST
+        api:
+          $path: ./payments-api-spec.yml

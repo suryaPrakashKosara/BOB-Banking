@@ -1,0 +1,205 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: loans-api-tool-dprtz
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Loans API. Manages loan applications,
+    eligibility checks, and loan lifecycle.
+  labels:
+    api-spec: ./loans-api-spec.yml
+spec:
+  tools:
+    - name: listLoans
+      description: Returns a paginated list of all loan records.
+      inputSchema:
+        type: object
+        properties:
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          status:
+            description: Filter by loan status.
+            x-parameter-location: query
+            type: string
+            enum: &a1
+              - DRAFT
+              - SUBMITTED
+              - UNDER_REVIEW
+              - APPROVED
+              - REJECTED
+              - DISBURSED
+              - ACTIVE
+              - CLOSED
+              - DEFAULTED
+          loanType:
+            description: Filter by loan type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - PERSONAL
+              - HOME
+              - AUTO
+              - BUSINESS
+              - EDUCATION
+              - OVERDRAFT
+      title: List loans
+      x-api-binding:
+        operationPath: /loans
+        operationMethod: GET
+        api:
+          $path: ./loans-api-spec.yml
+    - name: applyForLoan
+      description: Submits a new loan application and returns the created loan record.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Submit loan application
+      x-api-binding:
+        operationPath: /loans
+        operationMethod: POST
+        api:
+          $path: ./loans-api-spec.yml
+    - name: checkEligibility
+      description: Assesses whether a customer is eligible for a loan before a formal
+        application is submitted.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Check loan eligibility
+      x-api-binding:
+        operationPath: /loans/eligibility
+        operationMethod: POST
+        api:
+          $path: ./loans-api-spec.yml
+    - name: getLoansByCustomer
+      description: Returns all loan records linked to the specified customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          status:
+            description: Filter by loan status.
+            x-parameter-location: query
+            type: string
+            enum: *a1
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        required:
+          - customerId
+      title: Get loans by customer
+      x-api-binding:
+        operationPath: /loans/customer/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./loans-api-spec.yml
+    - name: getLoan
+      description: Returns the full details for a single loan record.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - loanId
+      title: Get loan
+      x-api-binding:
+        operationPath: /loans/{loanId}
+        operationMethod: GET
+        api:
+          $path: ./loans-api-spec.yml
+    - name: updateLoan
+      description: Updates mutable fields on an existing loan record such as
+        disbursement account or contact details.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          disbursementAccountId:
+            type: string
+            description: Updated disbursement account identifier.
+            example: ACC-00457
+          repaymentAccountId:
+            type: string
+            description: Updated repayment account identifier.
+            example: ACC-00457
+          repaymentFrequency:
+            type: string
+            enum:
+              - WEEKLY
+              - FORTNIGHTLY
+              - MONTHLY
+              - QUARTERLY
+            description: Frequency of scheduled loan repayments.
+          notes:
+            type: string
+            maxLength: 500
+            description: Updated applicant notes.
+            example: Switching repayment account to new primary account.
+        required:
+          - loanId
+      title: Update loan
+      x-api-binding:
+        operationPath: /loans/{loanId}
+        operationMethod: PUT
+        api:
+          $path: ./loans-api-spec.yml
+    - name: getLoanStatus
+      description: Returns the current processing status and status history for a loan.
+      inputSchema:
+        type: object
+        properties:
+          loanId:
+            description: Unique loan identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - loanId
+      title: Get loan status
+      x-api-binding:
+        operationPath: /loans/{loanId}/status
+        operationMethod: GET
+        api:
+          $path: ./loans-api-spec.yml

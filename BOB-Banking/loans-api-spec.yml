@@ -1,0 +1,1009 @@
+openapi: 3.0.3
+info:
+  title: Loans API
+  description: Enterprise Banking Loans API. Manages loan applications,
+    eligibility checks, and loan lifecycle.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+x-ibm-name: loans-api
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  type: rest
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  buffering: true
+  properties:
+    - name: target-url
+      value: https://loan-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+      description: Base URL of the Loans microservice backend.
+      encoded: false
+  activity-log:
+    enabled: true
+    content: activity
+    error-content: payload
+  assembly:
+    execute:
+      - invoke:
+          version: 2.0.0
+          title: Invoke Loans Backend
+          target-url: $(target-url)$(request.path)
+          verb: keep
+          timeout: 60
+          follow-redirects: false
+          compression: false
+          inject-proxy-headers: true
+          stop-on-error:
+            - ConnectionError
+            - OperationError
+    catch:
+      - errors:
+          - ConnectionError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 503 Response
+              actions:
+                - set: message.status.code
+                  value: 503
+                  type: number
+                - set: message.body
+                  value: '{"code":503,"message":"Loans service temporarily unavailable."}'
+                  type: string
+      - errors:
+          - OperationError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 502 Response
+              actions:
+                - set: message.status.code
+                  value: 502
+                  type: number
+                - set: message.body
+                  value: '{"code":502,"message":"Bad gateway. Upstream returned an invalid
+                    response."}'
+                  type: string
+servers:
+  - url: https://loan-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/loans
+    description: Production
+tags:
+  - name: Loans
+    description: Loan application submission and lifecycle management.
+  - name: Eligibility
+    description: Loan eligibility assessment before formal application.
+  - name: Status
+    description: Loan status tracking and updates.
+paths:
+  /loans:
+    get:
+      tags:
+        - Loans
+      summary: List loans
+      description: Returns a paginated list of all loan records.
+      operationId: listLoans
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          required: false
+          description: Filter by loan status.
+          schema:
+            $ref: "#/components/schemas/LoanStatus"
+        - name: loanType
+          in: query
+          required: false
+          description: Filter by loan type.
+          schema:
+            $ref: "#/components/schemas/LoanType"
+      responses:
+        "200":
+          description: Paginated list of loan records.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanPage"
+              examples:
+                LoanPageExample:
+                  $ref: "#/components/examples/LoanPageExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+    post:
+      tags:
+        - Loans
+      summary: Submit loan application
+      description: Submits a new loan application and returns the created loan record.
+      operationId: applyForLoan
+      requestBody:
+        $ref: "#/components/requestBodies/LoanApplicationRequest"
+      responses:
+        "201":
+          description: Loan application submitted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanDetails"
+              examples:
+                LoanDetailsExample:
+                  $ref: "#/components/examples/LoanDetailsExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /loans/eligibility:
+    post:
+      tags:
+        - Eligibility
+      summary: Check loan eligibility
+      description: Assesses whether a customer is eligible for a loan before a formal
+        application is submitted.
+      operationId: checkEligibility
+      requestBody:
+        $ref: "#/components/requestBodies/LoanEligibilityRequest"
+      responses:
+        "200":
+          description: Eligibility assessment result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanEligibility"
+              examples:
+                EligibleExample:
+                  $ref: "#/components/examples/EligibilityEligibleExample"
+                IneligibleExample:
+                  $ref: "#/components/examples/EligibilityIneligibleExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /loans/customer/{customerId}:
+    parameters:
+      - $ref: "#/components/parameters/CustomerIdParam"
+    get:
+      tags:
+        - Loans
+      summary: Get loans by customer
+      description: Returns all loan records linked to the specified customer.
+      operationId: getLoansByCustomer
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by loan status.
+          schema:
+            $ref: "#/components/schemas/LoanStatus"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of loans for the customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanPage"
+              examples:
+                CustomerLoansExample:
+                  $ref: "#/components/examples/LoanPageExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /loans/{loanId}:
+    parameters:
+      - $ref: "#/components/parameters/LoanIdParam"
+    get:
+      tags:
+        - Loans
+      summary: Get loan
+      description: Returns the full details for a single loan record.
+      operationId: getLoan
+      responses:
+        "200":
+          description: Loan details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanDetails"
+              examples:
+                LoanDetailsExample:
+                  $ref: "#/components/examples/LoanDetailsExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+    put:
+      tags:
+        - Loans
+      summary: Update loan
+      description: Updates mutable fields on an existing loan record such as
+        disbursement account or contact details.
+      operationId: updateLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanUpdateRequest"
+      responses:
+        "200":
+          description: Updated loan record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /loans/{loanId}/status:
+    parameters:
+      - $ref: "#/components/parameters/LoanIdParam"
+    get:
+      tags:
+        - Status
+      summary: Get loan status
+      description: Returns the current processing status and status history for a loan.
+      operationId: getLoanStatus
+      responses:
+        "200":
+          description: Loan status record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanStatusRecord"
+              examples:
+                LoanStatusExample:
+                  $ref: "#/components/examples/LoanStatusExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: RS256 JWT issued by the bank identity provider.
+  parameters:
+    LoanIdParam:
+      name: loanId
+      in: path
+      required: true
+      description: Unique loan identifier.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: LOAN-00789
+    CustomerIdParam:
+      name: customerId
+      in: path
+      required: true
+      description: Unique customer identifier (CIF).
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: CUST-00123
+    PageParam:
+      name: page
+      in: query
+      required: false
+      description: Page number (1-based).
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of records per page.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      example: 20
+  requestBodies:
+    LoanApplicationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoanApplication"
+          examples:
+            PersonalLoanExample:
+              $ref: "#/components/examples/PersonalLoanApplicationExample"
+            HomeLoanExample:
+              $ref: "#/components/examples/HomeLoanApplicationExample"
+    LoanEligibilityRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoanEligibilityRequest"
+          examples:
+            EligibilityRequestExample:
+              $ref: "#/components/examples/EligibilityRequestExample"
+  schemas:
+    LoanType:
+      type: string
+      enum:
+        - PERSONAL
+        - HOME
+        - AUTO
+        - BUSINESS
+        - EDUCATION
+        - OVERDRAFT
+      description: Classification of the loan product.
+    LoanStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - UNDER_REVIEW
+        - APPROVED
+        - REJECTED
+        - DISBURSED
+        - ACTIVE
+        - CLOSED
+        - DEFAULTED
+      description: Lifecycle status of the loan application or active loan.
+    RepaymentFrequency:
+      type: string
+      enum:
+        - WEEKLY
+        - FORTNIGHTLY
+        - MONTHLY
+        - QUARTERLY
+      description: Frequency of scheduled loan repayments.
+    EligibilityOutcome:
+      type: string
+      enum:
+        - ELIGIBLE
+        - INELIGIBLE
+        - REFER
+      description: Result of the eligibility pre-assessment. REFER indicates manual
+        review is required.
+    LoanApplication:
+      type: object
+      required:
+        - customerId
+        - loanType
+        - requestedAmount
+        - currency
+        - termMonths
+        - purpose
+      properties:
+        customerId:
+          type: string
+          description: Identifier of the applying customer. Must exist in the Customer API.
+          example: CUST-00123
+        loanType:
+          $ref: "#/components/schemas/LoanType"
+        requestedAmount:
+          type: number
+          format: double
+          minimum: 1
+          description: Amount of credit requested in the specified currency.
+          example: 25000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        termMonths:
+          type: integer
+          minimum: 1
+          maximum: 360
+          description: Requested loan term in months.
+          example: 60
+        purpose:
+          type: string
+          maxLength: 300
+          description: Stated purpose for the loan.
+          example: Purchase of a new vehicle.
+        disbursementAccountId:
+          type: string
+          description: Account identifier to which approved funds will be disbursed.
+          example: ACC-00456
+        repaymentAccountId:
+          type: string
+          description: Account identifier from which repayments will be collected.
+          example: ACC-00456
+        repaymentFrequency:
+          $ref: "#/components/schemas/RepaymentFrequency"
+        collateral:
+          $ref: "#/components/schemas/CollateralDetails"
+        notes:
+          type: string
+          maxLength: 500
+          description: Optional applicant notes or additional context.
+          example: First-time applicant. No prior credit history.
+    LoanDetails:
+      type: object
+      required:
+        - loanId
+        - customerId
+        - loanType
+        - status
+        - requestedAmount
+        - currency
+        - termMonths
+        - createdAt
+      properties:
+        loanId:
+          type: string
+          description: Unique loan identifier assigned by the system.
+          example: LOAN-00789
+        customerId:
+          type: string
+          description: Identifier of the customer who applied for this loan.
+          example: CUST-00123
+        loanType:
+          $ref: "#/components/schemas/LoanType"
+        status:
+          $ref: "#/components/schemas/LoanStatus"
+        requestedAmount:
+          type: number
+          format: double
+          description: Amount of credit originally requested.
+          example: 25000
+        approvedAmount:
+          type: number
+          format: double
+          description: Amount approved by the credit committee. Null until approved.
+          example: 22000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        termMonths:
+          type: integer
+          description: Approved loan term in months.
+          example: 60
+        interestRate:
+          type: number
+          format: double
+          description: Annual interest rate as a percentage. Set after approval.
+          example: 7.25
+        repaymentFrequency:
+          $ref: "#/components/schemas/RepaymentFrequency"
+        repaymentAmount:
+          type: number
+          format: double
+          description: Scheduled repayment amount per period. Calculated after approval.
+          example: 490.35
+        disbursementAccountId:
+          type: string
+          description: Account to which approved funds are disbursed.
+          example: ACC-00456
+        repaymentAccountId:
+          type: string
+          description: Account from which repayments are collected.
+          example: ACC-00456
+        purpose:
+          type: string
+          description: Stated loan purpose.
+          example: Purchase of a new vehicle.
+        collateral:
+          $ref: "#/components/schemas/CollateralDetails"
+        disbursedAt:
+          type: string
+          format: date-time
+          description: Timestamp when funds were disbursed (UTC, ISO 8601). Null until
+            disbursed.
+          example: 2024-02-01T10:00:00Z
+        maturityDate:
+          type: string
+          format: date
+          description: Date on which the loan is fully repaid (ISO 8601 date).
+          example: 2029-02-01
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the application was submitted (UTC, ISO 8601).
+          example: 2024-01-20T09:00:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the most recent update (UTC, ISO 8601).
+          example: 2024-01-25T14:30:00Z
+    LoanUpdateRequest:
+      type: object
+      description: Mutable loan fields. Loan type, amount, and term are immutable
+        after submission.
+      properties:
+        disbursementAccountId:
+          type: string
+          description: Updated disbursement account identifier.
+          example: ACC-00457
+        repaymentAccountId:
+          type: string
+          description: Updated repayment account identifier.
+          example: ACC-00457
+        repaymentFrequency:
+          $ref: "#/components/schemas/RepaymentFrequency"
+        notes:
+          type: string
+          maxLength: 500
+          description: Updated applicant notes.
+          example: Switching repayment account to new primary account.
+    LoanStatusRecord:
+      type: object
+      required:
+        - loanId
+        - currentStatus
+        - updatedAt
+      properties:
+        loanId:
+          type: string
+          description: Loan identifier.
+          example: LOAN-00789
+        currentStatus:
+          $ref: "#/components/schemas/LoanStatus"
+        previousStatus:
+          $ref: "#/components/schemas/LoanStatus"
+        reason:
+          type: string
+          maxLength: 300
+          description: Reason for the most recent status transition.
+          example: Credit score meets threshold. Approved by underwriting.
+        decidedBy:
+          type: string
+          description: Identifier of the system or officer that performed the last status
+            change.
+          example: underwriting-engine-v2
+        statusHistory:
+          type: array
+          description: Chronological list of all status transitions for this loan.
+          items:
+            $ref: "#/components/schemas/LoanStatusHistoryEntry"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the most recent status change (UTC, ISO 8601).
+          example: 2024-01-25T14:30:00Z
+    LoanStatusHistoryEntry:
+      type: object
+      required:
+        - status
+        - changedAt
+      properties:
+        status:
+          $ref: "#/components/schemas/LoanStatus"
+        reason:
+          type: string
+          maxLength: 300
+          description: Reason for this status transition.
+          example: Application received and queued for review.
+        decidedBy:
+          type: string
+          description: System or officer that triggered this transition.
+          example: loan-intake-service
+        changedAt:
+          type: string
+          format: date-time
+          description: Timestamp of this transition (UTC, ISO 8601).
+          example: 2024-01-20T09:01:00Z
+    LoanEligibilityRequest:
+      type: object
+      required:
+        - customerId
+        - loanType
+        - requestedAmount
+        - currency
+        - termMonths
+      properties:
+        customerId:
+          type: string
+          description: Identifier of the customer to assess. Must exist in the Customer API.
+          example: CUST-00123
+        loanType:
+          $ref: "#/components/schemas/LoanType"
+        requestedAmount:
+          type: number
+          format: double
+          minimum: 1
+          description: Amount of credit to assess eligibility for.
+          example: 25000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        termMonths:
+          type: integer
+          minimum: 1
+          maximum: 360
+          description: Requested term in months.
+          example: 60
+    LoanEligibility:
+      type: object
+      required:
+        - customerId
+        - outcome
+        - assessedAt
+      properties:
+        customerId:
+          type: string
+          description: Identifier of the assessed customer.
+          example: CUST-00123
+        outcome:
+          $ref: "#/components/schemas/EligibilityOutcome"
+        maxEligibleAmount:
+          type: number
+          format: double
+          description: Maximum loan amount the customer qualifies for. Null if ineligible.
+          example: 30000
+        indicativeRate:
+          type: number
+          format: double
+          description: Indicative annual interest rate as a percentage. Subject to final
+            approval.
+          example: 7.25
+        reasons:
+          type: array
+          description: List of reasons supporting the eligibility outcome.
+          items:
+            type: string
+          example:
+            - KYC status is VERIFIED.
+            - Sufficient account balance detected.
+            - No active defaults recorded.
+        referralReasons:
+          type: array
+          description: Conditions requiring manual review when outcome is REFER.
+          items:
+            type: string
+          example:
+            - Credit history is less than 12 months.
+        assessedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the eligibility assessment (UTC, ISO 8601).
+          example: 2024-01-19T15:00:00Z
+        expiresAt:
+          type: string
+          format: date-time
+          description: Timestamp after which this eligibility result is no longer valid.
+          example: 2024-01-26T15:00:00Z
+    CollateralDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - PROPERTY
+            - VEHICLE
+            - SAVINGS_ACCOUNT
+            - SHARES
+            - OTHER
+          description: Type of collateral offered against the loan.
+          example: VEHICLE
+        description:
+          type: string
+          maxLength: 300
+          description: Description of the collateral asset.
+          example: 2023 Toyota Camry - VIN 1HGCM82633A123456
+        estimatedValue:
+          type: number
+          format: double
+          description: Estimated market value of the collateral in the loan currency.
+          example: 35000
+    LoanPage:
+      type: object
+      required:
+        - data
+        - page
+        - pageSize
+        - totalCount
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoanDetails"
+          description: Array of loan records for the current page.
+        page:
+          type: integer
+          description: Current page number.
+          example: 1
+        pageSize:
+          type: integer
+          description: Records per page.
+          example: 20
+        totalCount:
+          type: integer
+          description: Total number of matching loan records across all pages.
+          example: 7
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 400
+        message:
+          type: string
+          description: Human-readable error description.
+          example: The request payload is invalid.
+        details:
+          type: array
+          description: Field-level validation errors.
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: Name of the field that failed validation.
+          example: requestedAmount
+        message:
+          type: string
+          description: Validation failure reason.
+          example: Must be greater than zero.
+  responses:
+    BadRequest:
+      description: Bad Request. The request payload is malformed or fails validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 400
+            message: The request payload is invalid.
+            details:
+              - field: requestedAmount
+                message: Must be greater than zero.
+    Unauthorized:
+      description: Unauthorized. A valid Bearer token is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 401
+            message: Authentication token is missing or invalid.
+    Forbidden:
+      description: Forbidden. The caller does not have permission for this operation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 403
+            message: Insufficient scope for this operation.
+    NotFound:
+      description: Not Found. The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 404
+            message: Loan not found.
+    Conflict:
+      description: Conflict. The operation cannot be completed due to a current state
+        constraint.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 409
+            message: An active loan application already exists for this customer.
+    UnprocessableEntity:
+      description: Unprocessable Entity. The loan application was rejected due to a
+        business rule.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 422
+            message: Loan application rejected. Customer KYC status is not VERIFIED.
+    InternalServerError:
+      description: Internal Server Error. An unexpected condition was encountered.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 500
+            message: An unexpected error occurred. Please try again later.
+  examples:
+    PersonalLoanApplicationExample:
+      summary: Personal loan application
+      value:
+        customerId: CUST-00123
+        loanType: PERSONAL
+        requestedAmount: 15000
+        currency: AUD
+        termMonths: 36
+        purpose: Home renovation.
+        disbursementAccountId: ACC-00456
+        repaymentAccountId: ACC-00456
+        repaymentFrequency: MONTHLY
+    HomeLoanApplicationExample:
+      summary: Home loan application with collateral
+      value:
+        customerId: CUST-00124
+        loanType: HOME
+        requestedAmount: 450000
+        currency: AUD
+        termMonths: 300
+        purpose: Purchase of primary residence.
+        disbursementAccountId: ACC-00458
+        repaymentAccountId: ACC-00458
+        repaymentFrequency: MONTHLY
+        collateral:
+          type: PROPERTY
+          description: 42 Harbour Street, Sydney NSW 2000
+          estimatedValue: 650000
+    LoanDetailsExample:
+      summary: Approved personal loan
+      value:
+        loanId: LOAN-00789
+        customerId: CUST-00123
+        loanType: PERSONAL
+        status: APPROVED
+        requestedAmount: 15000
+        approvedAmount: 15000
+        currency: AUD
+        termMonths: 36
+        interestRate: 8.5
+        repaymentFrequency: MONTHLY
+        repaymentAmount: 473.29
+        disbursementAccountId: ACC-00456
+        repaymentAccountId: ACC-00456
+        purpose: Home renovation.
+        disbursedAt: null
+        maturityDate: 2027-02-01
+        createdAt: 2024-01-20T09:00:00Z
+        updatedAt: 2024-01-25T14:30:00Z
+    LoanPageExample:
+      summary: Paginated loan list
+      value:
+        data:
+          - loanId: LOAN-00789
+            customerId: CUST-00123
+            loanType: PERSONAL
+            status: APPROVED
+            requestedAmount: 15000
+            approvedAmount: 15000
+            currency: AUD
+            termMonths: 36
+            interestRate: 8.5
+            createdAt: 2024-01-20T09:00:00Z
+            updatedAt: 2024-01-25T14:30:00Z
+          - loanId: LOAN-00790
+            customerId: CUST-00124
+            loanType: HOME
+            status: UNDER_REVIEW
+            requestedAmount: 450000
+            currency: AUD
+            termMonths: 300
+            createdAt: 2024-02-05T11:00:00Z
+            updatedAt: 2024-02-05T11:00:00Z
+        page: 1
+        pageSize: 20
+        totalCount: 2
+    LoanStatusExample:
+      summary: Approved loan status with history
+      value:
+        loanId: LOAN-00789
+        currentStatus: APPROVED
+        previousStatus: UNDER_REVIEW
+        reason: Credit score meets threshold. Approved by underwriting.
+        decidedBy: underwriting-engine-v2
+        statusHistory:
+          - status: SUBMITTED
+            reason: Application received and queued for review.
+            decidedBy: loan-intake-service
+            changedAt: 2024-01-20T09:01:00Z
+          - status: UNDER_REVIEW
+            reason: Assigned to automated underwriting queue.
+            decidedBy: underwriting-engine-v2
+            changedAt: 2024-01-22T08:00:00Z
+          - status: APPROVED
+            reason: Credit score meets threshold. Approved by underwriting.
+            decidedBy: underwriting-engine-v2
+            changedAt: 2024-01-25T14:30:00Z
+        updatedAt: 2024-01-25T14:30:00Z
+    EligibilityRequestExample:
+      summary: Eligibility check for a personal loan
+      value:
+        customerId: CUST-00123
+        loanType: PERSONAL
+        requestedAmount: 25000
+        currency: AUD
+        termMonths: 60
+    EligibilityEligibleExample:
+      summary: Customer is eligible
+      value:
+        customerId: CUST-00123
+        outcome: ELIGIBLE
+        maxEligibleAmount: 30000
+        indicativeRate: 7.25
+        reasons:
+          - KYC status is VERIFIED.
+          - Sufficient account balance detected.
+          - No active defaults recorded.
+        assessedAt: 2024-01-19T15:00:00Z
+        expiresAt: 2024-01-26T15:00:00Z
+    EligibilityIneligibleExample:
+      summary: Customer is not eligible
+      value:
+        customerId: CUST-00125
+        outcome: INELIGIBLE
+        maxEligibleAmount: null
+        indicativeRate: null
+        reasons:
+          - KYC status is PENDING. Verification required before loan application.
+          - Insufficient account balance for the requested term and amount.
+        assessedAt: 2024-01-19T15:05:00Z
+        expiresAt: 2024-01-26T15:05:00Z

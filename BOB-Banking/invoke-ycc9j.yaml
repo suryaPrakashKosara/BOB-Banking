@@ -1,9 +1,9 @@
 kind: Invoke
 apiVersion: api.ibm.com/v1
 metadata:
-  name: invoke-zp324
-  namespace: Bob-Banking-apis
-  version: '1.0'
+  name: invoke-ycc9j
+  namespace: BOB-Banking
+  version: "1.0"
   tags: []
   labels:
     gatewayTypes:
@@ -13,9 +13,8 @@ spec:
     http:
       target:
         tlsClientProfile: sample-tls-client-profile:1.0.0
-        url: >-
-          'https://accounts-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/accounts'
-          & $pathAndQuery()
+        url: "'https://customer-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/\
+          customers' & $pathAndQuery()"
         urlType: jsonata
         persistentConnections: false
         timeout: 30

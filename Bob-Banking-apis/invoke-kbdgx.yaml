@@ -1,7 +1,7 @@
 kind: Invoke
 apiVersion: api.ibm.com/v1
 metadata:
-  name: invoke-zp324
+  name: invoke-kbdgx
   namespace: Bob-Banking-apis
   version: '1.0'
   tags: []
@@ -14,7 +14,7 @@ spec:
       target:
         tlsClientProfile: sample-tls-client-profile:1.0.0
         url: >-
-          'https://accounts-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/accounts'
+          'https://customer-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/customers'
           & $pathAndQuery()
         urlType: jsonata
         persistentConnections: false

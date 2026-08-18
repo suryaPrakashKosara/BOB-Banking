@@ -1,44 +1,8 @@
 openapi: 3.0.3
 info:
   title: Accounts API
-  description: |
-    ## Overview
-    The **Accounts API** is the authoritative source of truth for all bank accounts,
-    balances, and transaction records on the enterprise Banking platform.
-
-    It is a downstream consumer of the **Customer API** (`customerId` is the mandatory
-    foreign key on every account) and an upstream provider to both the **Loan API**
-    and the **Risk API**.
-
-    ## Responsibilities
-    - Manage the full lifecycle of Savings, Current, and Fixed Deposit accounts
-    - Return real-time and historical balance information
-      (available balance, ledger balance, average monthly balance)
-    - Return paginated transaction history with rich filtering
-    - Expose an account-validation endpoint consumed by the Payments API
-      before any disbursement or transfer
-
-    ## Account Types
-    | Type            | Description                                              |
-    |-----------------|----------------------------------------------------------|
-    | `SAVINGS`       | Interest-bearing retail savings account                  |
-    | `CURRENT`       | Transactional current / checking account                 |
-    | `FIXED_DEPOSIT` | Term deposit with fixed maturity and interest rate       |
-
-    ## Cross-API Relationships
-    | Consumer      | Endpoint(s) Used                                                  | Purpose                                       |
-    |---------------|-------------------------------------------------------------------|-----------------------------------------------|
-    | Customer API  | Provides `customerId` foreign key                                 | Ownership  every account belongs to one customer |
-    | Loan API      | `GET /accounts/customers/{customerId}`, `/balance`, `/transactions` | Loan eligibility  balance and repayment behaviour |
-    | Risk API      | `GET /accounts/{accountId}/transactions`                          | Fraud analysis and AML pattern detection      |
-    | Payments API  | `POST /accounts/{accountId}/validate`                             | Beneficiary account validation before disbursement |
-
-    ## Business Rules
-    - A customer can own multiple accounts (one-to-many). `customerId` is required on creation.
-    - An account cannot be closed if it has a non-zero balance.
-    - Fixed Deposit accounts are read-only after creation (maturity date and rate are immutable).
-    - A `FROZEN` account rejects all debits and credits.
-    - The `availableBalance` may differ from `ledgerBalance` due to pending transactions.
+  description: Enterprise Banking Accounts API. Manages bank account lifecycle,
+    balances, and transactions.
   version: 1.0.0
   contact:
     name: Banking API Platform Team
@@ -46,124 +10,100 @@ info:
     url: https://developer.bank.com
   license:
     name: Internal Use Only
+x-ibm-name: accounts-api
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  type: rest
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  buffering: true
+  properties:
+    - name: target-url
+      value: https://accounts-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+      description: Base URL of the Accounts microservice backend.
+      encoded: false
+  activity-log:
+    enabled: true
+    content: activity
+    error-content: payload
+  assembly:
+    execute:
+      - invoke:
+          version: 2.0.0
+          title: Invoke Accounts Backend
+          target-url: $(target-url)$(request.path)
+          verb: keep
+          timeout: 60
+          follow-redirects: false
+          compression: false
+          inject-proxy-headers: true
+          stop-on-error:
+            - ConnectionError
+            - OperationError
+    catch:
+      - errors:
+          - ConnectionError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 503 Response
+              actions:
+                - set: message.status.code
+                  value: 503
+                  type: number
+                - set: message.body
+                  value: '{"code":503,"message":"Accounts service temporarily unavailable."}'
+                  type: string
+      - errors:
+          - OperationError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 502 Response
+              actions:
+                - set: message.status.code
+                  value: 502
+                  type: number
+                - set: message.body
+                  value: '{"code":502,"message":"Bad gateway. Upstream returned an invalid
+                    response."}'
+                  type: string
 servers:
   - url: https://accounts-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/accounts
     description: Production
 tags:
   - name: Accounts
-    description: Account lifecycle  open, retrieve, update, close.
+    description: Bank account lifecycle management.
   - name: Balances
-    description: Real-time balance, available balance, and average monthly balance.
+    description: Real-time account balance retrieval.
   - name: Transactions
-    description: Transaction history, individual transaction retrieval, and summary
-      statistics.
-  - name: Fixed Deposits
-    description: Fixed deposit accounts  term, maturity, interest, and premature closure.
-  - name: Validation
-    description: Account validation endpoint consumed by the Payments API.
+    description: Transaction history and posting.
 paths:
   /accounts:
-    post:
-      tags:
-        - Accounts
-      operationId: openAccount
-      summary: Open a new bank account for a customer
-      description: >
-        Opens a new Savings, Current, or Fixed Deposit account linked to an
-
-        existing customer. The `customerId` is validated against the Customer
-        API
-
-        before creation.
-
-
-        **Business rules:**
-
-        - `customerId` is mandatory  every account must belong to one customer.
-
-        - Fixed Deposit accounts require `fixedDepositDetails` in the request
-        body.
-
-        - On success returns `201` with a `Location` header pointing to the new
-        resource.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AccountOpenRequest"
-            examples:
-              savings:
-                $ref: "#/components/examples/OpenSavingsAccountExample"
-              current:
-                $ref: "#/components/examples/OpenCurrentAccountExample"
-              fixedDeposit:
-                $ref: "#/components/examples/OpenFixedDepositExample"
-      responses:
-        "201":
-          description: Account opened successfully.
-          headers:
-            Location:
-              description: URL of the newly created account resource.
-              schema:
-                type: string
-                example: /accounts/a1b2c3d4-0002-0002-0002-000000000001
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Account"
-              examples:
-                savings:
-                  $ref: "#/components/examples/AccountSavingsResponseExample"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          description: Customer not found  `customerId` does not exist in Customer API.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-              example:
-                traceId: e3b0c442-0000-0000-0000-000000000404
-                code: CUSTOMER_NOT_FOUND
-                message: No customer found for the supplied customerId.
-        "409":
-          $ref: "#/components/responses/Conflict"
-      security:
-        - BearerAuth:
-            - account:write
     get:
       tags:
         - Accounts
+      summary: List accounts
+      description: Returns a paginated list of all bank accounts.
       operationId: listAccounts
-      summary: List accounts with optional filters
-      description: |
-        Returns a paginated list of accounts. Intended for internal banking
-        portal and service-to-service use. Supports filtering by account type,
-        status, and currency.
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
-        - name: accountType
-          in: query
-          description: Filter by account type.
-          schema:
-            $ref: "#/components/schemas/AccountType"
         - name: status
           in: query
+          required: false
           description: Filter by account status.
           schema:
             $ref: "#/components/schemas/AccountStatus"
-        - name: currency
+        - name: accountType
           in: query
-          description: Filter by ISO 4217 currency code.
+          required: false
+          description: Filter by account type.
           schema:
-            type: string
-            example: USD
+            $ref: "#/components/schemas/AccountType"
       responses:
         "200":
           description: Paginated list of accounts.
@@ -171,128 +111,121 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountPage"
+              examples:
+                AccountPageExample:
+                  $ref: "#/components/examples/AccountPageExample"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:read
-  /accounts/customers/{customerId}:
-    get:
+        - BearerAuth: []
+    post:
       tags:
         - Accounts
-      operationId: getAccountsByCustomerId
-      summary: List all accounts owned by a customer
-      description: |
-        Returns all accounts linked to the given `customerId`.
-
-        **Business rule:** one customer can own multiple accounts.
-
-        This is the primary endpoint consumed by the **Loan API** to enumerate
-        the customer's accounts during the loan eligibility workflow.
-        Also used by the **Risk API** to discover all accounts before pulling
-        transaction history for AML analysis.
-      parameters:
-        - $ref: "#/components/parameters/CustomerIdParam"
-        - name: accountType
-          in: query
-          description: Filter by account type.
-          schema:
-            $ref: "#/components/schemas/AccountType"
-        - name: status
-          in: query
-          description: Filter by account status.
-          schema:
-            $ref: "#/components/schemas/AccountStatus"
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
+      summary: Create account
+      description: Opens a new bank account and returns the assigned account record.
+      operationId: createAccount
+      requestBody:
+        $ref: "#/components/requestBodies/AccountCreateRequest"
       responses:
-        "200":
-          description: Accounts owned by the customer.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CustomerAccountList"
-              examples:
-                multipleAccounts:
-                  $ref: "#/components/examples/CustomerAccountListExample"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-      security:
-        - BearerAuth:
-            - account:read
-  /accounts/{accountId}:
-    get:
-      tags:
-        - Accounts
-      operationId: getAccountById
-      summary: Retrieve account details by ID
-      description: >
-        Returns the full account record including type, status, currency,
-
-        and  for Fixed Deposits  maturity details.
-
-        Called by the Loan API and Payments API during their respective
-        workflows.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
-      responses:
-        "200":
-          description: Account details.
+        "201":
+          description: Account created successfully.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Account"
               examples:
-                savings:
-                  $ref: "#/components/examples/AccountSavingsResponseExample"
-                fixedDeposit:
-                  $ref: "#/components/examples/AccountFDResponseExample"
+                AccountResponseExample:
+                  $ref: "#/components/examples/AccountResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:read
-    patch:
+        - BearerAuth: []
+  /accounts/customer/{customerId}:
+    parameters:
+      - $ref: "#/components/parameters/CustomerIdParam"
+    get:
       tags:
         - Accounts
-      operationId: updateAccount
-      summary: Update mutable account attributes
-      description: |
-        Allows updating `nickname` and `status` (e.g. to FROZEN or DORMANT).
-        Fixed Deposit accounts cannot be updated (returns `405`).
-        `accountType`, `currency`, and `customerId` are immutable.
+      summary: Get accounts by customer
+      description: Returns all accounts linked to the specified customer.
+      operationId: getAccountsByCustomer
       parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
+        - name: status
+          in: query
+          required: false
+          description: Filter by account status.
+          schema:
+            $ref: "#/components/schemas/AccountStatus"
+      responses:
+        "200":
+          description: List of accounts for the customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountList"
+              examples:
+                AccountListExample:
+                  $ref: "#/components/examples/AccountListExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /accounts/{accountId}:
+    parameters:
+      - $ref: "#/components/parameters/AccountIdParam"
+    get:
+      tags:
+        - Accounts
+      summary: Get account
+      description: Returns the full record for a single bank account.
+      operationId: getAccount
+      responses:
+        "200":
+          description: Account record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+              examples:
+                AccountResponseExample:
+                  $ref: "#/components/examples/AccountResponseExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+    put:
+      tags:
+        - Accounts
+      summary: Update account
+      description: Replaces mutable fields on an existing account record.
+      operationId: updateAccount
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AccountUpdateRequest"
-            examples:
-              freeze:
-                summary: Freeze an account
-                value:
-                  status: FROZEN
-              rename:
-                summary: Set a nickname
-                value:
-                  nickname: Primary Savings
       responses:
         "200":
-          description: Account updated.
+          description: Updated account record.
           content:
             application/json:
               schema:
@@ -301,611 +234,318 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:write
+        - BearerAuth: []
     delete:
       tags:
         - Accounts
+      summary: Close account
+      description: Closes (soft-deletes) a bank account. Accounts with a non-zero
+        balance cannot be closed.
       operationId: closeAccount
-      summary: Close a bank account
-      description: |
-        Closes the account (soft-delete  sets status to `CLOSED`).
-
-        **Business rule:** an account with a non-zero `ledgerBalance` cannot
-        be closed and returns `409 Conflict`.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
       responses:
         "204":
           description: Account closed. No content returned.
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          description: Account has a non-zero balance or has active linked loans.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-              example:
-                traceId: a1b2c3d4-0000-0000-0000-000000000409
-                code: ACCOUNT_HAS_BALANCE
-                message: Account cannot be closed while it holds a non-zero balance.
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:close
+        - BearerAuth: []
   /accounts/{accountId}/balance:
+    parameters:
+      - $ref: "#/components/parameters/AccountIdParam"
     get:
       tags:
         - Balances
+      summary: Get account balance
+      description: Returns the current available and ledger balances for an account.
       operationId: getAccountBalance
-      summary: Retrieve the current balance of an account
-      description: >
-        Returns a complete balance snapshot including:
-
-        - `availableBalance`  funds immediately usable (cleared, unblocked)
-
-        - `ledgerBalance`  total balance including pending / uncleared items
-
-        - `blockedAmount`  funds held against pending transactions or disputes
-
-        - `averageMonthlyBalance`  rolling 30-day average (used by Loan API)
-
-
-        **Consumed by the Loan API** during step 3 of the loan eligibility
-        workflow
-
-        to assess the applicant's financial position before credit scoring.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
       responses:
         "200":
-          description: Account balance snapshot.
+          description: Account balance.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountBalance"
               examples:
-                healthy:
-                  $ref: "#/components/examples/AccountBalanceExample"
+                BalanceExample:
+                  $ref: "#/components/examples/BalanceExample"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:read
-  /accounts/customers/{customerId}/balances:
-    get:
-      tags:
-        - Balances
-      operationId: getAllBalancesByCustomer
-      summary: Retrieve balance snapshots for all accounts of a customer
-      description: |
-        Returns balance information for every account owned by the customer in
-        a single call. Used by the **Loan API** to get a holistic view of the
-        applicant's total financial position across all accounts, and by the
-        **Risk API** during credit scoring.
-      parameters:
-        - $ref: "#/components/parameters/CustomerIdParam"
-        - name: accountType
-          in: query
-          description: Optionally restrict to a specific account type.
-          schema:
-            $ref: "#/components/schemas/AccountType"
-      responses:
-        "200":
-          description: Balance snapshots for all customer accounts.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CustomerBalanceSummary"
-              examples:
-                summary:
-                  $ref: "#/components/examples/CustomerBalanceSummaryExample"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-      security:
-        - BearerAuth:
-            - account:read
+        - BearerAuth: []
   /accounts/{accountId}/transactions:
+    parameters:
+      - $ref: "#/components/parameters/AccountIdParam"
     get:
       tags:
         - Transactions
-      operationId: getTransactionHistory
-      summary: Retrieve paginated transaction history for an account
-      description: >
-        Returns a paginated, filterable list of transactions.
-
-
-        **Consumed by:**
-
-        - **Loan API**  retrieves repayment history and income patterns to
-        assess
-          loan eligibility (step 4 of the eligibility workflow).
-        - **Risk API**  pulls transaction data for AML pattern detection and
-          fraud analysis.
-
-        Supports rich filtering by date range, transaction type, amount range,
-
-        and reference ID. Results are ordered by `valueDate` descending.
+      summary: List transactions
+      description: Returns a paginated list of transactions for an account.
+      operationId: listTransactions
       parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: fromDate
           in: query
-          description: Start date filter inclusive (ISO 8601 date).
+          required: false
+          description: Start date for transaction filter (ISO 8601 date).
           schema:
             type: string
             format: date
-            example: 2024-01-01
+          example: 2024-01-01
         - name: toDate
           in: query
-          description: End date filter inclusive (ISO 8601 date).
+          required: false
+          description: End date for transaction filter (ISO 8601 date).
           schema:
             type: string
             format: date
-            example: 2024-12-31
+          example: 2024-06-30
         - name: type
           in: query
+          required: false
           description: Filter by transaction type.
           schema:
             $ref: "#/components/schemas/TransactionType"
-        - name: minAmount
-          in: query
-          description: Minimum transaction amount filter.
-          schema:
-            type: number
-            format: double
-            example: 100
-        - name: maxAmount
-          in: query
-          description: Maximum transaction amount filter.
-          schema:
-            type: number
-            format: double
-            example: 50000
-        - name: referenceId
-          in: query
-          description: Filter by cross-API reference (e.g. a loanId or paymentId).
-          schema:
-            type: string
-        - name: counterpartyAccount
-          in: query
-          description: Filter by counterparty account number.
-          schema:
-            type: string
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
       responses:
         "200":
-          description: Paginated transaction history.
+          description: Paginated transaction list.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransactionPage"
               examples:
-                history:
+                TransactionPageExample:
                   $ref: "#/components/examples/TransactionPageExample"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:read
-  /accounts/{accountId}/transactions/{transactionId}:
-    get:
+        - BearerAuth: []
+    post:
       tags:
         - Transactions
-      operationId: getTransactionById
-      summary: Retrieve a single transaction by ID
-      description: |
-        Returns full details of one transaction including counterparty, channel,
-        reference IDs, and any linked cross-API identifiers (paymentId, loanId).
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
-        - $ref: "#/components/parameters/TransactionIdParam"
+      summary: Post transaction
+      description: Posts a debit or credit transaction to the account.
+      operationId: postTransaction
+      requestBody:
+        $ref: "#/components/requestBodies/TransactionCreateRequest"
       responses:
-        "200":
-          description: Transaction record.
+        "201":
+          description: Transaction posted successfully.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Transaction"
               examples:
-                credit:
-                  $ref: "#/components/examples/TransactionCreditExample"
-                debit:
-                  $ref: "#/components/examples/TransactionDebitExample"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-      security:
-        - BearerAuth:
-            - account:read
-  /accounts/{accountId}/transactions/summary:
-    get:
-      tags:
-        - Transactions
-      operationId: getTransactionSummary
-      summary: Retrieve aggregated transaction statistics for an account
-      description: >
-        Returns computed aggregates over a date range without returning raw
-
-        transaction rows. Used by the **Loan API** and **Risk API** to obtain
-
-        metrics (total credits, total debits, average monthly credit, missed
-
-        payment count, suspicious transaction count) efficiently in a single
-        call 
-
-        avoiding large pagination loops over raw transactions.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
-        - name: fromDate
-          in: query
-          required: true
-          description: Start of the analysis period (ISO 8601 date).
-          schema:
-            type: string
-            format: date
-            example: 2023-01-01
-        - name: toDate
-          in: query
-          required: true
-          description: End of the analysis period (ISO 8601 date).
-          schema:
-            type: string
-            format: date
-            example: 2024-12-31
-      responses:
-        "200":
-          description: Aggregated transaction statistics.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TransactionSummary"
-              examples:
-                summary:
-                  $ref: "#/components/examples/TransactionSummaryExample"
+                TransactionResponseExample:
+                  $ref: "#/components/examples/TransactionResponseExample"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
       security:
-        - BearerAuth:
-            - account:read
-  /accounts/{accountId}/fixed-deposit:
-    get:
-      tags:
-        - Fixed Deposits
-      operationId: getFixedDepositDetails
-      summary: Retrieve Fixed Deposit term and interest details
-      description: >
-        Returns the full Fixed Deposit details including principal, interest
-        rate,
-
-        maturity date, maturity amount, and premature closure penalty.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
-      responses:
-        "200":
-          description: Fixed Deposit details.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FixedDepositDetails"
-              examples:
-                fd:
-                  $ref: "#/components/examples/FixedDepositDetailsExample"
-        "400":
-          description: Account is not a Fixed Deposit account.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-              example:
-                traceId: a1b2c3d4-0000-0000-0000-000000000400
-                code: NOT_FIXED_DEPOSIT
-                message: This operation is only available for FIXED_DEPOSIT accounts.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-      security:
-        - BearerAuth:
-            - account:read
-  /accounts/{accountId}/fixed-deposit/break:
-    post:
-      tags:
-        - Fixed Deposits
-      operationId: breakFixedDeposit
-      summary: Prematurely close (break) a Fixed Deposit
-      description: >
-        Initiates premature closure of a Fixed Deposit. A penalty rate is
-        applied
-
-        to the accrued interest. Returns the net maturity amount after penalty.
-
-        The proceeds are credited to the customer's linked savings or current
-        account.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/BreakFixedDepositRequest"
-            examples:
-              break:
-                summary: Break FD and credit proceeds to savings account
-                value:
-                  creditToAccountId: a1b2c3d4-0002-0002-0002-000000000001
-                  reason: EMERGENCY_FUNDS
-                  requestedBy: jane.doe@email.com
-      responses:
-        "200":
-          description: Fixed Deposit broken. Returns updated FD and credited amounts.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BreakFixedDepositResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Fixed Deposit has already matured or is already closed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiError"
-      security:
-        - BearerAuth:
-            - account:write
-  /accounts/{accountId}/validate:
-    post:
-      tags:
-        - Validation
-      operationId: validateAccount
-      summary: Validate an account for payment eligibility
-      description: >
-        Checks that the specified account:
-
-        - Exists and is `ACTIVE`
-
-        - Can receive funds (not `FROZEN` or `CLOSED`)
-
-        - Matches the expected currency (if supplied)
-
-
-        **Consumed exclusively by the Payments API** before every loan
-        disbursement
-
-        or fund transfer to validate the beneficiary account.
-
-        Returns a typed `AccountValidationResult`  not raw account data  to
-
-        minimise PII exposure across service boundaries.
-      parameters:
-        - $ref: "#/components/parameters/AccountIdParam"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AccountValidationRequest"
-            examples:
-              disbursement:
-                summary: Validate account for loan disbursement
-                value:
-                  validationPurpose: LOAN_DISBURSEMENT
-                  expectedCurrency: USD
-                  requestedBy: payments-service
-              transfer:
-                summary: Validate beneficiary account for a transfer
-                value:
-                  validationPurpose: PAYMENT_TRANSFER
-                  expectedCurrency: USD
-                  requestedBy: payments-service
-      responses:
-        "200":
-          description: Validation result (valid or invalid  check `valid` field).
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AccountValidationResult"
-              examples:
-                pass:
-                  $ref: "#/components/examples/AccountValidationPassExample"
-                fail:
-                  $ref: "#/components/examples/AccountValidationFailExample"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-      security:
-        - BearerAuth:
-            - account:validate
+        - BearerAuth: []
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: >
-        JWT Bearer token issued by the IBM API Connect OAuth provider.
-
-        Scopes:
-
-        - `account:read`      read accounts, balances, transactions, FD details
-
-        - `account:write`     open accounts, update attributes, upload FD
-        breaks
-
-        - `account:close`     close / deactivate an account
-
-        - `account:validate`  validate an account for payment (Payments API
-        only)
+      description: RS256 JWT issued by the bank identity provider.
   parameters:
     AccountIdParam:
       name: accountId
       in: path
       required: true
-      description: Unique account identifier (UUID v4).
+      description: Unique account identifier.
       schema:
         type: string
-        format: uuid
-        example: a1b2c3d4-0002-0002-0002-000000000001
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: ACC-00456
     CustomerIdParam:
       name: customerId
       in: path
       required: true
-      description: Unique customer identifier (UUID v4). Foreign key from Customer API.
+      description: Unique customer identifier (CIF).
       schema:
         type: string
-        format: uuid
-        example: c1a2b3c4-0001-0001-0001-000000000001
-    TransactionIdParam:
-      name: transactionId
-      in: path
-      required: true
-      description: Unique transaction identifier (UUID v4).
-      schema:
-        type: string
-        format: uuid
-        example: t1a2b3c4-0006-0006-0006-000000000006
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: CUST-00123
     PageParam:
       name: page
       in: query
+      required: false
       description: Page number (1-based).
       schema:
         type: integer
         minimum: 1
         default: 1
+      example: 1
     PageSizeParam:
       name: pageSize
       in: query
+      required: false
       description: Number of records per page.
       schema:
         type: integer
         minimum: 1
-        maximum: 200
+        maximum: 100
         default: 20
+      example: 20
+  requestBodies:
+    AccountCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AccountCreateRequest"
+          examples:
+            SavingsExample:
+              $ref: "#/components/examples/AccountCreateSavingsExample"
+            CurrentExample:
+              $ref: "#/components/examples/AccountCreateCurrentExample"
+    TransactionCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TransactionCreateRequest"
+          examples:
+            CreditExample:
+              $ref: "#/components/examples/TransactionCreateCreditExample"
+            DebitExample:
+              $ref: "#/components/examples/TransactionCreateDebitExample"
   schemas:
     AccountType:
       type: string
-      description: Classification of the bank account.
       enum:
         - SAVINGS
         - CURRENT
         - FIXED_DEPOSIT
-      example: SAVINGS
+        - LOAN_DISBURSEMENT
+      description: Classification of the bank account.
     AccountStatus:
       type: string
-      description: >
-        Operational lifecycle status of the account.
-
-        - `ACTIVE`    open and fully operational
-
-        - `DORMANT`   no transactions for the configured dormancy period
-
-        - `FROZEN`    account debits and credits are blocked (regulatory or
-        fraud hold)
-
-        - `CLOSED`    permanently closed; read-only
       enum:
         - ACTIVE
         - DORMANT
         - FROZEN
         - CLOSED
-      example: ACTIVE
+      description: Operational status of the bank account.
+    Currency:
+      type: string
+      minLength: 3
+      maxLength: 3
+      description: ISO 4217 three-letter currency code.
+      example: AUD
     TransactionType:
       type: string
-      description: Nature of the transaction from the account's perspective.
       enum:
         - CREDIT
         - DEBIT
-        - TRANSFER_IN
-        - TRANSFER_OUT
-        - LOAN_DISBURSEMENT
-        - LOAN_REPAYMENT
-        - INTEREST_CREDIT
-        - FD_MATURITY_CREDIT
-        - CHARGE
+        - TRANSFER
+        - FEE
+        - INTEREST
         - REVERSAL
-      example: CREDIT
-    TransactionChannel:
-      type: string
-      description: Channel through which the transaction was initiated.
-      enum:
-        - ONLINE_BANKING
-        - MOBILE_APP
-        - ATM
-        - BRANCH
-        - API
-        - STANDING_ORDER
-        - DIRECT_DEBIT
-        - SYSTEM
-      example: MOBILE_APP
-    InterestFrequency:
-      type: string
-      description: Frequency of interest payout for Fixed Deposits.
-      enum:
-        - MONTHLY
-        - QUARTERLY
-        - HALF_YEARLY
-        - ANNUALLY
-        - ON_MATURITY
-      example: ON_MATURITY
-    FdBreakReason:
+      description: Classification of the transaction.
+    TransactionStatus:
       type: string
       enum:
-        - EMERGENCY_FUNDS
-        - REINVESTMENT
-        - LOAN_REPAYMENT
-        - CUSTOMER_REQUEST
-        - OTHER
-      example: EMERGENCY_FUNDS
-    AccountOpenRequest:
+        - PENDING
+        - POSTED
+        - FAILED
+        - REVERSED
+      description: Processing status of the transaction.
+    Account:
+      type: object
+      required:
+        - accountId
+        - customerId
+        - accountType
+        - status
+        - currency
+        - openedAt
+      properties:
+        accountId:
+          type: string
+          description: Unique account identifier assigned by the system.
+          example: ACC-00456
+        customerId:
+          type: string
+          description: Identifier of the owning customer.
+          example: CUST-00123
+        accountType:
+          $ref: "#/components/schemas/AccountType"
+        status:
+          $ref: "#/components/schemas/AccountStatus"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        nickname:
+          type: string
+          maxLength: 100
+          description: Optional human-readable label for the account.
+          example: Primary Savings
+        iban:
+          type: string
+          maxLength: 34
+          description: International Bank Account Number.
+          example: AU00BANK0000000100123456
+        bsb:
+          type: string
+          maxLength: 10
+          description: Bank State Branch code (Australian accounts).
+          example: 013-000
+        accountNumber:
+          type: string
+          maxLength: 20
+          description: Domestic account number.
+          example: "100123456"
+        openedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was opened (UTC, ISO 8601).
+          example: 2024-01-15T09:30:00Z
+        closedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the account was closed. Null if still open.
+          example: null
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the most recent update (UTC, ISO 8601).
+          example: 2024-06-01T14:22:00Z
+    AccountCreateRequest:
       type: object
       required:
         - customerId
@@ -914,963 +554,458 @@ components:
       properties:
         customerId:
           type: string
-          format: uuid
-          description: |
-            Owning customer. Foreign key to Customer API.
-            The Customer API is the authoritative source for this value.
-          example: c1a2b3c4-0001-0001-0001-000000000001
+          description: Identifier of the customer who will own this account.
+          example: CUST-00123
         accountType:
           $ref: "#/components/schemas/AccountType"
         currency:
-          type: string
-          description: ISO 4217 currency code.
-          example: USD
+          $ref: "#/components/schemas/Currency"
         nickname:
           type: string
-          description: Customer-facing label for the account.
-          maxLength: 60
+          maxLength: 100
+          description: Optional human-readable label for the account.
           example: Primary Savings
         initialDeposit:
           type: number
           format: double
-          description: Optional opening deposit amount. Must be >= 0.
           minimum: 0
+          description: Optional opening deposit amount in the account currency.
           example: 1000
-        fixedDepositDetails:
-          $ref: "#/components/schemas/FixedDepositOpenDetails"
-          description: Required when `accountType` is `FIXED_DEPOSIT`. Ignored otherwise.
-        branchCode:
-          type: string
-          description: Branch code for accounts opened at a physical branch.
-          example: NYC-001
-    Account:
-      type: object
-      description: Full account record returned for Savings, Current, and Fixed
-        Deposit accounts.
-      properties:
-        accountId:
-          type: string
-          format: uuid
-          readOnly: true
-          example: a1b2c3d4-0002-0002-0002-000000000001
-        customerId:
-          type: string
-          format: uuid
-          description: Owning customer. References Customer API.
-          example: c1a2b3c4-0001-0001-0001-000000000001
-        accountNumber:
-          type: string
-          readOnly: true
-          description: Human-readable account number (bank-formatted).
-          example: 001-100000001
-        accountType:
-          $ref: "#/components/schemas/AccountType"
-        currency:
-          type: string
-          description: ISO 4217 currency code. Immutable after opening.
-          example: USD
-        nickname:
-          type: string
-          example: Primary Savings
-        status:
-          $ref: "#/components/schemas/AccountStatus"
-        branchCode:
-          type: string
-          example: NYC-001
-        fixedDepositDetails:
-          $ref: "#/components/schemas/FixedDepositDetails"
-          description: Populated only when `accountType` is `FIXED_DEPOSIT`.
-          nullable: true
-        openedAt:
-          type: string
-          format: date-time
-          readOnly: true
-          example: 2024-01-15T09:30:00Z
-        updatedAt:
-          type: string
-          format: date-time
-          readOnly: true
-          example: 2024-06-01T14:00:00Z
     AccountUpdateRequest:
       type: object
-      description: >
-        Mutable account fields. `accountType`, `currency`, and `customerId` are
-        immutable.
-
-        Fixed Deposit accounts cannot be updated.
       properties:
         nickname:
           type: string
-          maxLength: 60
+          maxLength: 100
+          description: Updated account nickname.
+          example: Main Current Account
         status:
-          type: string
-          description: Allowed transitions  only `FROZEN` and `DORMANT` can be set via API.
-          enum:
-            - FROZEN
-            - DORMANT
-            - ACTIVE
+          $ref: "#/components/schemas/AccountStatus"
     AccountPage:
       type: object
+      required:
+        - data
+        - page
+        - pageSize
+        - totalCount
       properties:
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        totalCount:
-          type: integer
-        totalPages:
-          type: integer
-        accounts:
+        data:
           type: array
           items:
             $ref: "#/components/schemas/Account"
-    CustomerAccountList:
+          description: Array of account records for the current page.
+        page:
+          type: integer
+          description: Current page number.
+          example: 1
+        pageSize:
+          type: integer
+          description: Records per page.
+          example: 20
+        totalCount:
+          type: integer
+          description: Total number of matching records across all pages.
+          example: 85
+    AccountList:
       type: object
-      description: All accounts owned by one customer.
+      required:
+        - customerId
+        - accounts
       properties:
         customerId:
           type: string
-          format: uuid
-        totalCount:
-          type: integer
-          example: 3
+          description: Identifier of the queried customer.
+          example: CUST-00123
         accounts:
           type: array
           items:
             $ref: "#/components/schemas/Account"
+          description: All accounts linked to this customer.
     AccountBalance:
       type: object
-      description: |
-        Complete balance snapshot for one account.
-        Used by the Loan API for eligibility assessment.
+      required:
+        - accountId
+        - currency
+        - availableBalance
+        - ledgerBalance
+        - asOf
       properties:
         accountId:
           type: string
-          format: uuid
-        customerId:
-          type: string
-          format: uuid
-          description: Owner customer reference.
+          description: Account identifier.
+          example: ACC-00456
         currency:
-          type: string
-          example: USD
+          $ref: "#/components/schemas/Currency"
         availableBalance:
           type: number
           format: double
-          description: |
-            Funds immediately available for withdrawal, payment, or transfer.
-            Excludes blocked amounts and uncleared credits.
-          example: 12450.75
+          description: Funds immediately available for withdrawal or payment.
+          example: 4850.75
         ledgerBalance:
           type: number
           format: double
-          description: >
-            Total balance including pending and uncleared transactions.
-
-            `ledgerBalance = availableBalance + blockedAmount + pendingCredits -
-            pendingDebits`
-          example: 12550.75
-        blockedAmount:
-          type: number
-          format: double
-          description: Amount currently blocked against pending transactions or disputes.
-          example: 100
-        pendingCredits:
-          type: number
-          format: double
-          description: Uncleared incoming funds not yet reflected in ledger balance.
-          example: 0
+          description: Total posted balance including pending debits.
+          example: 5000
         pendingDebits:
           type: number
           format: double
-          description: Authorised but not yet settled debit transactions.
-          example: 0
-        averageMonthlyBalance:
-          type: number
-          format: double
-          description: >
-            Rolling 30-day average daily balance. Key metric used by the Loan
-            API
-
-            during loan eligibility and credit scoring.
-          example: 11800
-        overdraftLimit:
-          type: number
-          format: double
-          description: Approved overdraft limit. Zero if no overdraft facility.
-          nullable: true
-          example: 2000
+          description: Sum of authorised but not yet posted debit transactions.
+          example: 149.25
         asOf:
           type: string
           format: date-time
-          description: Timestamp at which this balance snapshot was computed.
-          example: 2024-06-15T10:00:00Z
-    CustomerBalanceSummary:
-      type: object
-      description: |
-        Aggregated balance view across all accounts for one customer.
-        Returned by `GET /accounts/customers/{customerId}/balances`.
-      properties:
-        customerId:
-          type: string
-          format: uuid
-        asOf:
-          type: string
-          format: date-time
-        totalAvailableBalance:
-          type: number
-          format: double
-          description: Sum of `availableBalance` across all ACTIVE accounts (same currency).
-          example: 24900.5
-        totalLedgerBalance:
-          type: number
-          format: double
-          example: 25100.5
-        currency:
-          type: string
-          description: Currency of the aggregated totals. Multi-currency customers have
-            one entry per currency.
-          example: USD
-        accountBalances:
-          type: array
-          description: Individual balance snapshot per account.
-          items:
-            $ref: "#/components/schemas/AccountBalance"
+          description: Timestamp of the balance snapshot (UTC, ISO 8601).
+          example: 2024-06-15T08:00:00Z
     Transaction:
       type: object
-      description: |
-        A single ledger entry on an account. Used by the Loan API for repayment
-        pattern analysis and by the Risk API for AML and fraud detection.
+      required:
+        - transactionId
+        - accountId
+        - type
+        - status
+        - amount
+        - currency
+        - postedAt
       properties:
         transactionId:
           type: string
-          format: uuid
-          readOnly: true
-          example: t1a2b3c4-0006-0006-0006-000000000001
+          description: Unique transaction identifier.
+          example: TXN-00789
         accountId:
           type: string
-          format: uuid
-        customerId:
-          type: string
-          format: uuid
-          description: Denormalized owner reference for cross-API tracing.
+          description: Account to which this transaction belongs.
+          example: ACC-00456
         type:
           $ref: "#/components/schemas/TransactionType"
-        channel:
-          $ref: "#/components/schemas/TransactionChannel"
+        status:
+          $ref: "#/components/schemas/TransactionStatus"
         amount:
           type: number
           format: double
-          description: Absolute transaction amount (always positive; direction indicated
-            by `type`).
-          example: 5000
+          description: Transaction amount. Always positive; direction is determined by type.
+          example: 250
         currency:
-          type: string
-          example: USD
-        runningBalance:
-          type: number
-          format: double
-          description: Ledger balance immediately after this transaction was applied.
-          example: 17450.75
+          $ref: "#/components/schemas/Currency"
         description:
           type: string
-          description: Narrative description of the transaction.
-          example: Monthly salary credit - ACME Corp
+          maxLength: 200
+          description: Narrative or reference for the transaction.
+          example: Salary deposit - June 2024
         referenceId:
           type: string
-          description: |
-            Cross-API reference identifier. Examples:
-            - `loanId` for LOAN_DISBURSEMENT / LOAN_REPAYMENT
-            - `paymentId` for transfers initiated via the Payments API
-          nullable: true
-          example: l1a2b3c4-0003-0003-0003-000000000001
+          maxLength: 100
+          description: External reference or payment instruction ID.
+          example: PAY-REF-20240601
         counterpartyName:
           type: string
-          nullable: true
-          example: ACME Corporation Payroll
-        counterpartyAccount:
-          type: string
-          description: Counterparty account number (masked for security where required).
-          nullable: true
-          example: "****5678"
-        counterpartyBank:
-          type: string
-          description: Counterparty bank name or BIC/SWIFT code.
-          nullable: true
-          example: CHASUS33
-        isSuspicious:
-          type: boolean
-          description: Flag set by the Risk API or fraud engine if this transaction is
-            flagged.
-          example: false
-        valueDate:
-          type: string
-          format: date
-          description: The business date on which the transaction is effective.
-          example: 2024-06-01
-        processedAt:
+          maxLength: 100
+          description: Name of the sending or receiving party.
+          example: Acme Corp Pty Ltd
+        postedAt:
           type: string
           format: date-time
-          description: System timestamp when the transaction was posted to the ledger.
-          example: 2024-06-01T08:30:00Z
+          description: Timestamp when the transaction was posted (UTC, ISO 8601).
+          example: 2024-06-01T09:00:00Z
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the transaction record was created (UTC, ISO 8601).
+          example: 2024-06-01T08:58:00Z
+    TransactionCreateRequest:
+      type: object
+      required:
+        - type
+        - amount
+        - currency
+      properties:
+        type:
+          $ref: "#/components/schemas/TransactionType"
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Transaction amount. Must be greater than zero.
+          example: 250
+        currency:
+          $ref: "#/components/schemas/Currency"
+        description:
+          type: string
+          maxLength: 200
+          description: Narrative or reference for the transaction.
+          example: Salary deposit - June 2024
+        referenceId:
+          type: string
+          maxLength: 100
+          description: Idempotency key or external reference ID.
+          example: PAY-REF-20240601
+        counterpartyName:
+          type: string
+          maxLength: 100
+          description: Name of the sending or receiving party.
+          example: Acme Corp Pty Ltd
     TransactionPage:
       type: object
-      description: Paginated transaction history.
+      required:
+        - data
+        - page
+        - pageSize
+        - totalCount
       properties:
-        accountId:
-          type: string
-          format: uuid
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        totalCount:
-          type: integer
-        fromDate:
-          type: string
-          format: date
-        toDate:
-          type: string
-          format: date
-        transactions:
+        data:
           type: array
           items:
             $ref: "#/components/schemas/Transaction"
-    TransactionSummary:
-      type: object
-      description: |
-        Pre-aggregated statistics for an account over a date range.
-        Designed for efficient consumption by the Loan API and Risk API
-        without requiring iteration over raw transaction pages.
-      properties:
-        accountId:
-          type: string
-          format: uuid
-        customerId:
-          type: string
-          format: uuid
-        periodFromDate:
-          type: string
-          format: date
-        periodToDate:
-          type: string
-          format: date
-        totalTransactionCount:
+          description: Array of transaction records for the current page.
+        page:
           type: integer
-          example: 247
-        totalCreditAmount:
-          type: number
-          format: double
-          description: Sum of all CREDIT and TRANSFER_IN amounts in the period.
-          example: 85000
-        totalDebitAmount:
-          type: number
-          format: double
-          description: Sum of all DEBIT and TRANSFER_OUT amounts in the period.
-          example: 63000
-        averageMonthlyCredit:
-          type: number
-          format: double
-          description: Total credits divided by number of months in the period.
-          example: 7083.33
-        averageMonthlyDebit:
-          type: number
-          format: double
-          example: 5250
-        loanRepaymentCount:
-          type: integer
-          description: Number of LOAN_REPAYMENT transactions.
-          example: 12
-        loanRepaymentTotalAmount:
-          type: number
-          format: double
-          example: 12000
-        missedPaymentCount:
-          type: integer
-          description: |
-            Count of scheduled loan repayments or standing orders that were
-            not honoured due to insufficient funds. Used by the Loan API for
-            repayment behaviour scoring.
-          example: 0
-        largeTransactionCount:
-          type: integer
-          description: >
-            Number of transactions exceeding the large-transaction threshold
-
-            (configurable, default e 10,000 USD equivalent). Used by the Risk
-            API
-
-            for AML analysis.
-          example: 3
-        suspiciousTransactionCount:
-          type: integer
-          description: Transactions flagged by the fraud engine.
-          example: 0
-        distinctCounterpartyCount:
-          type: integer
-          description: Number of unique counterparty accounts transacted with.
-          example: 18
-        currency:
-          type: string
-          example: USD
-        computedAt:
-          type: string
-          format: date-time
-    FixedDepositOpenDetails:
-      type: object
-      description: Details required when opening a Fixed Deposit account.
-      required:
-        - principalAmount
-        - tenorMonths
-        - interestRate
-        - interestFrequency
-      properties:
-        principalAmount:
-          type: number
-          format: double
-          description: Principal deposit amount. Must be > 0.
-          example: 50000
-        tenorMonths:
-          type: integer
-          description: Deposit term in months.
-          minimum: 1
-          maximum: 120
-          example: 12
-        interestRate:
-          type: number
-          format: double
-          description: Annual interest rate percentage (e.g. 6.5 for 6.5% p.a.).
-          example: 6.5
-        interestFrequency:
-          $ref: "#/components/schemas/InterestFrequency"
-        autoRenew:
-          type: boolean
-          description: Automatically renew on maturity at the prevailing rate.
-          default: false
-        maturityCreditAccountId:
-          type: string
-          format: uuid
-          description: Account to receive maturity proceeds. Must belong to the same
-            customer.
-          nullable: true
-    FixedDepositDetails:
-      type: object
-      description: Full Fixed Deposit details  returned as part of the Account object
-        for FD accounts.
-      properties:
-        principalAmount:
-          type: number
-          format: double
-          example: 50000
-        tenorMonths:
-          type: integer
-          example: 12
-        interestRate:
-          type: number
-          format: double
-          example: 6.5
-        interestFrequency:
-          $ref: "#/components/schemas/InterestFrequency"
-        accruedInterest:
-          type: number
-          format: double
-          description: Interest accrued to date.
-          example: 2708.33
-        maturityAmount:
-          type: number
-          format: double
-          description: Expected total amount at maturity (principal + total interest).
-          example: 53250
-        maturityDate:
-          type: string
-          format: date
-          example: 2025-01-15
-        prematureClosurePenaltyRate:
-          type: number
-          format: double
-          description: Penalty rate applied on premature closure (% of accrued interest).
+          description: Current page number.
           example: 1
-        autoRenew:
-          type: boolean
-          example: false
-        maturityCreditAccountId:
-          type: string
-          format: uuid
-          nullable: true
-        openedAt:
-          type: string
-          format: date-time
-    BreakFixedDepositRequest:
-      type: object
-      required:
-        - creditToAccountId
-        - reason
-      properties:
-        creditToAccountId:
-          type: string
-          format: uuid
-          description: Account to receive the net proceeds after penalty. Must belong to
-            the same customer.
-        reason:
-          $ref: "#/components/schemas/FdBreakReason"
-        requestedBy:
-          type: string
-          description: User or system requesting the premature closure.
-    BreakFixedDepositResult:
-      type: object
-      properties:
-        accountId:
-          type: string
-          format: uuid
-        principalAmount:
-          type: number
-          format: double
-        accruedInterest:
-          type: number
-          format: double
-        penaltyAmount:
-          type: number
-          format: double
-        netProceedsAmount:
-          type: number
-          format: double
-          description: Principal + accruedInterest - penaltyAmount credited to
-            `creditToAccountId`.
-        creditedToAccountId:
-          type: string
-          format: uuid
-        brokenAt:
-          type: string
-          format: date-time
-    AccountValidationRequest:
-      type: object
-      required:
-        - validationPurpose
-        - requestedBy
-      properties:
-        validationPurpose:
-          type: string
-          description: Context in which the validation is being performed.
-          enum:
-            - LOAN_DISBURSEMENT
-            - PAYMENT_TRANSFER
-            - BENEFICIARY_CHECK
-          example: LOAN_DISBURSEMENT
-        expectedCurrency:
-          type: string
-          description: Expected ISO 4217 currency. Validation fails if account currency
-            differs.
-          example: USD
-        requestedBy:
-          type: string
-          description: ID of the calling service (e.g. payments-service).
-          example: payments-service
-    AccountValidationResult:
-      type: object
-      description: >
-        Typed validation result returned to the Payments API.
-
-        Does not expose full account PII  only fields necessary for payment
-        processing.
-      properties:
-        accountId:
-          type: string
-          format: uuid
-        customerId:
-          type: string
-          format: uuid
-        valid:
-          type: boolean
-          description: "`true` if the account passed all validation checks."
-        status:
-          $ref: "#/components/schemas/AccountStatus"
-        currency:
-          type: string
-        accountType:
-          $ref: "#/components/schemas/AccountType"
-        validationMessages:
-          type: array
-          description: Human-readable list of validation failures. Empty if `valid` is true.
-          items:
-            type: string
-          example: []
-        validatedAt:
-          type: string
-          format: date-time
+        pageSize:
+          type: integer
+          description: Records per page.
+          example: 20
+        totalCount:
+          type: integer
+          description: Total number of matching transactions across all pages.
+          example: 310
     ApiError:
       type: object
-      description: Standard error envelope for all 4xx / 5xx responses.
+      required:
+        - code
+        - message
       properties:
-        traceId:
-          type: string
-          format: uuid
-          description: Distributed trace ID for log correlation across APIs (IBM API
-            Connect analytics).
-          example: e3b0c442-98fc-1c14-9afb-f4c8996fb924
         code:
-          type: string
-          description: Machine-readable error code.
-          example: ACCOUNT_NOT_FOUND
+          type: integer
+          description: HTTP status code.
+          example: 400
         message:
           type: string
-          description: Human-readable description.
-          example: No account found with the specified ID.
+          description: Human-readable error description.
+          example: The request payload is invalid.
         details:
           type: array
-          description: Field-level validation errors (present on 400 responses only).
-          nullable: true
+          description: Field-level validation errors.
           items:
             $ref: "#/components/schemas/FieldError"
     FieldError:
       type: object
+      required:
+        - field
+        - message
       properties:
         field:
           type: string
+          description: Name of the field that failed validation.
           example: currency
         message:
           type: string
+          description: Validation failure reason.
           example: Must be a valid ISO 4217 currency code.
   responses:
     BadRequest:
-      description: |
-        400 Bad Request  the request payload failed validation.
-        Check `details` for field-level errors.
+      description: Bad Request. The request payload is malformed or fails validation.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
           example:
-            traceId: e3b0c442-98fc-1c14-9afb-f4c8996fb924
-            code: VALIDATION_ERROR
-            message: Request payload contains invalid fields.
+            code: 400
+            message: The request payload is invalid.
             details:
               - field: currency
                 message: Must be a valid ISO 4217 currency code.
-              - field: initialDeposit
-                message: Must be greater than or equal to 0.
     Unauthorized:
-      description: 401 Unauthorized  missing or invalid JWT Bearer token.
+      description: Unauthorized. A valid Bearer token is required.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
           example:
-            traceId: a1b2c3d4-0000-0000-0000-000000000401
-            code: UNAUTHORIZED
-            message: A valid Bearer token is required to access this resource.
+            code: 401
+            message: Authentication token is missing or invalid.
     Forbidden:
-      description: 403 Forbidden  token valid but required scope is missing.
+      description: Forbidden. The caller does not have permission for this operation.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
           example:
-            traceId: a1b2c3d4-0000-0000-0000-000000000403
-            code: INSUFFICIENT_SCOPE
-            message: The token does not have the required scope for this operation.
+            code: 403
+            message: Insufficient scope for this operation.
     NotFound:
-      description: 404 Not Found  the specified resource does not exist.
+      description: Not Found. The requested resource does not exist.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
           example:
-            traceId: a1b2c3d4-0000-0000-0000-000000000404
-            code: ACCOUNT_NOT_FOUND
-            message: No account found with the specified ID.
+            code: 404
+            message: Account not found.
     Conflict:
-      description: 409 Conflict  the request conflicts with the current resource state.
+      description: Conflict. The operation cannot be completed due to a state conflict.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
           example:
-            traceId: a1b2c3d4-0000-0000-0000-000000000409
-            code: ACCOUNT_HAS_BALANCE
-            message: Account cannot be closed while it holds a non-zero balance.
+            code: 409
+            message: Account cannot be closed because the balance is non-zero.
+    UnprocessableEntity:
+      description: Unprocessable Entity. The transaction cannot be processed due to a
+        business rule violation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            code: 422
+            message: Insufficient available balance for this debit transaction.
+    InternalServerError:
+      description: Internal Server Error. An unexpected condition was encountered.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            code: 500
+            message: An unexpected error occurred. Please try again later.
   examples:
-    OpenSavingsAccountExample:
-      summary: Open a Savings account
+    AccountCreateSavingsExample:
+      summary: Open a savings account
       value:
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        customerId: CUST-00123
         accountType: SAVINGS
-        currency: USD
+        currency: AUD
         nickname: Primary Savings
         initialDeposit: 1000
-        branchCode: NYC-001
-    OpenCurrentAccountExample:
-      summary: Open a Current account
+    AccountCreateCurrentExample:
+      summary: Open a current account
       value:
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        customerId: CUST-00123
         accountType: CURRENT
-        currency: USD
-        nickname: Business Current
-        initialDeposit: 5000
-        branchCode: NYC-001
-    OpenFixedDepositExample:
-      summary: Open a Fixed Deposit account
+        currency: AUD
+        nickname: Main Current Account
+    AccountResponseExample:
+      summary: Typical account response
       value:
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        accountType: FIXED_DEPOSIT
-        currency: USD
-        fixedDepositDetails:
-          principalAmount: 50000
-          tenorMonths: 12
-          interestRate: 6.5
-          interestFrequency: ON_MATURITY
-          autoRenew: false
-          maturityCreditAccountId: a1b2c3d4-0002-0002-0002-000000000001
-    AccountSavingsResponseExample:
-      summary: Active Savings account
-      value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        accountNumber: 001-100000001
+        accountId: ACC-00456
+        customerId: CUST-00123
         accountType: SAVINGS
-        currency: USD
+        status: ACTIVE
+        currency: AUD
         nickname: Primary Savings
-        status: ACTIVE
-        branchCode: NYC-001
-        fixedDepositDetails: null
+        bsb: 013-000
+        accountNumber: "100123456"
         openedAt: 2024-01-15T09:30:00Z
-        updatedAt: 2024-06-01T14:00:00Z
-    AccountFDResponseExample:
-      summary: Active Fixed Deposit account
+        closedAt: null
+        updatedAt: 2024-06-01T14:22:00Z
+    AccountPageExample:
+      summary: Paginated account list
       value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000003
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        accountNumber: 003-300000003
-        accountType: FIXED_DEPOSIT
-        currency: USD
-        nickname: 12-Month FD
-        status: ACTIVE
-        branchCode: NYC-001
-        fixedDepositDetails:
-          principalAmount: 50000
-          tenorMonths: 12
-          interestRate: 6.5
-          interestFrequency: ON_MATURITY
-          accruedInterest: 2708.33
-          maturityAmount: 53250
-          maturityDate: 2025-01-15
-          prematureClosurePenaltyRate: 1
-          autoRenew: false
-          maturityCreditAccountId: a1b2c3d4-0002-0002-0002-000000000001
-          openedAt: 2024-01-15T09:35:00Z
-        openedAt: 2024-01-15T09:35:00Z
-        updatedAt: 2024-01-15T09:35:00Z
-    CustomerAccountListExample:
-      summary: Three accounts owned by one customer
-      value:
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        totalCount: 3
-        accounts:
-          - accountId: a1b2c3d4-0002-0002-0002-000000000001
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            accountNumber: 001-100000001
+        data:
+          - accountId: ACC-00456
+            customerId: CUST-00123
             accountType: SAVINGS
-            currency: USD
+            status: ACTIVE
+            currency: AUD
             nickname: Primary Savings
-            status: ACTIVE
             openedAt: 2024-01-15T09:30:00Z
-            updatedAt: 2024-06-01T14:00:00Z
-          - accountId: a1b2c3d4-0002-0002-0002-000000000002
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            accountNumber: 001-200000002
+            updatedAt: 2024-06-01T14:22:00Z
+          - accountId: ACC-00457
+            customerId: CUST-00124
             accountType: CURRENT
-            currency: USD
-            nickname: Business Current
             status: ACTIVE
-            openedAt: 2024-02-01T10:00:00Z
-            updatedAt: 2024-06-01T14:00:00Z
-          - accountId: a1b2c3d4-0002-0002-0002-000000000003
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            accountNumber: 003-300000003
-            accountType: FIXED_DEPOSIT
-            currency: USD
-            nickname: 12-Month FD
-            status: ACTIVE
-            openedAt: 2024-01-15T09:35:00Z
-            updatedAt: 2024-01-15T09:35:00Z
-    AccountBalanceExample:
-      summary: Healthy Savings account balance
-      value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        currency: USD
-        availableBalance: 12450.75
-        ledgerBalance: 12550.75
-        blockedAmount: 100
-        pendingCredits: 0
-        pendingDebits: 0
-        averageMonthlyBalance: 11800
-        overdraftLimit: 2000
-        asOf: 2024-06-15T10:00:00Z
-    CustomerBalanceSummaryExample:
-      summary: All balances for one customer (USD accounts)
-      value:
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        asOf: 2024-06-15T10:00:00Z
-        totalAvailableBalance: 24900.5
-        totalLedgerBalance: 25100.5
-        currency: USD
-        accountBalances:
-          - accountId: a1b2c3d4-0002-0002-0002-000000000001
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            currency: USD
-            availableBalance: 12450.75
-            ledgerBalance: 12550.75
-            blockedAmount: 100
-            pendingCredits: 0
-            pendingDebits: 0
-            averageMonthlyBalance: 11800
-            overdraftLimit: 2000
-            asOf: 2024-06-15T10:00:00Z
-          - accountId: a1b2c3d4-0002-0002-0002-000000000002
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            currency: USD
-            availableBalance: 12449.75
-            ledgerBalance: 12549.75
-            blockedAmount: 0
-            pendingCredits: 0
-            pendingDebits: 0
-            averageMonthlyBalance: 12000
-            overdraftLimit: 0
-            asOf: 2024-06-15T10:00:00Z
-    TransactionPageExample:
-      summary: Last two transactions on a Savings account
-      value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
+            currency: AUD
+            nickname: Main Current Account
+            openedAt: 2024-02-10T11:00:00Z
+            updatedAt: 2024-05-30T09:00:00Z
         page: 1
         pageSize: 20
-        totalCount: 247
-        fromDate: 2024-01-01
-        toDate: 2024-06-15
-        transactions:
-          - transactionId: t1a2b3c4-0006-0006-0006-000000000001
-            accountId: a1b2c3d4-0002-0002-0002-000000000001
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            type: CREDIT
-            channel: API
-            amount: 5000
-            currency: USD
-            runningBalance: 17450.75
-            description: Monthly salary credit - ACME Corp
-            referenceId: null
-            counterpartyName: ACME Corporation Payroll
-            counterpartyAccount: "****5678"
-            counterpartyBank: CHASUS33
-            isSuspicious: false
-            valueDate: 2024-06-01
-            processedAt: 2024-06-01T08:30:00Z
-          - transactionId: t1a2b3c4-0006-0006-0006-000000000002
-            accountId: a1b2c3d4-0002-0002-0002-000000000001
-            customerId: c1a2b3c4-0001-0001-0001-000000000001
-            type: LOAN_REPAYMENT
-            channel: STANDING_ORDER
-            amount: 1000
-            currency: USD
-            runningBalance: 16450.75
-            description: Loan repayment - PERSONAL LOAN
-            referenceId: l1a2b3c4-0003-0003-0003-000000000001
-            counterpartyName: Bank Loans Division
-            counterpartyAccount: null
-            counterpartyBank: null
-            isSuspicious: false
-            valueDate: 2024-06-05
-            processedAt: 2024-06-05T01:00:00Z
-    TransactionCreditExample:
-      summary: Single CREDIT transaction
+        totalCount: 2
+    AccountListExample:
+      summary: Accounts for a customer
       value:
-        transactionId: t1a2b3c4-0006-0006-0006-000000000001
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
+        customerId: CUST-00123
+        accounts:
+          - accountId: ACC-00456
+            customerId: CUST-00123
+            accountType: SAVINGS
+            status: ACTIVE
+            currency: AUD
+            nickname: Primary Savings
+            openedAt: 2024-01-15T09:30:00Z
+            updatedAt: 2024-06-01T14:22:00Z
+          - accountId: ACC-00458
+            customerId: CUST-00123
+            accountType: CURRENT
+            status: ACTIVE
+            currency: AUD
+            nickname: Everyday Account
+            openedAt: 2024-03-01T10:00:00Z
+            updatedAt: 2024-06-01T14:22:00Z
+    BalanceExample:
+      summary: Current account balance
+      value:
+        accountId: ACC-00456
+        currency: AUD
+        availableBalance: 4850.75
+        ledgerBalance: 5000
+        pendingDebits: 149.25
+        asOf: 2024-06-15T08:00:00Z
+    TransactionCreateCreditExample:
+      summary: Post a credit transaction
+      value:
         type: CREDIT
-        channel: API
-        amount: 5000
-        currency: USD
-        runningBalance: 17450.75
-        description: Monthly salary credit - ACME Corp
-        referenceId: null
-        counterpartyName: ACME Corporation Payroll
-        counterpartyAccount: "****5678"
-        counterpartyBank: CHASUS33
-        isSuspicious: false
-        valueDate: 2024-06-01
-        processedAt: 2024-06-01T08:30:00Z
-    TransactionDebitExample:
-      summary: Single LOAN_DISBURSEMENT transaction
+        amount: 2500
+        currency: AUD
+        description: Salary deposit - June 2024
+        referenceId: PAY-REF-20240601
+        counterpartyName: Acme Corp Pty Ltd
+    TransactionCreateDebitExample:
+      summary: Post a debit transaction
       value:
-        transactionId: t1a2b3c4-0006-0006-0006-000000000010
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        type: LOAN_DISBURSEMENT
-        channel: SYSTEM
-        amount: 25000
-        currency: USD
-        runningBalance: 37450.75
-        description: Loan disbursement - PERSONAL LOAN
-        referenceId: l1a2b3c4-0003-0003-0003-000000000001
-        counterpartyName: null
-        counterpartyAccount: null
-        counterpartyBank: null
-        isSuspicious: false
-        valueDate: 2024-06-10
-        processedAt: 2024-06-10T11:05:00Z
-    TransactionSummaryExample:
-      summary: 24-month transaction summary for eligibility assessment
+        type: DEBIT
+        amount: 149.25
+        currency: AUD
+        description: Utility bill payment
+        referenceId: UTIL-20240601
+        counterpartyName: City Power
+    TransactionResponseExample:
+      summary: Posted transaction response
       value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        periodFromDate: 2023-01-01
-        periodToDate: 2024-12-31
-        totalTransactionCount: 247
-        totalCreditAmount: 85000
-        totalDebitAmount: 63000
-        averageMonthlyCredit: 7083.33
-        averageMonthlyDebit: 5250
-        loanRepaymentCount: 12
-        loanRepaymentTotalAmount: 12000
-        missedPaymentCount: 0
-        largeTransactionCount: 3
-        suspiciousTransactionCount: 0
-        distinctCounterpartyCount: 18
-        currency: USD
-        computedAt: 2024-06-15T10:05:00Z
-    FixedDepositDetailsExample:
-      summary: Fixed Deposit details for a 12-month term
+        transactionId: TXN-00789
+        accountId: ACC-00456
+        type: CREDIT
+        status: POSTED
+        amount: 2500
+        currency: AUD
+        description: Salary deposit - June 2024
+        referenceId: PAY-REF-20240601
+        counterpartyName: Acme Corp Pty Ltd
+        postedAt: 2024-06-01T09:00:00Z
+        createdAt: 2024-06-01T08:58:00Z
+    TransactionPageExample:
+      summary: Paginated transaction list
       value:
-        principalAmount: 50000
-        tenorMonths: 12
-        interestRate: 6.5
-        interestFrequency: ON_MATURITY
-        accruedInterest: 2708.33
-        maturityAmount: 53250
-        maturityDate: 2025-01-15
-        prematureClosurePenaltyRate: 1
-        autoRenew: false
-        maturityCreditAccountId: a1b2c3d4-0002-0002-0002-000000000001
-        openedAt: 2024-01-15T09:35:00Z
-    AccountValidationPassExample:
-      summary: Account passes validation for loan disbursement
-      value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000001
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        valid: true
-        status: ACTIVE
-        currency: USD
-        accountType: SAVINGS
-        validationMessages: []
-        validatedAt: 2024-06-15T11:00:00Z
-    AccountValidationFailExample:
-      summary: Account fails validation  account is FROZEN
-      value:
-        accountId: a1b2c3d4-0002-0002-0002-000000000009
-        customerId: c1a2b3c4-0001-0001-0001-000000000001
-        valid: false
-        status: FROZEN
-        currency: USD
-        accountType: SAVINGS
-        validationMessages:
-          - Account is FROZEN and cannot receive funds.
-        validatedAt: 2024-06-15T11:01:00Z
+        data:
+          - transactionId: TXN-00789
+            accountId: ACC-00456
+            type: CREDIT
+            status: POSTED
+            amount: 2500
+            currency: AUD
+            description: Salary deposit - June 2024
+            postedAt: 2024-06-01T09:00:00Z
+            createdAt: 2024-06-01T08:58:00Z
+          - transactionId: TXN-00790
+            accountId: ACC-00456
+            type: DEBIT
+            status: POSTED
+            amount: 149.25
+            currency: AUD
+            description: Utility bill payment
+            postedAt: 2024-06-02T11:30:00Z
+            createdAt: 2024-06-02T11:28:00Z
+        page: 1
+        pageSize: 20
+        totalCount: 2

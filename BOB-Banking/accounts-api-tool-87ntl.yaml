@@ -1,0 +1,255 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: accounts-api-tool-87ntl
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Accounts API. Manages bank account lifecycle,
+    balances, and transactions.
+  labels:
+    api-spec: ./accounts-api-spec.yml
+spec:
+  tools:
+    - name: listAccounts
+      description: Returns a paginated list of all bank accounts.
+      inputSchema:
+        type: object
+        properties:
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          status:
+            description: Filter by account status.
+            x-parameter-location: query
+            type: string
+            enum: &a1
+              - ACTIVE
+              - DORMANT
+              - FROZEN
+              - CLOSED
+          accountType:
+            description: Filter by account type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - SAVINGS
+              - CURRENT
+              - FIXED_DEPOSIT
+              - LOAN_DISBURSEMENT
+      title: List accounts
+      x-api-binding:
+        operationPath: /accounts
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: createAccount
+      description: Opens a new bank account and returns the assigned account record.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Create account
+      x-api-binding:
+        operationPath: /accounts
+        operationMethod: POST
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAccountsByCustomer
+      description: Returns all accounts linked to the specified customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          status:
+            description: Filter by account status.
+            x-parameter-location: query
+            type: string
+            enum: *a1
+        required:
+          - customerId
+      title: Get accounts by customer
+      x-api-binding:
+        operationPath: /accounts/customer/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAccount
+      description: Returns the full record for a single bank account.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - accountId
+      title: Get account
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: updateAccount
+      description: Replaces mutable fields on an existing account record.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          nickname:
+            type: string
+            maxLength: 100
+            description: Updated account nickname.
+            example: Main Current Account
+          status:
+            type: string
+            enum: *a1
+            description: Operational status of the bank account.
+        required:
+          - accountId
+      title: Update account
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: PUT
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: closeAccount
+      description: Closes (soft-deletes) a bank account. Accounts with a non-zero
+        balance cannot be closed.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - accountId
+      title: Close account
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: DELETE
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: getAccountBalance
+      description: Returns the current available and ledger balances for an account.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - accountId
+      title: Get account balance
+      x-api-binding:
+        operationPath: /accounts/{accountId}/balance
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: listTransactions
+      description: Returns a paginated list of transactions for an account.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          fromDate:
+            description: Start date for transaction filter (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+          toDate:
+            description: End date for transaction filter (ISO 8601 date).
+            x-parameter-location: query
+            type: string
+            format: date
+          type:
+            description: Filter by transaction type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - CREDIT
+              - DEBIT
+              - TRANSFER
+              - FEE
+              - INTEREST
+              - REVERSAL
+        required:
+          - accountId
+      title: List transactions
+      x-api-binding:
+        operationPath: /accounts/{accountId}/transactions
+        operationMethod: GET
+        api:
+          $path: ./accounts-api-spec.yml
+    - name: postTransaction
+      description: Posts a debit or credit transaction to the account.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - accountId
+      title: Post transaction
+      x-api-binding:
+        operationPath: /accounts/{accountId}/transactions
+        operationMethod: POST
+        api:
+          $path: ./accounts-api-spec.yml

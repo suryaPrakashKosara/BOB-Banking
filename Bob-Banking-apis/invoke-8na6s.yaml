@@ -1,7 +1,7 @@
 kind: Invoke
 apiVersion: api.ibm.com/v1
 metadata:
-  name: invoke-zp324
+  name: invoke-8na6s
   namespace: Bob-Banking-apis
   version: '1.0'
   tags: []

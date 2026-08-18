@@ -3,7 +3,7 @@ apiVersion: api.ibm.com/v1
 metadata:
   name: invoke-pp50t
   namespace: Bob-Banking-apis
-  version: "1.0"
+  version: '1.0'
   tags: []
   labels:
     gatewayTypes:
@@ -13,8 +13,9 @@ spec:
     http:
       target:
         tlsClientProfile: sample-tls-client-profile:1.0.0
-        url: "'https://loan-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/loan\
-          s' & $pathAndQuery()"
+        url: >-
+          'https://loan-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/loans'
+          & $pathAndQuery()
         urlType: jsonata
         persistentConnections: false
         timeout: 30

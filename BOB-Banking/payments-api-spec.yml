@@ -1,0 +1,1171 @@
+openapi: 3.0.3
+info:
+  title: Payments API
+  description: Enterprise Banking Payments API. Orchestrates payment processing,
+    internal transfers, account validation, and loan disbursements across the
+    banking platform.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+x-ibm-name: payments-api
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  type: rest
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  buffering: true
+  properties:
+    - name: target-url
+      value: https://payments-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+      description: Base URL of the Payments microservice backend.
+      encoded: false
+  activity-log:
+    enabled: true
+    content: activity
+    error-content: payload
+  assembly:
+    execute:
+      - invoke:
+          version: 2.0.0
+          title: Invoke Payments Backend
+          target-url: $(target-url)$(request.path)
+          verb: keep
+          timeout: 60
+          follow-redirects: false
+          compression: false
+          inject-proxy-headers: true
+          stop-on-error:
+            - ConnectionError
+            - OperationError
+    catch:
+      - errors:
+          - ConnectionError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 503 Response
+              actions:
+                - set: message.status.code
+                  value: 503
+                  type: number
+                - set: message.body
+                  value: '{"code":503,"message":"Payments service temporarily unavailable."}'
+                  type: string
+      - errors:
+          - OperationError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 502 Response
+              actions:
+                - set: message.status.code
+                  value: 502
+                  type: number
+                - set: message.body
+                  value: '{"code":502,"message":"Bad gateway. Upstream returned an invalid
+                    response."}'
+                  type: string
+servers:
+  - url: https://payments-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/payments
+    description: Production
+tags:
+  - name: Payments
+    description: General payment submission, retrieval, and listing.
+  - name: Status
+    description: Payment status tracking.
+  - name: Transfers
+    description: Internal account-to-account transfers.
+  - name: Validation
+    description: Pre-payment account and compliance validation.
+  - name: Disbursements
+    description: Loan disbursement payments triggered by the Loans API.
+paths:
+  /payments:
+    get:
+      tags:
+        - Payments
+      summary: List payments
+      description: Returns a paginated list of payment records. Supports filtering by
+        status, payment type, and date range.
+      operationId: listPayments
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          required: false
+          description: Filter by payment status.
+          schema:
+            $ref: "#/components/schemas/PaymentStatus"
+        - name: paymentType
+          in: query
+          required: false
+          description: Filter by payment type.
+          schema:
+            $ref: "#/components/schemas/PaymentType"
+        - name: customerId
+          in: query
+          required: false
+          description: Filter payments by originating customer identifier.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+          example: CUST-00123
+        - name: fromDate
+          in: query
+          required: false
+          description: Filter payments submitted on or after this date (ISO 8601 date).
+          schema:
+            type: string
+            format: date
+          example: 2024-01-01
+        - name: toDate
+          in: query
+          required: false
+          description: Filter payments submitted on or before this date (ISO 8601 date).
+          schema:
+            type: string
+            format: date
+          example: 2024-06-30
+      responses:
+        "200":
+          description: Paginated list of payment records.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentPage"
+              examples:
+                PaymentPageExample:
+                  $ref: "#/components/examples/PaymentPageExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+    post:
+      tags:
+        - Payments
+      summary: Submit payment
+      description: Submits a new payment instruction. The Payments API validates the
+        source account via the Accounts API and screens the payment via the Risk
+        API before processing.
+      operationId: submitPayment
+      requestBody:
+        $ref: "#/components/requestBodies/PaymentRequest"
+      responses:
+        "201":
+          description: Payment accepted and queued for processing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              examples:
+                PaymentResponseExample:
+                  $ref: "#/components/examples/PaymentResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /payments/{paymentId}:
+    parameters:
+      - $ref: "#/components/parameters/PaymentIdParam"
+    get:
+      tags:
+        - Payments
+      summary: Get payment
+      description: Returns the full record for a single payment.
+      operationId: getPayment
+      responses:
+        "200":
+          description: Payment record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              examples:
+                PaymentResponseExample:
+                  $ref: "#/components/examples/PaymentResponseExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /payments/{paymentId}/status:
+    parameters:
+      - $ref: "#/components/parameters/PaymentIdParam"
+    get:
+      tags:
+        - Status
+      summary: Get payment status
+      description: Returns the current processing status and status history for a payment.
+      operationId: getPaymentStatus
+      responses:
+        "200":
+          description: Payment status record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentStatusRecord"
+              examples:
+                PaymentStatusExample:
+                  $ref: "#/components/examples/PaymentStatusExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /payments/internal-transfer:
+    post:
+      tags:
+        - Transfers
+      summary: Submit internal transfer
+      description: Transfers funds between two accounts held within the same banking
+        platform. Validates both the source and destination accounts via the
+        Accounts API before posting the debit and credit.
+      operationId: submitInternalTransfer
+      requestBody:
+        $ref: "#/components/requestBodies/TransferRequest"
+      responses:
+        "201":
+          description: Internal transfer accepted and queued for processing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              examples:
+                TransferResponseExample:
+                  $ref: "#/components/examples/TransferResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /payments/validate:
+    post:
+      tags:
+        - Validation
+      summary: Validate payment
+      description: Performs pre-payment validation including account status checks via
+        the Accounts API and fraud screening via the Risk API. Returns a
+        validation verdict before the payment is committed.
+      operationId: validatePayment
+      requestBody:
+        $ref: "#/components/requestBodies/ValidationRequest"
+      responses:
+        "200":
+          description: Validation result. Check the valid field before submitting the
+            payment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResponse"
+              examples:
+                ValidationPassExample:
+                  $ref: "#/components/examples/ValidationPassExample"
+                ValidationFailExample:
+                  $ref: "#/components/examples/ValidationFailExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /payments/disbursement:
+    post:
+      tags:
+        - Disbursements
+      summary: Submit loan disbursement
+      description: Disburses approved loan funds to the customer disbursement account.
+        Called exclusively by the Loans API after a loan is approved. Validates
+        the destination account via the Accounts API and runs a final fraud
+        check via the Risk API before transferring funds.
+      operationId: submitDisbursement
+      requestBody:
+        $ref: "#/components/requestBodies/DisbursementRequest"
+      responses:
+        "201":
+          description: Disbursement accepted and queued for processing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              examples:
+                DisbursementResponseExample:
+                  $ref: "#/components/examples/DisbursementResponseExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: RS256 JWT issued by the bank identity provider.
+  parameters:
+    PaymentIdParam:
+      name: paymentId
+      in: path
+      required: true
+      description: Unique payment identifier.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: PAY-00901
+    PageParam:
+      name: page
+      in: query
+      required: false
+      description: Page number (1-based).
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of records per page.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      example: 20
+  requestBodies:
+    PaymentRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PaymentRequest"
+          examples:
+            DomesticPaymentExample:
+              $ref: "#/components/examples/DomesticPaymentRequestExample"
+            InternationalPaymentExample:
+              $ref: "#/components/examples/InternationalPaymentRequestExample"
+    TransferRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TransferRequest"
+          examples:
+            TransferRequestExample:
+              $ref: "#/components/examples/TransferRequestExample"
+    ValidationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationRequest"
+          examples:
+            ValidationRequestExample:
+              $ref: "#/components/examples/ValidationRequestExample"
+    DisbursementRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DisbursementRequest"
+          examples:
+            DisbursementRequestExample:
+              $ref: "#/components/examples/DisbursementRequestExample"
+  schemas:
+    PaymentType:
+      type: string
+      enum:
+        - DOMESTIC
+        - INTERNATIONAL
+        - INTERNAL_TRANSFER
+        - LOAN_DISBURSEMENT
+        - DIRECT_DEBIT
+        - STANDING_ORDER
+      description: Classification of the payment instruction.
+    PaymentStatus:
+      type: string
+      enum:
+        - PENDING
+        - VALIDATED
+        - PROCESSING
+        - COMPLETED
+        - FAILED
+        - REJECTED
+        - REVERSED
+        - CANCELLED
+      description: Processing lifecycle status of a payment.
+    PaymentRail:
+      type: string
+      enum:
+        - NPP
+        - BECS
+        - SWIFT
+        - SEPA
+        - INTERNAL
+      description: Payment network or rail used to process the transaction.
+    ValidationFailureCode:
+      type: string
+      enum:
+        - ACCOUNT_NOT_FOUND
+        - ACCOUNT_FROZEN
+        - ACCOUNT_CLOSED
+        - INSUFFICIENT_BALANCE
+        - CURRENCY_MISMATCH
+        - FRAUD_RISK_FLAGGED
+        - COMPLIANCE_FAILED
+        - DAILY_LIMIT_EXCEEDED
+        - INVALID_COUNTERPARTY
+      description: Machine-readable reason code for a validation failure.
+    BankAccount:
+      type: object
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          description: Internal account identifier from the Accounts API.
+          example: ACC-00456
+        accountName:
+          type: string
+          maxLength: 100
+          description: Name of the account holder as it appears on the account.
+          example: Jane Smith
+        bsb:
+          type: string
+          maxLength: 10
+          description: Bank State Branch code (Australian domestic payments).
+          example: 013-000
+        accountNumber:
+          type: string
+          maxLength: 20
+          description: Domestic account number.
+          example: "100123456"
+        iban:
+          type: string
+          maxLength: 34
+          description: International Bank Account Number (international payments).
+          example: AU00BANK0000000100123456
+        bankCode:
+          type: string
+          maxLength: 20
+          description: SWIFT/BIC code for international payments.
+          example: ANZBAU3M
+    PaymentRequest:
+      type: object
+      required:
+        - customerId
+        - sourceAccountId
+        - amount
+        - currency
+        - paymentType
+        - destinationAccount
+      properties:
+        customerId:
+          type: string
+          description: Identifier of the customer initiating the payment. Validated
+            against the Customer API.
+          example: CUST-00123
+        sourceAccountId:
+          type: string
+          description: Identifier of the account to debit. Must belong to the customer and
+            be ACTIVE.
+          example: ACC-00456
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Payment amount. Must be greater than zero.
+          example: 500
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        paymentType:
+          $ref: "#/components/schemas/PaymentType"
+        destinationAccount:
+          $ref: "#/components/schemas/BankAccount"
+        description:
+          type: string
+          maxLength: 200
+          description: Payment narrative or reference shown to both parties.
+          example: Invoice payment INV-2024-0601
+        referenceId:
+          type: string
+          maxLength: 100
+          description: Idempotency key or external reference. Duplicate submissions with
+            the same referenceId are rejected.
+          example: REF-20240601-001
+        scheduledDate:
+          type: string
+          format: date
+          description: Future date to process the payment (ISO 8601 date). Omit for
+            immediate processing.
+          example: 2024-07-01
+    PaymentResponse:
+      type: object
+      required:
+        - paymentId
+        - customerId
+        - sourceAccountId
+        - amount
+        - currency
+        - paymentType
+        - status
+        - createdAt
+      properties:
+        paymentId:
+          type: string
+          description: Unique payment identifier assigned by the system.
+          example: PAY-00901
+        customerId:
+          type: string
+          description: Identifier of the customer who initiated the payment.
+          example: CUST-00123
+        sourceAccountId:
+          type: string
+          description: Account debited for the payment.
+          example: ACC-00456
+        amount:
+          type: number
+          format: double
+          description: Payment amount.
+          example: 500
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        paymentType:
+          $ref: "#/components/schemas/PaymentType"
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        rail:
+          $ref: "#/components/schemas/PaymentRail"
+        destinationAccount:
+          $ref: "#/components/schemas/BankAccount"
+        description:
+          type: string
+          description: Payment narrative.
+          example: Invoice payment INV-2024-0601
+        referenceId:
+          type: string
+          description: External reference or idempotency key.
+          example: REF-20240601-001
+        networkTransactionId:
+          type: string
+          description: Transaction identifier assigned by the payment network.
+          example: NPP-TXN-20240601-88721
+        scheduledDate:
+          type: string
+          format: date
+          description: Scheduled processing date for future-dated payments.
+          example: null
+        completedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the payment reached terminal status (UTC, ISO 8601).
+          example: 2024-06-01T10:05:00Z
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the payment instruction was created (UTC, ISO 8601).
+          example: 2024-06-01T10:00:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the most recent status update (UTC, ISO 8601).
+          example: 2024-06-01T10:05:00Z
+    PaymentStatusRecord:
+      type: object
+      required:
+        - paymentId
+        - currentStatus
+        - updatedAt
+      properties:
+        paymentId:
+          type: string
+          description: Payment identifier.
+          example: PAY-00901
+        currentStatus:
+          $ref: "#/components/schemas/PaymentStatus"
+        previousStatus:
+          $ref: "#/components/schemas/PaymentStatus"
+        reason:
+          type: string
+          maxLength: 300
+          description: Reason for the most recent status transition.
+          example: Funds transferred successfully via NPP.
+        statusHistory:
+          type: array
+          description: Chronological list of all status transitions for this payment.
+          items:
+            $ref: "#/components/schemas/PaymentStatusHistoryEntry"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the most recent status change (UTC, ISO 8601).
+          example: 2024-06-01T10:05:00Z
+    PaymentStatusHistoryEntry:
+      type: object
+      required:
+        - status
+        - changedAt
+      properties:
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        reason:
+          type: string
+          maxLength: 300
+          description: Reason for this status transition.
+          example: Payment instruction received and queued.
+        changedAt:
+          type: string
+          format: date-time
+          description: Timestamp of this transition (UTC, ISO 8601).
+          example: 2024-06-01T10:00:01Z
+    TransferRequest:
+      type: object
+      required:
+        - customerId
+        - sourceAccountId
+        - destinationAccountId
+        - amount
+        - currency
+      properties:
+        customerId:
+          type: string
+          description: Identifier of the customer initiating the transfer. Both accounts
+            must belong to this customer.
+          example: CUST-00123
+        sourceAccountId:
+          type: string
+          description: Account to debit. Must be ACTIVE and have sufficient balance.
+          example: ACC-00456
+        destinationAccountId:
+          type: string
+          description: Account to credit. Must be ACTIVE and accept the payment currency.
+          example: ACC-00458
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Transfer amount. Must be greater than zero.
+          example: 1000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        description:
+          type: string
+          maxLength: 200
+          description: Transfer narrative visible to the account holder.
+          example: Monthly savings transfer.
+        referenceId:
+          type: string
+          maxLength: 100
+          description: Idempotency key or external reference.
+          example: XFER-20240601-002
+    ValidationRequest:
+      type: object
+      required:
+        - customerId
+        - sourceAccountId
+        - amount
+        - currency
+        - paymentType
+      properties:
+        customerId:
+          type: string
+          description: Customer initiating the payment. Used to retrieve the risk profile
+            from the Risk API.
+          example: CUST-00123
+        sourceAccountId:
+          type: string
+          description: Account to validate as the funding source.
+          example: ACC-00456
+        destinationAccountId:
+          type: string
+          description: Internal destination account to validate. Required for
+            INTERNAL_TRANSFER and LOAN_DISBURSEMENT.
+          example: ACC-00458
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Payment amount to validate against balance and daily limits.
+          example: 500
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        paymentType:
+          $ref: "#/components/schemas/PaymentType"
+    ValidationResponse:
+      type: object
+      required:
+        - valid
+        - checkedAt
+      properties:
+        valid:
+          type: boolean
+          description: True if the payment passed all validation checks and may be
+            submitted.
+          example: true
+        customerId:
+          type: string
+          description: Customer identifier that was validated.
+          example: CUST-00123
+        sourceAccountId:
+          type: string
+          description: Source account that was validated.
+          example: ACC-00456
+        availableBalance:
+          type: number
+          format: double
+          description: Available balance at the time of validation.
+          example: 4850.75
+        failureCodes:
+          type: array
+          description: List of failure reason codes. Empty when valid is true.
+          items:
+            $ref: "#/components/schemas/ValidationFailureCode"
+        failureMessages:
+          type: array
+          description: Human-readable descriptions corresponding to each failure code.
+          items:
+            type: string
+          example: []
+        checkedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the validation check (UTC, ISO 8601).
+          example: 2024-06-01T09:55:00Z
+        expiresAt:
+          type: string
+          format: date-time
+          description: Timestamp after which this validation result is no longer valid.
+          example: 2024-06-01T10:25:00Z
+    DisbursementRequest:
+      type: object
+      required:
+        - loanId
+        - customerId
+        - destinationAccountId
+        - amount
+        - currency
+      properties:
+        loanId:
+          type: string
+          description: Identifier of the approved loan. Must exist in the Loans API and
+            have status APPROVED.
+          example: LOAN-00789
+        customerId:
+          type: string
+          description: Identifier of the loan recipient customer.
+          example: CUST-00123
+        destinationAccountId:
+          type: string
+          description: Account to credit with the disbursed loan funds. Validated via the
+            Accounts API.
+          example: ACC-00456
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Disbursement amount. Must match the approved loan amount.
+          example: 22000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter currency code.
+          example: AUD
+        referenceId:
+          type: string
+          maxLength: 100
+          description: Idempotency key to prevent duplicate disbursements for the same loan.
+          example: DISB-LOAN-00789-001
+        notes:
+          type: string
+          maxLength: 300
+          description: Optional disbursement notes from the loans officer.
+          example: Approved by underwriting-engine-v2. Disbursing to primary savings
+            account.
+    PaymentPage:
+      type: object
+      required:
+        - data
+        - page
+        - pageSize
+        - totalCount
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentResponse"
+          description: Array of payment records for the current page.
+        page:
+          type: integer
+          description: Current page number.
+          example: 1
+        pageSize:
+          type: integer
+          description: Records per page.
+          example: 20
+        totalCount:
+          type: integer
+          description: Total number of matching payment records across all pages.
+          example: 45
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 400
+        message:
+          type: string
+          description: Human-readable error description.
+          example: The request payload is invalid.
+        details:
+          type: array
+          description: Field-level validation errors.
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: Name of the field that failed validation.
+          example: amount
+        message:
+          type: string
+          description: Validation failure reason.
+          example: Must be greater than zero.
+  responses:
+    BadRequest:
+      description: Bad Request. The request payload is malformed or fails validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 400
+            message: The request payload is invalid.
+            details:
+              - field: amount
+                message: Must be greater than zero.
+    Unauthorized:
+      description: Unauthorized. A valid Bearer token is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 401
+            message: Authentication token is missing or invalid.
+    Forbidden:
+      description: Forbidden. The caller does not have permission for this operation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 403
+            message: Insufficient scope for this operation.
+    NotFound:
+      description: Not Found. The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 404
+            message: Payment not found.
+    Conflict:
+      description: Conflict. A duplicate payment instruction was detected.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 409
+            message: A payment with this referenceId has already been submitted.
+    UnprocessableEntity:
+      description: Unprocessable Entity. The payment cannot be processed due to a
+        business rule violation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 422
+            message: Insufficient available balance for this payment.
+    InternalServerError:
+      description: Internal Server Error. An unexpected condition was encountered.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 500
+            message: An unexpected error occurred. Please try again later.
+  examples:
+    DomesticPaymentRequestExample:
+      summary: Domestic payment to an external account
+      value:
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        amount: 500
+        currency: AUD
+        paymentType: DOMESTIC
+        destinationAccount:
+          accountName: John Citizen
+          bsb: 062-000
+          accountNumber: "987654321"
+        description: Invoice payment INV-2024-0601
+        referenceId: REF-20240601-001
+    InternationalPaymentRequestExample:
+      summary: International SWIFT payment
+      value:
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        amount: 2000
+        currency: USD
+        paymentType: INTERNATIONAL
+        destinationAccount:
+          accountName: Acme Corp USA
+          iban: US12345678901234567890
+          bankCode: BOFAUS3N
+        description: Supplier payment Q2 2024
+        referenceId: REF-20240601-INTL-001
+    PaymentResponseExample:
+      summary: Accepted domestic payment
+      value:
+        paymentId: PAY-00901
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        amount: 500
+        currency: AUD
+        paymentType: DOMESTIC
+        status: COMPLETED
+        rail: NPP
+        destinationAccount:
+          accountName: John Citizen
+          bsb: 062-000
+          accountNumber: "987654321"
+        description: Invoice payment INV-2024-0601
+        referenceId: REF-20240601-001
+        networkTransactionId: NPP-TXN-20240601-88721
+        scheduledDate: null
+        completedAt: 2024-06-01T10:05:00Z
+        createdAt: 2024-06-01T10:00:00Z
+        updatedAt: 2024-06-01T10:05:00Z
+    PaymentPageExample:
+      summary: Paginated payment list
+      value:
+        data:
+          - paymentId: PAY-00901
+            customerId: CUST-00123
+            sourceAccountId: ACC-00456
+            amount: 500
+            currency: AUD
+            paymentType: DOMESTIC
+            status: COMPLETED
+            rail: NPP
+            createdAt: 2024-06-01T10:00:00Z
+            updatedAt: 2024-06-01T10:05:00Z
+          - paymentId: PAY-00902
+            customerId: CUST-00123
+            sourceAccountId: ACC-00456
+            amount: 149.25
+            currency: AUD
+            paymentType: DIRECT_DEBIT
+            status: COMPLETED
+            rail: BECS
+            createdAt: 2024-06-02T08:00:00Z
+            updatedAt: 2024-06-02T08:03:00Z
+        page: 1
+        pageSize: 20
+        totalCount: 2
+    PaymentStatusExample:
+      summary: Completed payment status with history
+      value:
+        paymentId: PAY-00901
+        currentStatus: COMPLETED
+        previousStatus: PROCESSING
+        reason: Funds transferred successfully via NPP.
+        statusHistory:
+          - status: PENDING
+            reason: Payment instruction received and queued.
+            changedAt: 2024-06-01T10:00:01Z
+          - status: VALIDATED
+            reason: Source account and destination account validated successfully.
+            changedAt: 2024-06-01T10:00:05Z
+          - status: PROCESSING
+            reason: Payment submitted to NPP rail for processing.
+            changedAt: 2024-06-01T10:00:10Z
+          - status: COMPLETED
+            reason: Funds transferred successfully via NPP.
+            changedAt: 2024-06-01T10:05:00Z
+        updatedAt: 2024-06-01T10:05:00Z
+    TransferRequestExample:
+      summary: Internal transfer between two customer accounts
+      value:
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        destinationAccountId: ACC-00458
+        amount: 1000
+        currency: AUD
+        description: Monthly savings transfer.
+        referenceId: XFER-20240601-002
+    TransferResponseExample:
+      summary: Accepted internal transfer
+      value:
+        paymentId: PAY-00903
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        amount: 1000
+        currency: AUD
+        paymentType: INTERNAL_TRANSFER
+        status: COMPLETED
+        rail: INTERNAL
+        destinationAccount:
+          accountId: ACC-00458
+          accountName: Jane Smith
+        description: Monthly savings transfer.
+        referenceId: XFER-20240601-002
+        networkTransactionId: null
+        completedAt: 2024-06-01T10:02:00Z
+        createdAt: 2024-06-01T10:01:00Z
+        updatedAt: 2024-06-01T10:02:00Z
+    ValidationRequestExample:
+      summary: Validate a domestic payment before submission
+      value:
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        amount: 500
+        currency: AUD
+        paymentType: DOMESTIC
+    ValidationPassExample:
+      summary: Validation passed
+      value:
+        valid: true
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        availableBalance: 4850.75
+        failureCodes: []
+        failureMessages: []
+        checkedAt: 2024-06-01T09:55:00Z
+        expiresAt: 2024-06-01T10:25:00Z
+    ValidationFailExample:
+      summary: Validation failed due to insufficient balance
+      value:
+        valid: false
+        customerId: CUST-00123
+        sourceAccountId: ACC-00459
+        availableBalance: 45.2
+        failureCodes:
+          - INSUFFICIENT_BALANCE
+        failureMessages:
+          - Available balance of 45.20 AUD is less than the requested payment
+            amount of 500.00 AUD.
+        checkedAt: 2024-06-01T09:56:00Z
+        expiresAt: 2024-06-01T10:26:00Z
+    DisbursementRequestExample:
+      summary: Loan disbursement from Loans API
+      value:
+        loanId: LOAN-00789
+        customerId: CUST-00123
+        destinationAccountId: ACC-00456
+        amount: 22000
+        currency: AUD
+        referenceId: DISB-LOAN-00789-001
+        notes: Approved by underwriting-engine-v2. Disbursing to primary savings
+          account.
+    DisbursementResponseExample:
+      summary: Accepted loan disbursement
+      value:
+        paymentId: PAY-00904
+        customerId: CUST-00123
+        sourceAccountId: ACC-00456
+        amount: 22000
+        currency: AUD
+        paymentType: LOAN_DISBURSEMENT
+        status: COMPLETED
+        rail: INTERNAL
+        destinationAccount:
+          accountId: ACC-00456
+          accountName: Jane Smith
+        description: Loan disbursement for LOAN-00789
+        referenceId: DISB-LOAN-00789-001
+        networkTransactionId: null
+        completedAt: 2024-02-01T10:10:00Z
+        createdAt: 2024-02-01T10:00:00Z
+        updatedAt: 2024-02-01T10:10:00Z

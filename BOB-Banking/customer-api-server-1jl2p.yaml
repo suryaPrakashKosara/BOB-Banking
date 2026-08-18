@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: customer-api-server-1jl2p
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Customer API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: BOB-Banking:bob-banking-quota-1jl2p:1.0
+  policy-sequence:
+    - $ref: BOB-Banking:bob-banking-freeflowpolicysequence-1jl2p:1.0
+  capabilities:
+    tools:
+      - $ref: BOB-Banking:customer-api-tool-1jl2p:1.0

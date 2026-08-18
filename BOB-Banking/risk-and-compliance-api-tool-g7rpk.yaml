@@ -1,0 +1,103 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-and-compliance-api-tool-g7rpk
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Risk and Compliance API. Provides risk
+    assessment, fraud detection, compliance checks, and credit scoring.
+  labels:
+    api-spec: ./risk-and-compliance-api-spec.yml
+spec:
+  tools:
+    - name: evaluateRisk
+      description: Performs a comprehensive risk assessment for a customer or account
+        and returns a scored risk profile.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Evaluate risk
+      x-api-binding:
+        operationPath: /risk/evaluate
+        operationMethod: POST
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: getCustomerRiskProfile
+      description: Returns the current risk assessment profile for a customer
+        including risk score, category, and last assessment details.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - customerId
+      title: Get customer risk profile
+      x-api-binding:
+        operationPath: /risk/customer/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: getAccountRiskProfile
+      description: Returns the current risk assessment profile for a bank account
+        including transaction risk signals and fraud indicators.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier.
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - accountId
+      title: Get account risk profile
+      x-api-binding:
+        operationPath: /risk/account/{accountId}
+        operationMethod: GET
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: detectFraud
+      description: Analyzes transaction patterns and behavioral signals to detect
+        potential fraud. Returns a fraud risk verdict with supporting signals.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Submit fraud detection request
+      x-api-binding:
+        operationPath: /risk/fraud
+        operationMethod: POST
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: runComplianceCheck
+      description: Executes AML screening, sanctions list lookup, and PEP (Politically
+        Exposed Person) checks for a customer or entity.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Run compliance check
+      x-api-binding:
+        operationPath: /risk/compliance
+        operationMethod: POST
+        api:
+          $path: ./risk-and-compliance-api-spec.yml
+    - name: calculateCreditScore
+      description: Calculates or retrieves the credit score for a customer based on
+        account history, repayment behavior, and financial profile.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Calculate credit score
+      x-api-binding:
+        operationPath: /risk/credit-score
+        operationMethod: POST
+        api:
+          $path: ./risk-and-compliance-api-spec.yml

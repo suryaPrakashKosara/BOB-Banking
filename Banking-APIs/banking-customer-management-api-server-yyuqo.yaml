@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-customer-management-api-server-yyuqo
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Banking Customer Management API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: Banking-APIs:banking-apis-quota-yyuqo:1.0
+  policy-sequence:
+    - $ref: Banking-APIs:banking-apis-freeflowpolicysequence-yyuqo:1.0
+  capabilities:
+    tools:
+      - $ref: Banking-APIs:banking-customer-management-api-tool-yyuqo:1.0

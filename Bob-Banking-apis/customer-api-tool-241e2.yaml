@@ -1,0 +1,230 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: customer-api-tool-241e2
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  description: Enterprise Banking Customer API. Authoritative source for customer
+    profiles, KYC verification, and account linkage.
+  labels:
+    api-spec: ./customer-api-spec.yml
+spec:
+  tools:
+    - name: listCustomers
+      description: Returns a paginated list of all active customers.
+      inputSchema:
+        type: object
+        properties:
+          page:
+            description: Page number (1-based).
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            default: 1
+          pageSize:
+            description: Number of records per page.
+            x-parameter-location: query
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          status:
+            description: Filter by customer status.
+            x-parameter-location: query
+            type: string
+            enum:
+              - ACTIVE
+              - INACTIVE
+              - SUSPENDED
+              - PENDING_VERIFICATION
+      title: List customers
+      x-api-binding:
+        operationPath: /customers
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: createCustomer
+      description: Onboards a new customer and returns the assigned customer record.
+      inputSchema:
+        type: object
+        properties: {}
+      title: Create customer
+      x-api-binding:
+        operationPath: /customers
+        operationMethod: POST
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getCustomer
+      description: Returns the full profile for a single customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - customerId
+      title: Get customer
+      x-api-binding:
+        operationPath: /customers/{customerId}
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: updateCustomer
+      description: Replaces mutable profile fields for an existing customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          firstName:
+            type: string
+            maxLength: 100
+            description: Updated first name.
+            example: Jane
+          lastName:
+            type: string
+            maxLength: 100
+            description: Updated last name.
+            example: Smith
+          email:
+            type: string
+            format: email
+            description: Updated email address.
+            example: jane.smith@example.com
+          phone:
+            type: string
+            maxLength: 30
+            description: Updated phone number.
+            example: "+61412345678"
+          address:
+            type: object
+            required:
+              - line1
+              - city
+              - country
+            properties:
+              line1:
+                type: string
+                maxLength: 100
+                description: Street address line 1.
+                example: 123 Collins Street
+              line2:
+                type: string
+                maxLength: 100
+                description: Street address line 2 (optional).
+                example: Suite 400
+              city:
+                type: string
+                maxLength: 100
+                description: City or suburb.
+                example: Melbourne
+              state:
+                type: string
+                maxLength: 100
+                description: State or province.
+                example: VIC
+              postalCode:
+                type: string
+                maxLength: 20
+                description: Postal or ZIP code.
+                example: "3000"
+              country:
+                type: string
+                minLength: 2
+                maxLength: 2
+                description: ISO 3166-1 alpha-2 country code.
+                example: AU
+        required:
+          - customerId
+      title: Update customer
+      x-api-binding:
+        operationPath: /customers/{customerId}
+        operationMethod: PUT
+        api:
+          $path: ./customer-api-spec.yml
+    - name: deleteCustomer
+      description: Soft-deletes (deactivates) a customer record.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - customerId
+      title: Delete customer
+      x-api-binding:
+        operationPath: /customers/{customerId}
+        operationMethod: DELETE
+        api:
+          $path: ./customer-api-spec.yml
+    - name: getKyc
+      description: Returns the current KYC verification record for a customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+        required:
+          - customerId
+      title: Get KYC record
+      x-api-binding:
+        operationPath: /customers/{customerId}/kyc
+        operationMethod: GET
+        api:
+          $path: ./customer-api-spec.yml
+    - name: updateKycStatus
+      description: Updates the KYC verification status for a customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique customer identifier (CIF).
+            x-parameter-location: path
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+          status:
+            type: string
+            enum:
+              - NOT_STARTED
+              - PENDING
+              - VERIFIED
+              - FAILED
+              - EXPIRED
+            description: KYC verification outcome.
+          notes:
+            type: string
+            maxLength: 500
+            description: Optional compliance notes for the status change.
+            example: Identity documents reviewed and approved.
+        required:
+          - customerId
+          - status
+      title: Update KYC status
+      x-api-binding:
+        operationPath: /customers/{customerId}/kyc
+        operationMethod: PUT
+        api:
+          $path: ./customer-api-spec.yml

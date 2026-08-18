@@ -1,0 +1,1107 @@
+openapi: 3.0.3
+info:
+  title: Risk and Compliance API
+  description: Enterprise Banking Risk and Compliance API. Provides risk
+    assessment, fraud detection, compliance checks, and credit scoring.
+  version: 1.0.0
+  contact:
+    name: Banking API Platform Team
+    email: api-platform@bank.com
+    url: https://developer.bank.com
+  license:
+    name: Internal Use Only
+x-ibm-name: risk-compliance-api
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  type: rest
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  buffering: true
+  properties:
+    - name: target-url
+      value: https://risk-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
+      description: Base URL of the Risk and Compliance microservice backend.
+      encoded: false
+  activity-log:
+    enabled: true
+    content: activity
+    error-content: payload
+  assembly:
+    execute:
+      - invoke:
+          version: 2.0.0
+          title: Invoke Risk Backend
+          target-url: $(target-url)$(request.path)
+          verb: keep
+          timeout: 60
+          follow-redirects: false
+          compression: false
+          inject-proxy-headers: true
+          stop-on-error:
+            - ConnectionError
+            - OperationError
+    catch:
+      - errors:
+          - ConnectionError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 503 Response
+              actions:
+                - set: message.status.code
+                  value: 503
+                  type: number
+                - set: message.body
+                  value: '{"code":503,"message":"Risk service temporarily unavailable."}'
+                  type: string
+      - errors:
+          - OperationError
+        execute:
+          - set-variable:
+              version: 2.0.0
+              title: Set 502 Response
+              actions:
+                - set: message.status.code
+                  value: 502
+                  type: number
+                - set: message.body
+                  value: '{"code":502,"message":"Bad gateway. Upstream returned an invalid
+                    response."}'
+                  type: string
+servers:
+  - url: https://risk-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud/risk
+    description: Production
+tags:
+  - name: Risk
+    description: Risk assessment and scoring for customers and accounts.
+  - name: Fraud
+    description: Fraud signal detection and transaction analysis.
+  - name: Compliance
+    description: Regulatory compliance checks including AML and sanctions screening.
+  - name: Credit
+    description: Credit score calculation and retrieval.
+paths:
+  /risk/evaluate:
+    post:
+      tags:
+        - Risk
+      summary: Evaluate risk
+      description: Performs a comprehensive risk assessment for a customer or account
+        and returns a scored risk profile.
+      operationId: evaluateRisk
+      requestBody:
+        $ref: "#/components/requestBodies/RiskEvaluationRequest"
+      responses:
+        "200":
+          description: Risk assessment result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskAssessment"
+              examples:
+                LowRiskExample:
+                  $ref: "#/components/examples/LowRiskAssessmentExample"
+                HighRiskExample:
+                  $ref: "#/components/examples/HighRiskAssessmentExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/customer/{customerId}:
+    parameters:
+      - $ref: "#/components/parameters/CustomerIdParam"
+    get:
+      tags:
+        - Risk
+      summary: Get customer risk profile
+      description: Returns the current risk assessment profile for a customer
+        including risk score, category, and last assessment details.
+      operationId: getCustomerRiskProfile
+      responses:
+        "200":
+          description: Customer risk profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskAssessment"
+              examples:
+                CustomerRiskExample:
+                  $ref: "#/components/examples/LowRiskAssessmentExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/account/{accountId}:
+    parameters:
+      - $ref: "#/components/parameters/AccountIdParam"
+    get:
+      tags:
+        - Risk
+      summary: Get account risk profile
+      description: Returns the current risk assessment profile for a bank account
+        including transaction risk signals and fraud indicators.
+      operationId: getAccountRiskProfile
+      responses:
+        "200":
+          description: Account risk profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskAssessment"
+              examples:
+                AccountRiskExample:
+                  $ref: "#/components/examples/LowRiskAssessmentExample"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/fraud:
+    post:
+      tags:
+        - Fraud
+      summary: Submit fraud detection request
+      description: Analyzes transaction patterns and behavioral signals to detect
+        potential fraud. Returns a fraud risk verdict with supporting signals.
+      operationId: detectFraud
+      requestBody:
+        $ref: "#/components/requestBodies/FraudDetectionRequest"
+      responses:
+        "200":
+          description: Fraud detection result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FraudResult"
+              examples:
+                CleanExample:
+                  $ref: "#/components/examples/FraudCleanExample"
+                FlaggedExample:
+                  $ref: "#/components/examples/FraudFlaggedExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/compliance:
+    post:
+      tags:
+        - Compliance
+      summary: Run compliance check
+      description: Executes AML screening, sanctions list lookup, and PEP (Politically
+        Exposed Person) checks for a customer or entity.
+      operationId: runComplianceCheck
+      requestBody:
+        $ref: "#/components/requestBodies/ComplianceCheckRequest"
+      responses:
+        "200":
+          description: Compliance check result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceResult"
+              examples:
+                PassExample:
+                  $ref: "#/components/examples/CompliancePassExample"
+                FailExample:
+                  $ref: "#/components/examples/ComplianceFailExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+  /risk/credit-score:
+    post:
+      tags:
+        - Credit
+      summary: Calculate credit score
+      description: Calculates or retrieves the credit score for a customer based on
+        account history, repayment behavior, and financial profile.
+      operationId: calculateCreditScore
+      requestBody:
+        $ref: "#/components/requestBodies/CreditScoreRequest"
+      responses:
+        "200":
+          description: Credit score result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditScore"
+              examples:
+                GoodScoreExample:
+                  $ref: "#/components/examples/CreditScoreGoodExample"
+                PoorScoreExample:
+                  $ref: "#/components/examples/CreditScorePoorExample"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: RS256 JWT issued by the bank identity provider.
+  parameters:
+    CustomerIdParam:
+      name: customerId
+      in: path
+      required: true
+      description: Unique customer identifier (CIF).
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: CUST-00123
+    AccountIdParam:
+      name: accountId
+      in: path
+      required: true
+      description: Unique account identifier.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: ^[A-Za-z0-9_-]+$
+      example: ACC-00456
+  requestBodies:
+    RiskEvaluationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RiskEvaluationRequest"
+          examples:
+            CustomerEvalExample:
+              $ref: "#/components/examples/RiskEvaluationRequestExample"
+    FraudDetectionRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FraudDetectionRequest"
+          examples:
+            FraudRequestExample:
+              $ref: "#/components/examples/FraudDetectionRequestExample"
+    ComplianceCheckRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ComplianceCheckRequest"
+          examples:
+            ComplianceRequestExample:
+              $ref: "#/components/examples/ComplianceCheckRequestExample"
+    CreditScoreRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreditScoreRequest"
+          examples:
+            CreditScoreRequestExample:
+              $ref: "#/components/examples/CreditScoreRequestExample"
+  schemas:
+    RiskCategory:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      description: Risk classification band assigned after risk scoring.
+    RiskSubjectType:
+      type: string
+      enum:
+        - CUSTOMER
+        - ACCOUNT
+      description: The type of entity being assessed.
+    FraudVerdict:
+      type: string
+      enum:
+        - CLEAN
+        - FLAGGED
+        - BLOCKED
+      description: Outcome of the fraud detection analysis.
+    ComplianceStatus:
+      type: string
+      enum:
+        - PASSED
+        - FAILED
+        - REFER
+      description: Outcome of the compliance check. REFER requires manual review.
+    CreditBand:
+      type: string
+      enum:
+        - EXCELLENT
+        - GOOD
+        - FAIR
+        - POOR
+        - VERY_POOR
+      description: Qualitative band derived from the numeric credit score.
+    RiskSignal:
+      type: object
+      required:
+        - code
+        - description
+        - severity
+      properties:
+        code:
+          type: string
+          description: Machine-readable signal code.
+          example: HIGH_VELOCITY_TRANSACTIONS
+        description:
+          type: string
+          maxLength: 300
+          description: Human-readable description of the risk signal.
+          example: More than 20 transactions posted within a 1-hour window.
+        severity:
+          type: string
+          enum:
+            - INFO
+            - WARNING
+            - CRITICAL
+          description: Severity level of the signal.
+          example: WARNING
+    RiskEvaluationRequest:
+      type: object
+      required:
+        - subjectType
+        - subjectId
+      properties:
+        subjectType:
+          $ref: "#/components/schemas/RiskSubjectType"
+        subjectId:
+          type: string
+          description: Identifier of the customer or account to evaluate.
+          example: CUST-00123
+        requestedBy:
+          type: string
+          description: Identifier of the calling service or user.
+          example: loans-service
+        context:
+          type: string
+          maxLength: 200
+          description: Optional context describing the reason for evaluation.
+          example: Pre-loan-application risk check.
+    RiskAssessment:
+      type: object
+      required:
+        - assessmentId
+        - subjectType
+        - subjectId
+        - riskCategory
+        - riskScore
+        - assessedAt
+      properties:
+        assessmentId:
+          type: string
+          description: Unique identifier for this risk assessment record.
+          example: RISK-00321
+        subjectType:
+          $ref: "#/components/schemas/RiskSubjectType"
+        subjectId:
+          type: string
+          description: Identifier of the assessed customer or account.
+          example: CUST-00123
+        riskCategory:
+          $ref: "#/components/schemas/RiskCategory"
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Numeric risk score. Higher values indicate greater risk.
+          example: 180
+        signals:
+          type: array
+          description: Risk signals detected during the assessment.
+          items:
+            $ref: "#/components/schemas/RiskSignal"
+        recommendation:
+          type: string
+          enum:
+            - APPROVE
+            - APPROVE_WITH_CONDITIONS
+            - MANUAL_REVIEW
+            - REJECT
+          description: Action recommendation based on the risk score and signals.
+          example: APPROVE
+        assessedBy:
+          type: string
+          description: Identifier of the system or model that performed the assessment.
+          example: risk-engine-v3
+        assessedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the assessment (UTC, ISO 8601).
+          example: 2024-06-01T10:30:00Z
+        expiresAt:
+          type: string
+          format: date-time
+          description: Timestamp after which this assessment is considered stale.
+          example: 2024-06-08T10:30:00Z
+    FraudSignal:
+      type: object
+      required:
+        - code
+        - description
+        - confidence
+      properties:
+        code:
+          type: string
+          description: Machine-readable fraud signal code.
+          example: UNUSUAL_LOCATION
+        description:
+          type: string
+          maxLength: 300
+          description: Human-readable description of the fraud signal.
+          example: Transaction originated from a country not in the customer travel
+            history.
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Confidence score for this signal between 0.0 and 1.0.
+          example: 0.87
+    FraudDetectionRequest:
+      type: object
+      required:
+        - customerId
+        - accountId
+      properties:
+        customerId:
+          type: string
+          description: Customer whose behavior is being analyzed.
+          example: CUST-00123
+        accountId:
+          type: string
+          description: Account on which the fraud analysis is performed.
+          example: ACC-00456
+        transactionId:
+          type: string
+          description: Optional transaction identifier to analyze a specific transaction.
+          example: TXN-00789
+        amount:
+          type: number
+          format: double
+          description: Transaction amount to include in the analysis context.
+          example: 5000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 currency code for the transaction being analyzed.
+          example: AUD
+        channel:
+          type: string
+          enum:
+            - ONLINE
+            - MOBILE
+            - ATM
+            - BRANCH
+            - API
+          description: Channel through which the transaction was initiated.
+          example: ONLINE
+        ipAddress:
+          type: string
+          maxLength: 45
+          description: IPv4 or IPv6 address of the originating request.
+          example: 203.0.113.45
+        deviceId:
+          type: string
+          maxLength: 100
+          description: Device fingerprint or registered device identifier.
+          example: DEV-IPHONE15-8A3F
+    FraudResult:
+      type: object
+      required:
+        - resultId
+        - customerId
+        - accountId
+        - verdict
+        - fraudScore
+        - assessedAt
+      properties:
+        resultId:
+          type: string
+          description: Unique identifier for this fraud detection result.
+          example: FRAUD-00654
+        customerId:
+          type: string
+          description: Customer that was analyzed.
+          example: CUST-00123
+        accountId:
+          type: string
+          description: Account that was analyzed.
+          example: ACC-00456
+        transactionId:
+          type: string
+          description: Transaction analyzed, if applicable.
+          example: TXN-00789
+        verdict:
+          $ref: "#/components/schemas/FraudVerdict"
+        fraudScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Fraud probability score from 0 (no risk) to 100 (certain fraud).
+          example: 12
+        signals:
+          type: array
+          description: Fraud signals detected during the analysis.
+          items:
+            $ref: "#/components/schemas/FraudSignal"
+        blockedReason:
+          type: string
+          maxLength: 300
+          description: Reason for blocking the transaction. Populated only when verdict is
+            BLOCKED.
+          example: null
+        assessedBy:
+          type: string
+          description: Fraud detection model or engine that produced this result.
+          example: fraud-engine-v2
+        assessedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the fraud detection (UTC, ISO 8601).
+          example: 2024-06-01T09:05:00Z
+    ComplianceCheckRequest:
+      type: object
+      required:
+        - customerId
+        - checkTypes
+      properties:
+        customerId:
+          type: string
+          description: Customer to screen.
+          example: CUST-00123
+        checkTypes:
+          type: array
+          description: List of compliance check types to execute.
+          minItems: 1
+          items:
+            type: string
+            enum:
+              - AML
+              - SANCTIONS
+              - PEP
+              - ADVERSE_MEDIA
+          example:
+            - AML
+            - SANCTIONS
+            - PEP
+        transactionAmount:
+          type: number
+          format: double
+          description: Optional transaction amount used for AML threshold evaluation.
+          example: 15000
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 currency code for the transaction amount.
+          example: AUD
+        requestedBy:
+          type: string
+          description: Identifier of the calling service or officer.
+          example: loans-service
+    ComplianceCheckDetail:
+      type: object
+      required:
+        - checkType
+        - status
+        - checkedAt
+      properties:
+        checkType:
+          type: string
+          enum:
+            - AML
+            - SANCTIONS
+            - PEP
+            - ADVERSE_MEDIA
+          description: Type of compliance check performed.
+          example: AML
+        status:
+          $ref: "#/components/schemas/ComplianceStatus"
+        finding:
+          type: string
+          maxLength: 500
+          description: Description of the finding. Null if status is PASSED.
+          example: null
+        matchedListEntry:
+          type: string
+          maxLength: 200
+          description: Matched entry from a sanctions or PEP list. Null if no match.
+          example: null
+        checkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when this specific check was performed (UTC, ISO 8601).
+          example: 2024-06-01T10:00:00Z
+    ComplianceResult:
+      type: object
+      required:
+        - resultId
+        - customerId
+        - overallStatus
+        - checks
+        - assessedAt
+      properties:
+        resultId:
+          type: string
+          description: Unique identifier for this compliance result record.
+          example: COMP-00112
+        customerId:
+          type: string
+          description: Customer that was screened.
+          example: CUST-00123
+        overallStatus:
+          $ref: "#/components/schemas/ComplianceStatus"
+        checks:
+          type: array
+          description: Individual results for each check type that was executed.
+          items:
+            $ref: "#/components/schemas/ComplianceCheckDetail"
+        referralNotes:
+          type: string
+          maxLength: 500
+          description: Notes describing why manual review is required. Populated when
+            overallStatus is REFER.
+          example: null
+        assessedBy:
+          type: string
+          description: Compliance engine or officer that produced this result.
+          example: compliance-engine-v2
+        assessedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the compliance check (UTC, ISO 8601).
+          example: 2024-06-01T10:01:00Z
+        expiresAt:
+          type: string
+          format: date-time
+          description: Timestamp after which this result must be refreshed.
+          example: 2025-06-01T10:01:00Z
+    CreditScoreRequest:
+      type: object
+      required:
+        - customerId
+      properties:
+        customerId:
+          type: string
+          description: Customer for whom to calculate the credit score.
+          example: CUST-00123
+        forceRecalculate:
+          type: boolean
+          description: When true, triggers a fresh calculation even if a recent score
+            exists.
+          default: false
+        requestedBy:
+          type: string
+          description: Identifier of the calling service or officer.
+          example: loans-service
+    CreditScoreFactors:
+      type: object
+      properties:
+        paymentHistory:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Score contribution from payment history (0-100).
+          example: 85
+        creditUtilization:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Score contribution from credit utilization ratio (0-100).
+          example: 60
+        accountAge:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Score contribution from average age of credit accounts (0-100).
+          example: 72
+        creditMix:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Score contribution from diversity of credit types (0-100).
+          example: 55
+        recentInquiries:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Score contribution from recent hard credit inquiries (0-100). Lower
+            is better.
+          example: 90
+    CreditScore:
+      type: object
+      required:
+        - scoreId
+        - customerId
+        - score
+        - band
+        - calculatedAt
+      properties:
+        scoreId:
+          type: string
+          description: Unique identifier for this credit score record.
+          example: CSCORE-00987
+        customerId:
+          type: string
+          description: Customer to whom this score belongs.
+          example: CUST-00123
+        score:
+          type: integer
+          minimum: 300
+          maximum: 850
+          description: Numeric credit score. Range 300 to 850.
+          example: 720
+        band:
+          $ref: "#/components/schemas/CreditBand"
+        factors:
+          $ref: "#/components/schemas/CreditScoreFactors"
+        positiveFactors:
+          type: array
+          description: Factors that contributed positively to the score.
+          items:
+            type: string
+          example:
+            - No missed payments in the last 24 months.
+            - Credit utilization below 30 percent.
+        negativeFactors:
+          type: array
+          description: Factors that reduced the score.
+          items:
+            type: string
+          example:
+            - Two hard inquiries in the last 6 months.
+        calculatedBy:
+          type: string
+          description: Scoring model that produced this result.
+          example: credit-score-model-v4
+        calculatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the score was calculated (UTC, ISO 8601).
+          example: 2024-06-01T10:15:00Z
+        expiresAt:
+          type: string
+          format: date-time
+          description: Timestamp after which this score should be recalculated.
+          example: 2024-07-01T10:15:00Z
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 400
+        message:
+          type: string
+          description: Human-readable error description.
+          example: The request payload is invalid.
+        details:
+          type: array
+          description: Field-level validation errors.
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: Name of the field that failed validation.
+          example: subjectId
+        message:
+          type: string
+          description: Validation failure reason.
+          example: subjectId is required.
+  responses:
+    BadRequest:
+      description: Bad Request. The request payload is malformed or fails validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 400
+            message: The request payload is invalid.
+            details:
+              - field: subjectId
+                message: subjectId is required.
+    Unauthorized:
+      description: Unauthorized. A valid Bearer token is required.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 401
+            message: Authentication token is missing or invalid.
+    Forbidden:
+      description: Forbidden. The caller does not have permission for this operation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 403
+            message: Insufficient scope for this operation.
+    NotFound:
+      description: Not Found. The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 404
+            message: Customer or account not found.
+    InternalServerError:
+      description: Internal Server Error. An unexpected condition was encountered.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: 500
+            message: An unexpected error occurred. Please try again later.
+  examples:
+    RiskEvaluationRequestExample:
+      summary: Evaluate risk for a customer
+      value:
+        subjectType: CUSTOMER
+        subjectId: CUST-00123
+        requestedBy: loans-service
+        context: Pre-loan-application risk check.
+    LowRiskAssessmentExample:
+      summary: Low risk customer assessment
+      value:
+        assessmentId: RISK-00321
+        subjectType: CUSTOMER
+        subjectId: CUST-00123
+        riskCategory: LOW
+        riskScore: 180
+        signals: []
+        recommendation: APPROVE
+        assessedBy: risk-engine-v3
+        assessedAt: 2024-06-01T10:30:00Z
+        expiresAt: 2024-06-08T10:30:00Z
+    HighRiskAssessmentExample:
+      summary: High risk customer assessment
+      value:
+        assessmentId: RISK-00322
+        subjectType: CUSTOMER
+        subjectId: CUST-00125
+        riskCategory: HIGH
+        riskScore: 780
+        signals:
+          - code: HIGH_VELOCITY_TRANSACTIONS
+            description: More than 20 transactions posted within a 1-hour window.
+            severity: WARNING
+          - code: UNUSUAL_CROSS_BORDER_ACTIVITY
+            description: Multiple international transfers to high-risk jurisdictions
+              detected.
+            severity: CRITICAL
+        recommendation: MANUAL_REVIEW
+        assessedBy: risk-engine-v3
+        assessedAt: 2024-06-01T10:35:00Z
+        expiresAt: 2024-06-08T10:35:00Z
+    FraudDetectionRequestExample:
+      summary: Fraud detection request for a transaction
+      value:
+        customerId: CUST-00123
+        accountId: ACC-00456
+        transactionId: TXN-00789
+        amount: 5000
+        currency: AUD
+        channel: ONLINE
+        ipAddress: 203.0.113.45
+        deviceId: DEV-IPHONE15-8A3F
+    FraudCleanExample:
+      summary: Transaction cleared by fraud detection
+      value:
+        resultId: FRAUD-00654
+        customerId: CUST-00123
+        accountId: ACC-00456
+        transactionId: TXN-00789
+        verdict: CLEAN
+        fraudScore: 12
+        signals: []
+        blockedReason: null
+        assessedBy: fraud-engine-v2
+        assessedAt: 2024-06-01T09:05:00Z
+    FraudFlaggedExample:
+      summary: Transaction flagged by fraud detection
+      value:
+        resultId: FRAUD-00655
+        customerId: CUST-00126
+        accountId: ACC-00460
+        transactionId: TXN-00800
+        verdict: FLAGGED
+        fraudScore: 74
+        signals:
+          - code: UNUSUAL_LOCATION
+            description: Transaction originated from a country not in the customer travel
+              history.
+            confidence: 0.87
+          - code: DEVICE_NOT_RECOGNIZED
+            description: Transaction was initiated from an unregistered device.
+            confidence: 0.92
+        blockedReason: null
+        assessedBy: fraud-engine-v2
+        assessedAt: 2024-06-01T09:10:00Z
+    ComplianceCheckRequestExample:
+      summary: AML and sanctions compliance check
+      value:
+        customerId: CUST-00123
+        checkTypes:
+          - AML
+          - SANCTIONS
+          - PEP
+        transactionAmount: 15000
+        currency: AUD
+        requestedBy: loans-service
+    CompliancePassExample:
+      summary: All compliance checks passed
+      value:
+        resultId: COMP-00112
+        customerId: CUST-00123
+        overallStatus: PASSED
+        checks:
+          - checkType: AML
+            status: PASSED
+            finding: null
+            matchedListEntry: null
+            checkedAt: 2024-06-01T10:00:00Z
+          - checkType: SANCTIONS
+            status: PASSED
+            finding: null
+            matchedListEntry: null
+            checkedAt: 2024-06-01T10:00:01Z
+          - checkType: PEP
+            status: PASSED
+            finding: null
+            matchedListEntry: null
+            checkedAt: 2024-06-01T10:00:02Z
+        referralNotes: null
+        assessedBy: compliance-engine-v2
+        assessedAt: 2024-06-01T10:01:00Z
+        expiresAt: 2025-06-01T10:01:00Z
+    ComplianceFailExample:
+      summary: Sanctions check failed
+      value:
+        resultId: COMP-00113
+        customerId: CUST-00127
+        overallStatus: FAILED
+        checks:
+          - checkType: AML
+            status: PASSED
+            finding: null
+            matchedListEntry: null
+            checkedAt: 2024-06-01T10:05:00Z
+          - checkType: SANCTIONS
+            status: FAILED
+            finding: Name and date of birth match an entry on the OFAC SDN list.
+            matchedListEntry: OFAC-SDN-2024-00891
+            checkedAt: 2024-06-01T10:05:01Z
+        referralNotes: null
+        assessedBy: compliance-engine-v2
+        assessedAt: 2024-06-01T10:06:00Z
+        expiresAt: 2025-06-01T10:06:00Z
+    CreditScoreRequestExample:
+      summary: Credit score request
+      value:
+        customerId: CUST-00123
+        forceRecalculate: false
+        requestedBy: loans-service
+    CreditScoreGoodExample:
+      summary: Good credit score
+      value:
+        scoreId: CSCORE-00987
+        customerId: CUST-00123
+        score: 720
+        band: GOOD
+        factors:
+          paymentHistory: 85
+          creditUtilization: 60
+          accountAge: 72
+          creditMix: 55
+          recentInquiries: 90
+        positiveFactors:
+          - No missed payments in the last 24 months.
+          - Credit utilization below 30 percent.
+        negativeFactors:
+          - Two hard inquiries in the last 6 months.
+        calculatedBy: credit-score-model-v4
+        calculatedAt: 2024-06-01T10:15:00Z
+        expiresAt: 2024-07-01T10:15:00Z
+    CreditScorePoorExample:
+      summary: Poor credit score
+      value:
+        scoreId: CSCORE-00988
+        customerId: CUST-00128
+        score: 420
+        band: POOR
+        factors:
+          paymentHistory: 30
+          creditUtilization: 20
+          accountAge: 40
+          creditMix: 50
+          recentInquiries: 25
+        positiveFactors:
+          - Account age is greater than 3 years.
+        negativeFactors:
+          - Three missed payments in the last 12 months.
+          - Credit utilization above 85 percent.
+          - Five hard inquiries in the last 6 months.
+        calculatedBy: credit-score-model-v4
+        calculatedAt: 2024-06-01T10:20:00Z
+        expiresAt: 2024-07-01T10:20:00Z

@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: payments-api-server-ijyib
+  namespace: BOB-Banking
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Payments API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: BOB-Banking:bob-banking-quota-ijyib:1.0
+  policy-sequence:
+    - $ref: BOB-Banking:bob-banking-freeflowpolicysequence-ijyib:1.0
+  capabilities:
+    tools:
+      - $ref: BOB-Banking:payments-api-tool-ijyib:1.0

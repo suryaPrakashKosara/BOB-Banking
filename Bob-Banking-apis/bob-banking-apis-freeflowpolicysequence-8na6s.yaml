@@ -1,7 +1,7 @@
 kind: FreeFlowPolicySequence
 apiVersion: api.ibm.com/v1
 metadata:
-  name: bob-banking-apis-freeflowpolicysequence-zp324
+  name: bob-banking-apis-freeflowpolicysequence-8na6s
   namespace: Bob-Banking-apis
   version: "1.0"
   tags: []
@@ -10,6 +10,6 @@ metadata:
       - nano
 spec:
   main:
-    - $ref: Bob-Banking-apis:invoke-zp324:1.0
+    - $ref: Bob-Banking-apis:invoke-8na6s:1.0
   monitoring:
-    $ref: Bob-Banking-apis:telemetry-zp324:1.0
+    $ref: Bob-Banking-apis:telemetry-8na6s:1.0

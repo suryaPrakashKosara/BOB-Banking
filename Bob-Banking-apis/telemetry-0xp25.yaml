@@ -1,0 +1,11 @@
+kind: Telemetry
+apiVersion: api.ibm.com/v1
+metadata:
+  name: telemetry-0xp25
+  namespace: Bob-Banking-apis
+  version: "1.0"
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec: {}

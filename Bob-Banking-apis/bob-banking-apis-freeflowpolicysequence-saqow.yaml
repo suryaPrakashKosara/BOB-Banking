@@ -1,7 +1,7 @@
 kind: FreeFlowPolicySequence
 apiVersion: api.ibm.com/v1
 metadata:
-  name: bob-banking-apis-freeflowpolicysequence-pp50t
+  name: bob-banking-apis-freeflowpolicysequence-saqow
   namespace: Bob-Banking-apis
   version: "1.0"
   tags: []
@@ -10,6 +10,6 @@ metadata:
       - nano
 spec:
   main:
-    - $ref: Bob-Banking-apis:invoke-pp50t:1.0
+    - $ref: Bob-Banking-apis:invoke-saqow:1.0
   monitoring:
-    $ref: Bob-Banking-apis:telemetry-pp50t:1.0
+    $ref: Bob-Banking-apis:telemetry-saqow:1.0

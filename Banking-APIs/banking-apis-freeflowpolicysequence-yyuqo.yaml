@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-apis-freeflowpolicysequence-yyuqo
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Banking-APIs:ExtractIdentity-1MRBS:1.0
+    - $ref: Banking-APIs:Authenticate-44CDo:1.0
+    - $ref: Banking-APIs:Authorize-iafgJ:1.0
+    - $ref: Banking-APIs:invoke-yyuqo:1.0
+    - $ref: Banking-APIs:Parse-uVfdi:1.0
+    - $ref: Banking-APIs:Redact-VjMhK:1.0
+  monitoring:
+    $ref: Banking-APIs:telemetry-yyuqo:1.0

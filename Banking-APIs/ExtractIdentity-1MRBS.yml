@@ -1,0 +1,16 @@
+kind: ExtractIdentity
+apiVersion: api.ibm.com/v1
+metadata:
+  name: ExtractIdentity-1MRBS
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: Banking-APIs
+  credentialType:
+    oauth2:
+      httpHeader:
+        name: Authorization
