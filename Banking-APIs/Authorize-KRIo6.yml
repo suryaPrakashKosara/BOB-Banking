@@ -1,7 +1,7 @@
 kind: Authorize
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authorize-iafgJ
+  name: Authorize-KRIo6
   namespace: Banking-APIs
   version: '1.0'
   tags: []

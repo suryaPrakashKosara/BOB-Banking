@@ -12,7 +12,7 @@ spec:
   namespace: Banking-APIs
   operation:
     oauth2:
-      issClaim: 'sub '
+      issClaim: sub
       requiredScopes:
         - provider: verify-joy
           scopes:

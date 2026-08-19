@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-accounts-management-api-server-tkqvk
+  namespace: Banking-APIs
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Banking Accounts Management API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: Banking-APIs:banking-apis-quota-tkqvk:1.0
+  policy-sequence:
+    - $ref: Banking-APIs:banking-apis-freeflowpolicysequence-tkqvk:1.0
+  capabilities:
+    tools:
+      - $ref: Banking-APIs:banking-accounts-management-api-tool-tkqvk:1.0

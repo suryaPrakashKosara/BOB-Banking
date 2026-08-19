@@ -1,7 +1,7 @@
-kind: Authorize
+kind: Authenticate
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authorize-iafgJ
+  name: Authenticate-vfTVU
   namespace: Banking-APIs
   version: '1.0'
   tags: []
@@ -12,8 +12,5 @@ spec:
   namespace: Banking-APIs
   operation:
     oauth2:
-      issClaim: sub
-      requiredScopes:
-        - provider: verify-joy
-          scopes:
-            - customer
+      providers:
+        - verify-joy

@@ -1,7 +1,7 @@
-kind: Authorize
+kind: ExtractIdentity
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authorize-iafgJ
+  name: ExtractIdentity-2Qd79
   namespace: Banking-APIs
   version: '1.0'
   tags: []
@@ -10,10 +10,7 @@ metadata:
       - nano
 spec:
   namespace: Banking-APIs
-  operation:
+  credentialType:
     oauth2:
-      issClaim: sub
-      requiredScopes:
-        - provider: verify-joy
-          scopes:
-            - customer
+      httpHeader:
+        name: Authorization

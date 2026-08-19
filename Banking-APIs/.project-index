@@ -15,6 +15,20 @@
       "contentHash": "6adc98dbf41f2c6a"
     },
     {
+      "id": "05b787f5-6e3f-48c8-8835-bc3c330cca85:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Authenticate-vfTVU.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787034867897,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-vfTVU",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "d32bbf6df39936ef"
+    },
+    {
       "id": "06fdf015-0453-493a-bf26-6b7831027449:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/banking-customer-management-api-tool-yyuqo.yaml",
@@ -57,13 +71,13 @@
       "filePath": "Banking-APIs/Authorize-NxLlk.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787025180500,
+      "lastIndexed": 1787034902374,
       "schemaVersion": 1,
       "kind": "Authorize",
       "name": "Authorize-NxLlk",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "f178d7467ae96b38"
+      "contentHash": "76ccd8941541221e"
     },
     {
       "id": "10bf37c1-35eb-4c1a-bcad-94c2846f29c7:0",
@@ -168,13 +182,13 @@
       "filePath": "Banking-APIs/payments-api-tool-e21my.yaml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787032225923,
+      "lastIndexed": 1787034585819,
       "schemaVersion": 1,
       "kind": "MCPTools",
       "name": "payments-api-tool-e21my",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "99e5af0fd873b320"
+      "contentHash": "0d41f306e555efe1"
     },
     {
       "id": "353efe88-812e-4431-9031-866e022b5bb2:0",
@@ -261,6 +275,20 @@
       "contentHash": "9b5bf7c6e335c69d"
     },
     {
+      "id": "55b6685d-a069-45ae-bc39-ebe481b6ddd8:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/telemetry-tkqvk.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033302363,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "telemetry-tkqvk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "e48de180bc65b6ab"
+    },
+    {
       "id": "5e7ac0d8-0052-4c3d-98ea-666a989431ca:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/payments-api-tool-hg0qj.yaml",
@@ -289,6 +317,20 @@
       "contentHash": "b57ef834e96eba06"
     },
     {
+      "id": "67b041fe-13ef-4aa3-b819-73f2c7cb6337:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Authorize-KRIo6.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033468830,
+      "schemaVersion": 1,
+      "kind": "Authorize",
+      "name": "Authorize-KRIo6",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "40ea8a850eafdcd3"
+    },
+    {
       "id": "71e0aaff-ba64-4c9f-b392-b30b19d6a045:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/ExtractIdentity-1MRBS.yml",
@@ -312,6 +354,20 @@
       "schemaVersion": 1
     },
     {
+      "id": "7dd6a67c-d307-42ab-b9bc-ab0067de4575:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-accounts-management-api-tool-tkqvk.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033305660,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "banking-accounts-management-api-tool-tkqvk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "c3d85014de2569ec"
+    },
+    {
       "id": "83aff239-f4f8-486b-b1d3-14c94fb642b1:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/banking-apis-quota-m6zvp.yaml",
@@ -326,6 +382,48 @@
       "contentHash": "e270956eb2b8c2f2"
     },
     {
+      "id": "8407a93b-14bb-4bba-a0ff-3692069c9b85:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/ExtractIdentity-2Qd79.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033394523,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-2Qd79",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "cd40b836fd6c410d"
+    },
+    {
+      "id": "84638e70-3b30-4b60-8959-e4ca75269d70:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/invoke-tkqvk.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033301451,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "invoke-tkqvk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "97cb475d4bb0e465"
+    },
+    {
+      "id": "8818168f-4a64-4c96-8195-7a581b9d329e:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-accounts-management-api-server-tkqvk.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033306959,
+      "schemaVersion": 1,
+      "kind": "MCPServer",
+      "name": "banking-accounts-management-api-server-tkqvk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "cea9d5da78193670"
+    },
+    {
       "id": "8838f1e5-da2d-4d27-9ce2-9227c23be40e:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/ExtractIdentity-jouiN.yml",
@@ -338,6 +436,34 @@
       "namespace": "Banking-APIs",
       "version": "1.0",
       "contentHash": "b70c9f3a96da5a69"
+    },
+    {
+      "id": "90fd345c-01df-435a-99e0-225858493ce9:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-apis-quota-tkqvk.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033304400,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "banking-apis-quota-tkqvk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "239347b31e692bab"
+    },
+    {
+      "id": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-apis-freeflowpolicysequence-tkqvk.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787033403014,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "banking-apis-freeflowpolicysequence-tkqvk",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "b87f694dd5c0bcf0"
     },
     {
       "id": "a1eea635-41aa-4f51-ba88-9b7cbe0aeb19:0",
@@ -485,13 +611,13 @@
       "filePath": "Banking-APIs/Authorize-iafgJ.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787022129159,
+      "lastIndexed": 1787034893764,
       "schemaVersion": 1,
       "kind": "Authorize",
       "name": "Authorize-iafgJ",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "becc64e423201e00"
+      "contentHash": "de704354a2242257"
     },
     {
       "id": "cc44b6b6-e55c-493a-a630-124affce28fe:0",
@@ -520,6 +646,15 @@
       "namespace": "Banking-APIs",
       "version": "1.0",
       "contentHash": "2f09de5a892c6a44"
+    },
+    {
+      "id": "d3399947-68d2-4759-b457-3963b88d090b:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/banking-accounts-management-api-spec.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1787033300005,
+      "schemaVersion": 1
     },
     {
       "id": "d7e01bd5-9e85-468d-8950-ba7e01b9d9f8:0",
@@ -625,16 +760,28 @@
       "filePath": "Banking-APIs/Authenticate-5lPM7.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787032381231,
+      "lastIndexed": 1787034859390,
       "schemaVersion": 1,
       "kind": "Authenticate",
       "name": "Authenticate-5lPM7",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "2527e0b0fc2acf92"
+      "contentHash": "42a52ad0b52939d0"
     }
   ],
   "edges": [
+    {
+      "id": "1190307c-6ce7-4423-af75-95dfb5a884c9",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "8407a93b-14bb-4bba-a0ff-3692069c9b85:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:ExtractIdentity-2Qd79:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033367684,
+      "lastValidated": 1787033394528
+    },
     {
       "id": "12f3be9f-d197-467a-bfa1-0262aa39a14b",
       "projectId": "QTef5wyU",
@@ -660,6 +807,18 @@
       "lastValidated": 1787024867257
     },
     {
+      "id": "197442f6-6582-41d0-ad74-03350180ede8",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "67b041fe-13ef-4aa3-b819-73f2c7cb6337:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Authorize-KRIo6:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033403049,
+      "lastValidated": 1787033468834
+    },
+    {
       "id": "1c23829f-e5e8-48a7-9bad-9d04141e4eb5",
       "projectId": "QTef5wyU",
       "sourceNodeId": "03b63ec5-54d9-4ea2-8bf1-df8a25f3aa21:0",
@@ -669,7 +828,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787032335899,
-      "lastValidated": 1787032381252
+      "lastValidated": 1787034859395
     },
     {
       "id": "1e79121b-f7fe-4ad3-99e1-5f36c5acac75",
@@ -681,7 +840,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787021542414,
-      "lastValidated": 1787022129163
+      "lastValidated": 1787034893769
     },
     {
       "id": "1e81d83e-a50b-4a23-8835-911607c098a6",
@@ -790,6 +949,18 @@
       "isValid": true,
       "createdAt": 1787025588608,
       "lastValidated": 1787025698477
+    },
+    {
+      "id": "48d810f1-811b-469a-bb7b-a018781ab70e",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "8818168f-4a64-4c96-8195-7a581b9d329e:0",
+      "targetNodeId": "7dd6a67c-d307-42ab-b9bc-ab0067de4575:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-accounts-management-api-tool-tkqvk:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033306969,
+      "lastValidated": 1787033306969
     },
     {
       "id": "4c10994f-691d-4738-9c4e-691f29982060",
@@ -921,7 +1092,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787024867236,
-      "lastValidated": 1787025180504
+      "lastValidated": 1787034902377
     },
     {
       "id": "8be9b035-740b-44a9-af25-7ce84decbcb4",
@@ -934,6 +1105,18 @@
       "isValid": true,
       "createdAt": 1787032226942,
       "lastValidated": 1787032226942
+    },
+    {
+      "id": "95a4cb8a-378a-4ecb-bcd5-0e508006dd1b",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "05b787f5-6e3f-48c8-8835-bc3c330cca85:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Authenticate-vfTVU:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033398076,
+      "lastValidated": 1787034867901
     },
     {
       "id": "9790b595-8340-474d-9317-74fe501789f7",
@@ -1044,6 +1227,42 @@
       "lastValidated": 1787032532383
     },
     {
+      "id": "cc79db13-120c-41a1-b983-994321863f85",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "84638e70-3b30-4b60-8959-e4ca75269d70:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:invoke-tkqvk:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033303524,
+      "lastValidated": 1787033303524
+    },
+    {
+      "id": "cc8eef76-4e7a-4e5e-8622-5669434414cf",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "8818168f-4a64-4c96-8195-7a581b9d329e:0",
+      "targetNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-apis-freeflowpolicysequence-tkqvk:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033306969,
+      "lastValidated": 1787033403106
+    },
+    {
+      "id": "ce97b750-3f3e-4bc5-a6dd-30ca5ceedeb1",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "8818168f-4a64-4c96-8195-7a581b9d329e:0",
+      "targetNodeId": "90fd345c-01df-435a-99e0-225858493ce9:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:banking-apis-quota-tkqvk:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033306969,
+      "lastValidated": 1787033306969
+    },
+    {
       "id": "d52664f7-6f7c-4fad-a27a-b94ad2c01c6f",
       "projectId": "QTef5wyU",
       "sourceNodeId": "06fdf015-0453-493a-bf26-6b7831027449:0",
@@ -1068,6 +1287,18 @@
       "lastValidated": 1787021383163
     },
     {
+      "id": "dd2d99a9-4d53-486c-add2-5fb2c23fac48",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "55b6685d-a069-45ae-bc39-ebe481b6ddd8:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:telemetry-tkqvk:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787033303524,
+      "lastValidated": 1787033303524
+    },
+    {
       "id": "de3eb377-28e8-47b3-aae0-b40263f52ea8",
       "projectId": "QTef5wyU",
       "sourceNodeId": "b40be60c-91e5-4398-9a81-3e859442b51a:0",
@@ -1090,6 +1321,18 @@
       "isValid": true,
       "createdAt": 1787021479611,
       "lastValidated": 1787021505834
+    },
+    {
+      "id": "e8401458-274c-46cb-b44e-3d323c332f08",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "7dd6a67c-d307-42ab-b9bc-ab0067de4575:0",
+      "targetNodeId": "d3399947-68d2-4759-b457-3963b88d090b:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./banking-accounts-management-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1787033305671,
+      "lastValidated": 1787033305671
     },
     {
       "id": "f6fd5cd4-de61-4ec3-8b41-a530ab235050",

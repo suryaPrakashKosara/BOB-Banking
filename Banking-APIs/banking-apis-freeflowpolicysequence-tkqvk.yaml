@@ -1,0 +1,18 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-apis-freeflowpolicysequence-tkqvk
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Banking-APIs:ExtractIdentity-2Qd79:1.0
+    - $ref: Banking-APIs:Authenticate-vfTVU:1.0
+    - $ref: Banking-APIs:Authorize-KRIo6:1.0
+    - $ref: Banking-APIs:invoke-tkqvk:1.0
+  monitoring:
+    $ref: Banking-APIs:telemetry-tkqvk:1.0

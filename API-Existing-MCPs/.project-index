@@ -1,4 +1,14 @@
 {
-  "nodes": [],
+  "nodes": [
+    {
+      "id": "22c1633f-b36d-47dc-bc86-4608f3db8368:0",
+      "projectId": "fsbSOcoF",
+      "filePath": "API-Existing-MCPs/.project-index",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1787033564243,
+      "schemaVersion": 1
+    }
+  ],
   "edges": []
 }
