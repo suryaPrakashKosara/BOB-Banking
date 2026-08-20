@@ -13,9 +13,14 @@ projects:
     id: QTef5wyU
     description: ''
     tags: []
-    lastUpdated: 1787117824394
+    lastUpdated: 1787136424370
   API-Existing-MCPs:
     id: fsbSOcoF
     description: ''
     tags: []
     lastUpdated: 1787030200238
+  account-MCP:
+    id: yIuO4BpP
+    description: ''
+    tags: []
+    lastUpdated: 1787208308721
