@@ -17,3 +17,4 @@ spec:
         - provider: verify-joy
           scopes:
             - customer
+            - bankmanager

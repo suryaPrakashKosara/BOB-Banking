@@ -1,0 +1,18 @@
+kind: Redact
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Redact-9foTH
+  namespace: Banking-APIs
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  message:
+    messageName: response
+    body:
+      captures:
+        jsonata:
+          - accounts.accountNumber
+          - $. accountNumber

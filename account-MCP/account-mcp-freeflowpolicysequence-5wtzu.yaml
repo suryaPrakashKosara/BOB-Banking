@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: account-mcp-freeflowpolicysequence-5wtzu
+  namespace: account-MCP
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: account-MCP:ExtractIdentity-jJWLH:1.0
+    - $ref: account-MCP:Authenticate-KVV76:1.0
+    - $ref: account-MCP:Authorize-mTE0w:1.0
+    - $ref: account-MCP:invoke-5wtzu:1.0
+    - $ref: account-MCP:Parse-oGtxb:1.0
+    - $ref: account-MCP:Redact-89RBI:1.0
+  monitoring:
+    $ref: account-MCP:telemetry-5wtzu:1.0

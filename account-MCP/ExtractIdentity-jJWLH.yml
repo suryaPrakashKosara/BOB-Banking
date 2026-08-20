@@ -1,0 +1,16 @@
+kind: ExtractIdentity
+apiVersion: api.ibm.com/v1
+metadata:
+  name: ExtractIdentity-jJWLH
+  namespace: account-MCP
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: account-MCP
+  credentialType:
+    oauth2:
+      httpHeader:
+        name: Authorization

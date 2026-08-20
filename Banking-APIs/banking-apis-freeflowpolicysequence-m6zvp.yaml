@@ -14,5 +14,7 @@ spec:
     - $ref: Banking-APIs:Authenticate-ask9Z:1.0
     - $ref: Banking-APIs:Authorize-NxLlk:1.0
     - $ref: Banking-APIs:invoke-m6zvp:1.0
+    - $ref: Banking-APIs:Parse-hOjIP:1.0
+    - $ref: Banking-APIs:Redact-1Kan6:1.0
   monitoring:
     $ref: Banking-APIs:telemetry-m6zvp:1.0

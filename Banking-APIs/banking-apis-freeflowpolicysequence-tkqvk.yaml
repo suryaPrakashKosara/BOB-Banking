@@ -14,5 +14,7 @@ spec:
     - $ref: Banking-APIs:Authenticate-vfTVU:1.0
     - $ref: Banking-APIs:Authorize-KRIo6:1.0
     - $ref: Banking-APIs:invoke-tkqvk:1.0
+    - $ref: Banking-APIs:Parse-QdQIA:1.0
+    - $ref: Banking-APIs:Redact-9foTH:1.0
   monitoring:
     $ref: Banking-APIs:telemetry-tkqvk:1.0

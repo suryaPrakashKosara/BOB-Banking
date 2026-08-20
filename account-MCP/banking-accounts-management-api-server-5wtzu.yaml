@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-accounts-management-api-server-5wtzu
+  namespace: account-MCP
+  version: "1.0"
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Banking Accounts Management API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: account-MCP:account-mcp-quota-5wtzu:1.0
+  policy-sequence:
+    - $ref: account-MCP:account-mcp-freeflowpolicysequence-5wtzu:1.0
+  capabilities:
+    tools:
+      - $ref: account-MCP:banking-accounts-management-api-tool-5wtzu:1.0

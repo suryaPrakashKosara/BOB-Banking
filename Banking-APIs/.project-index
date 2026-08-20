@@ -71,13 +71,13 @@
       "filePath": "Banking-APIs/Authorize-NxLlk.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787034902374,
+      "lastIndexed": 1787132946419,
       "schemaVersion": 1,
       "kind": "Authorize",
       "name": "Authorize-NxLlk",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "76ccd8941541221e"
+      "contentHash": "dab2d87182bf7c75"
     },
     {
       "id": "10bf37c1-35eb-4c1a-bcad-94c2846f29c7:0",
@@ -175,6 +175,20 @@
       "namespace": "Banking-APIs",
       "version": "1.0",
       "contentHash": "fcb62e59908ee61c"
+    },
+    {
+      "id": "2ce78437-76a5-4d9a-8429-bd1b000e3eb4:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Redact-9foTH.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787132843367,
+      "schemaVersion": 1,
+      "kind": "Redact",
+      "name": "Redact-9foTH",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "d87e0ebab9c45885"
     },
     {
       "id": "34638b2f-737e-477e-94fd-2f729523e740:0",
@@ -322,13 +336,13 @@
       "filePath": "Banking-APIs/Authorize-KRIo6.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787033468830,
+      "lastIndexed": 1787136424343,
       "schemaVersion": 1,
       "kind": "Authorize",
       "name": "Authorize-KRIo6",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "40ea8a850eafdcd3"
+      "contentHash": "86036bc562041aec"
     },
     {
       "id": "71e0aaff-ba64-4c9f-b392-b30b19d6a045:0",
@@ -410,6 +424,20 @@
       "contentHash": "97cb475d4bb0e465"
     },
     {
+      "id": "87f61dff-2719-4a52-8d02-3bdfc29918be:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Redact-1Kan6.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787132575584,
+      "schemaVersion": 1,
+      "kind": "Redact",
+      "name": "Redact-1Kan6",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "3b4738bc5fe0d768"
+    },
+    {
       "id": "8818168f-4a64-4c96-8195-7a581b9d329e:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/banking-accounts-management-api-server-tkqvk.yaml",
@@ -452,18 +480,32 @@
       "contentHash": "239347b31e692bab"
     },
     {
+      "id": "9890d093-27ce-4543-b024-ea049d35a0c7:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Parse-hOjIP.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787131753750,
+      "schemaVersion": 1,
+      "kind": "Parse",
+      "name": "Parse-hOjIP",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "24ada5d99df60b7d"
+    },
+    {
       "id": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
       "projectId": "QTef5wyU",
       "filePath": "Banking-APIs/banking-apis-freeflowpolicysequence-tkqvk.yaml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787033403014,
+      "lastIndexed": 1787132783600,
       "schemaVersion": 1,
       "kind": "FreeFlowPolicySequence",
       "name": "banking-apis-freeflowpolicysequence-tkqvk",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "b87f694dd5c0bcf0"
+      "contentHash": "026995725c9883a1"
     },
     {
       "id": "a1eea635-41aa-4f51-ba88-9b7cbe0aeb19:0",
@@ -611,13 +653,13 @@
       "filePath": "Banking-APIs/Authorize-iafgJ.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787034893764,
+      "lastIndexed": 1787136410905,
       "schemaVersion": 1,
       "kind": "Authorize",
       "name": "Authorize-iafgJ",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "de704354a2242257"
+      "contentHash": "5f7b019a685cd753"
     },
     {
       "id": "cc44b6b6-e55c-493a-a630-124affce28fe:0",
@@ -718,13 +760,27 @@
       "filePath": "Banking-APIs/banking-apis-freeflowpolicysequence-m6zvp.yaml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1787024867215,
+      "lastIndexed": 1787119016389,
       "schemaVersion": 1,
       "kind": "FreeFlowPolicySequence",
       "name": "banking-apis-freeflowpolicysequence-m6zvp",
       "namespace": "Banking-APIs",
       "version": "1.0",
-      "contentHash": "998a03162a19196e"
+      "contentHash": "bbb55efa8cd9c7a0"
+    },
+    {
+      "id": "e72248ca-477d-4cd8-9b35-01974a72090c:0",
+      "projectId": "QTef5wyU",
+      "filePath": "Banking-APIs/Parse-QdQIA.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1787132771038,
+      "schemaVersion": 1,
+      "kind": "Parse",
+      "name": "Parse-QdQIA",
+      "namespace": "Banking-APIs",
+      "version": "1.0",
+      "contentHash": "4e1bb220d00a04e7"
     },
     {
       "id": "e75737d6-1283-4317-b8fb-42a0498d688e:0",
@@ -771,6 +827,19 @@
   ],
   "edges": [
     {
+      "id": "026b0fd9-0864-4f1d-9159-4523b45c38de",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/CreditGoodExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/CreditGoodExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
       "id": "1190307c-6ce7-4423-af75-95dfb5a884c9",
       "projectId": "QTef5wyU",
       "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
@@ -804,7 +873,20 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787024732504,
-      "lastValidated": 1787024867257
+      "lastValidated": 1787119016464
+    },
+    {
+      "id": "1838ef97-a214-4a58-aeaa-a6efe81fc50d",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/KycPendingExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/KycPendingExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
     },
     {
       "id": "197442f6-6582-41d0-ad74-03350180ede8",
@@ -816,7 +898,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787033403049,
-      "lastValidated": 1787033468834
+      "lastValidated": 1787136424350
     },
     {
       "id": "1c23829f-e5e8-48a7-9bad-9d04141e4eb5",
@@ -840,7 +922,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787021542414,
-      "lastValidated": 1787034893769
+      "lastValidated": 1787136410914
     },
     {
       "id": "1e81d83e-a50b-4a23-8835-911607c098a6",
@@ -879,6 +961,45 @@
       "lastValidated": 1787024728609
     },
     {
+      "id": "34541765-4954-4188-858d-65dc3507531f",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/RiskEvaluation",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/RiskEvaluation",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
+    },
+    {
+      "id": "36f6a476-9b45-45f1-80fa-bccd3c2b2ef1",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/EvaluateRequestFull",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/EvaluateRequestFull",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "3a108fae-c9a3-4d40-8518-1e764b228a3e",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/parameters/CustomerIdParam",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/parameters/CustomerIdParam",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
       "id": "3d0e383c-6b4b-4c60-ae29-1ef752cf1812",
       "projectId": "QTef5wyU",
       "sourceNodeId": "38e3c7c4-2c4f-4da3-8496-bae521805cca:0",
@@ -913,6 +1034,19 @@
       "isValid": true,
       "createdAt": 1787032224164,
       "lastValidated": 1787032224164
+    },
+    {
+      "id": "442d9e87-9007-4982-af8e-d826f9b04299",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AmlClearExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AmlClearExample",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
     },
     {
       "id": "46e7892d-2e05-40f6-961b-70626a3f24e1",
@@ -975,6 +1109,57 @@
       "lastValidated": 1787026160436
     },
     {
+      "id": "4e65059c-6609-47bf-be0a-80e3ba49161a",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "87f61dff-2719-4a52-8d02-3bdfc29918be:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Redact-1Kan6:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787119016398,
+      "lastValidated": 1787132575591
+    },
+    {
+      "id": "5578bc91-4a6c-41dd-a1d1-4d4ff2cc18b1",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/RiskHighExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/RiskHighExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "57e03531-f7ac-4855-9bf3-bd58bd1968f7",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/AMLRecord",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/AMLRecord",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "5adc19c0-b63b-45e6-897f-297f60a84a76",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/RiskEvaluateRequest",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/RiskEvaluateRequest",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
       "id": "5f4c61c9-2b1b-4233-86f1-a19ab8f63962",
       "projectId": "QTef5wyU",
       "sourceNodeId": "1ab67752-812b-4ba4-8610-6bc29cc6fea6:0",
@@ -985,6 +1170,19 @@
       "isValid": true,
       "createdAt": 1787022172385,
       "lastValidated": 1787022259330
+    },
+    {
+      "id": "5f8268e6-1d4d-41bc-be55-dbc85690c618",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/RiskLowExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/RiskLowExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
     },
     {
       "id": "604fc69b-4bed-4078-9c03-5ce1545772bc",
@@ -1011,6 +1209,19 @@
       "lastValidated": 1787024951317
     },
     {
+      "id": "6762d6f0-08d3-42da-8e30-f5c269f76648",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/RiskListExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/RiskListExample",
+      "createdAt": 1787118943374,
+      "lastValidated": 1787118943374
+    },
+    {
       "id": "6a20d229-db01-4ecb-b14c-8a4bb8f12eea",
       "projectId": "QTef5wyU",
       "sourceNodeId": "5e7ac0d8-0052-4c3d-98ea-666a989431ca:0",
@@ -1021,6 +1232,31 @@
       "isValid": true,
       "createdAt": 1787026780091,
       "lastValidated": 1787026780091
+    },
+    {
+      "id": "73e08724-26b8-4e16-8d74-4df58ecc1867",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "e40f3b43-b9ed-4272-a261-3ef92152b90d:0",
+      "targetNodeId": "9890d093-27ce-4543-b024-ea049d35a0c7:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Parse-hOjIP:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787119010852,
+      "lastValidated": 1787131753760
+    },
+    {
+      "id": "76d4ce0a-36be-4b28-afac-af8b1358f93e",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AmlFlaggedExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AmlFlaggedExample",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
     },
     {
       "id": "777a8128-223d-458d-ae35-314c4cecc069",
@@ -1071,6 +1307,19 @@
       "lastValidated": 1787021386348
     },
     {
+      "id": "84e59ed0-dc1f-45b7-b04f-8c2f59844295",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/responses/NotFound",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/responses/NotFound",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
+    },
+    {
       "id": "85ef0d53-2757-438a-bcd2-7e25cf39bc39",
       "projectId": "QTef5wyU",
       "sourceNodeId": "f211c304-4a12-461e-88da-3ffb6bb635fb:0",
@@ -1092,7 +1341,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787024867236,
-      "lastValidated": 1787034902377
+      "lastValidated": 1787132946433
     },
     {
       "id": "8be9b035-740b-44a9-af25-7ce84decbcb4",
@@ -1105,6 +1354,58 @@
       "isValid": true,
       "createdAt": 1787032226942,
       "lastValidated": 1787032226942
+    },
+    {
+      "id": "8e993c93-07bc-4a60-a0ca-d997a1dadb1b",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/CreditScore",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/CreditScore",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "8f054006-6a76-4916-a9c3-fcb74245d19a",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/KycVerifiedExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/KycVerifiedExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "8fe9e6e2-afb2-4200-8cb3-31c071e3c912",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/responses/BadRequest",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/responses/BadRequest",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "91f3feb7-21a0-415d-83bd-51edaec8a49d",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/CreditPoorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/CreditPoorExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
     },
     {
       "id": "95a4cb8a-378a-4ecb-bcd5-0e508006dd1b",
@@ -1203,6 +1504,32 @@
       "lastValidated": 1787032390572
     },
     {
+      "id": "b75e831c-ff6e-4b2f-a5d1-5dcac7a1fdf4",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/RiskEvaluationList",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/RiskEvaluationList",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
+    },
+    {
+      "id": "bccd8653-271e-411e-afaa-86c6a1cf57d3",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/responses/Unauthorized",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/responses/Unauthorized",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
+    },
+    {
       "id": "bd9631e9-cac7-4720-8f3f-0e69a2b906c3",
       "projectId": "QTef5wyU",
       "sourceNodeId": "bdd95ad8-3621-4fc8-9d23-75257ce386d5:0",
@@ -1227,6 +1554,19 @@
       "lastValidated": 1787032532383
     },
     {
+      "id": "c6810cb4-e83b-4363-9fbc-2dcb5b16eeb7",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/ErrorResponse",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/ErrorResponse",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
+    },
+    {
       "id": "cc79db13-120c-41a1-b983-994321863f85",
       "projectId": "QTef5wyU",
       "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
@@ -1248,7 +1588,20 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1787033306969,
-      "lastValidated": 1787033403106
+      "lastValidated": 1787132783682
+    },
+    {
+      "id": "ce496af5-737c-4937-bfa6-a3fba54b10d6",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/EvaluateResponseExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/EvaluateResponseExample",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
     },
     {
       "id": "ce97b750-3f3e-4bc5-a6dd-30ca5ceedeb1",
@@ -1335,6 +1688,69 @@
       "lastValidated": 1787033305671
     },
     {
+      "id": "e872ae59-6c7e-46f5-b61b-df6d5923add3",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/responses/InternalServerError",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/responses/InternalServerError",
+      "createdAt": 1787118943376,
+      "lastValidated": 1787118943376
+    },
+    {
+      "id": "ea08b71b-ee37-4aa4-8486-10fc742c8896",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "2ce78437-76a5-4d9a-8429-bd1b000e3eb4:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Redact-9foTH:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787132783628,
+      "lastValidated": 1787132843383
+    },
+    {
+      "id": "ea3083a2-5953-4dbc-a834-516be5920e5b",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "a1a49b6a-bff8-4ebd-b6ca-0f598257cfe2:0",
+      "targetNodeId": "e72248ca-477d-4cd8-9b35-01974a72090c:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Banking-APIs:Parse-QdQIA:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1787132765538,
+      "lastValidated": 1787132771060
+    },
+    {
+      "id": "eed3e924-89c0-4409-92b8-c601ca8f8859",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/KYCRecord",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/KYCRecord",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
+      "id": "f1f35f5e-2f4b-4e23-a0c0-9d7c201d28c7",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/EvaluateRequestMinimal",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/EvaluateRequestMinimal",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
+    },
+    {
       "id": "f6fd5cd4-de61-4ec3-8b41-a530ab235050",
       "projectId": "QTef5wyU",
       "sourceNodeId": "34638b2f-737e-477e-94fd-2f729523e740:0",
@@ -1345,6 +1761,19 @@
       "isValid": true,
       "createdAt": 1787032225928,
       "lastValidated": 1787032225928
+    },
+    {
+      "id": "fdad033a-dba5-467e-a2dc-b35548f7bb31",
+      "projectId": "QTef5wyU",
+      "sourceNodeId": "72947ba5-433a-49d7-bad8-63687c7bec55:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/RiskEvaluationEnriched",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/RiskEvaluationEnriched",
+      "createdAt": 1787118943375,
+      "lastValidated": 1787118943375
     }
   ]
 }

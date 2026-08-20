@@ -16,4 +16,5 @@ spec:
       requiredScopes:
         - provider: verify-joy
           scopes:
-            - customer
+            - loanadmin
+            - bankmanager

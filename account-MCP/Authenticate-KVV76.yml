@@ -1,0 +1,16 @@
+kind: Authenticate
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authenticate-KVV76
+  namespace: account-MCP
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: account-MCP
+  operation:
+    oauth2:
+      providers:
+        - verify-joy

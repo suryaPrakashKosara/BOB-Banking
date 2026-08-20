@@ -1,20 +1,20 @@
 kind: Authorize
 apiVersion: api.ibm.com/v1
 metadata:
-  name: Authorize-iafgJ
-  namespace: Banking-APIs
+  name: Authorize-mTE0w
+  namespace: account-MCP
   version: '1.0'
   tags: []
   labels:
     gatewayTypes:
       - nano
 spec:
-  namespace: Banking-APIs
+  namespace: account-MCP
   operation:
     oauth2:
-      issClaim: sub
+      issClaim: 'sub '
       requiredScopes:
         - provider: verify-joy
           scopes:
-            - customer
             - bankmanager
+            - customer
