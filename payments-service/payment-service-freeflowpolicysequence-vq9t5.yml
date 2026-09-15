@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: payment-service-freeflowpolicysequence-vq9t5
+  namespace: payment-service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: payment-service:ExtractIdentity-IoXun:1.0
+    - $ref: payment-service:Authenticate-lSPNt:1.0
+    - $ref: payment-service:Authorize-41e9F:1.0
+    - $ref: payment-service:invoke-vq9t5:1.0
+    - $ref: payment-service:Parse-ohwWi:1.0
+    - $ref: payment-service:Redact-tEHDe:1.0
+  monitoring:
+    $ref: payment-service:telemetry-vq9t5:1.0
