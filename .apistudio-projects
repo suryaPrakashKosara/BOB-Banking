@@ -1,29 +1,4 @@
 projects:
-  Bob-Banking-apis:
-    id: E98FqKoH
-    description: ''
-    tags: []
-    lastUpdated: 1784886894125
-  BOB-Banking:
-    id: bBLb3alb
-    description: ''
-    tags: []
-    lastUpdated: 1785376609298
-  Banking-APIs:
-    id: QTef5wyU
-    description: ''
-    tags: []
-    lastUpdated: 1787136424370
-  API-Existing-MCPs:
-    id: fsbSOcoF
-    description: ''
-    tags: []
-    lastUpdated: 1787030200238
-  account-MCP:
-    id: yIuO4BpP
-    description: ''
-    tags: []
-    lastUpdated: 1787209935698
   Accounts-v3:
     id: tzabVedZ
     description: ''
