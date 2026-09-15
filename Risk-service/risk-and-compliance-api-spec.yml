@@ -617,7 +617,7 @@ components:
           example: 404
   responses:
     BadRequest:
-      description: Bad Request  request body is missing or not valid JSON.
+      description: Bad Request  request body is missing or not valid JSON.
       content:
         application/json:
           schema:
@@ -687,7 +687,7 @@ components:
               - HIGH_FRAUD
               - SANCTIONS_FLAG
             status: ESCALATED
-            remarks: Sanctions hit  account frozen
+            remarks: Sanctions hit  account frozen
         total: 20
     RiskLowExample:
       summary: Low risk customer (1001)
@@ -725,9 +725,9 @@ components:
           - HIGH_FRAUD
           - SANCTIONS_FLAG
         status: ESCALATED
-        remarks: Sanctions hit  account frozen
+        remarks: Sanctions hit  account frozen
     EvaluateRequestMinimal:
-      summary: Minimal  only customerId required
+      summary: Minimal  only customerId required
       value:
         customerId: 1001
     EvaluateRequestFull:
@@ -785,7 +785,7 @@ components:
         evaluationDate: 2024-08-01T00:00:00.000Z
         bureau: CIBIL
         trend: DECLINING
-        remarks: Sanctions hit  account frozen
+        remarks: Sanctions hit  account frozen
     KycVerifiedExample:
       summary: KYC verified customer (1001)
       value:
@@ -832,4 +832,4 @@ components:
         flags:
           - HIGH_AML
           - SANCTIONS_FLAG
-        remarks: Sanctions hit  account frozen
+        remarks: Sanctions hit  account frozen
