@@ -224,7 +224,7 @@ paths:
         - Payments
       summary: Get payment by ID
       description: >-
-        Returns the full payment record for the given paymentId (range 50015040
+        Returns the full payment record for the given paymentId (range 50015040
         for seed data).
       operationId: getPayment
       parameters:
@@ -253,7 +253,7 @@ paths:
         - Transactions
       summary: Get payment by transaction ID
       description: >-
-        Returns the payment record for the given transactionId (range 60016040
+        Returns the payment record for the given transactionId (range 60016040
         for seed data).
       operationId: getTransaction
       parameters:
@@ -648,7 +648,7 @@ components:
           example: 404
   responses:
     BadRequest:
-      description: Bad Request  request body is missing or invalid.
+      description: Bad Request  request body is missing or invalid.
       content:
         application/json:
           schema:
