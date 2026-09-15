@@ -170,7 +170,7 @@ spec:
           $path: ./payments-api-spec.yml
     - name: getPayment
       description: >-
-        Returns the full payment record for the given paymentId (range 50015040
+        Returns the full payment record for the given paymentId (range 50015040
         for seed data).
       inputSchema:
         type: object

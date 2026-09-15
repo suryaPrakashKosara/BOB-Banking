@@ -112,9 +112,14 @@
       "projectId": "ZDTWHaww",
       "filePath": "payments-service/payments-api-tool-vq9t5.yml",
       "docIndex": 0,
-      "assetType": "support",
-      "lastIndexed": 1789456420869,
-      "schemaVersion": 1
+      "assetType": "resource",
+      "lastIndexed": 1789457406421,
+      "schemaVersion": 1,
+      "kind": "MCPTools",
+      "name": "payments-api-tool-vq9t5",
+      "namespace": "payment-service",
+      "version": "1.0",
+      "contentHash": "31663b511a1aa2fc"
     },
     {
       "id": "a68a0201-0ef0-4c1f-b365-bbf798f3b046:0",
@@ -275,6 +280,18 @@
       "lastValidated": 1789452120669
     },
     {
+      "id": "1eca58b0-0fbb-4aeb-b711-c758b5bd6a73",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "97e1421f-3e19-450c-acd4-000e2c287721:0",
+      "targetNodeId": "a68a0201-0ef0-4c1f-b365-bbf798f3b046:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./payments-api-spec.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1789457406425,
+      "lastValidated": 1789457406425
+    },
+    {
       "id": "28f71e9f-5056-4670-82cc-6150e0deb731",
       "projectId": "ZDTWHaww",
       "sourceNodeId": "a68a0201-0ef0-4c1f-b365-bbf798f3b046:0",
@@ -343,13 +360,13 @@
       "id": "48fdb8bc-0863-4df3-81ec-c245f03ca164",
       "projectId": "ZDTWHaww",
       "sourceNodeId": "8120b931-7f41-460b-aea1-3e1ee73a69f0:0",
-      "targetNodeId": "eedea245-b830-4af0-809f-7ab4088bedf2:0",
-      "targetRefType": "cross-project",
+      "targetNodeId": "97e1421f-3e19-450c-acd4-000e2c287721:0",
+      "targetRefType": "same-project",
       "targetRefString": "payment-service:payments-api-tool-vq9t5:1.0",
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1789452122706,
-      "lastValidated": 1789456420880
+      "lastValidated": 1789457406458
     },
     {
       "id": "4e44e69d-b83e-4f5c-835e-c8f2c2166137",
