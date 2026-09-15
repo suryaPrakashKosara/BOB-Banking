@@ -1,0 +1,244 @@
+kind: MCPTools
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-accounts-management-api-tool-w8xj4
+  namespace: Accounts-v3
+  version: "1.0"
+  tags: []
+  description: Accounts Management API for the Agentic Banking Platform. Manages
+    the full lifecycle of bank accounts including creation, balance enquiry,
+    transactions, and closure. Every account belongs to an existing customer
+    identified by customerId. Integrates with Customer API, Payments API, Loan
+    API, and Risk API. All services use customerId as the common identifier.
+  labels:
+    api-spec: ./banking-accounts-management-api-spec.yml
+spec:
+  tools:
+    - name: createAccount
+      description: Creates a new bank account for an existing customer. The
+        accountNumber is auto-generated as a string in format ACCT{accountId}
+        (e.g. ACCT2033). Every account must belong to a valid customerId between
+        1001 and 1020. Account types supported are SAVINGS, CURRENT,
+        FIXED_DEPOSIT, RECURRING_DEPOSIT, and NRI. Default currency is INR.
+        Default status is ACTIVE.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            type: integer
+            format: int64
+            description: Customer ID of the account owner. Must be a valid existing customer
+              between 1001 and 1020.
+            minimum: 1001
+            example: 1001
+          accountType:
+            type: string
+            description: Type of bank account.
+            enum:
+              - SAVINGS
+              - CURRENT
+              - FIXED_DEPOSIT
+              - RECURRING_DEPOSIT
+              - NRI
+            example: SAVINGS
+          currency:
+            type: string
+            description: Account currency. Defaults to INR.
+            default: INR
+            example: INR
+          branch:
+            type: string
+            description: Branch name where the account is held.
+            example: Mumbai Main Branch
+          ifsc:
+            type: string
+            description: IFSC code of the branch (e.g. HDFC0001001).
+            example: HDFC0001001
+        required:
+          - customerId
+          - accountType
+          - branch
+          - ifsc
+      title: Create a new account
+      x-api-binding:
+        operationPath: /accounts
+        operationMethod: POST
+        api:
+          $path: ./banking-accounts-management-api-spec.yml
+    - name: listAccounts
+      description: >
+        Returns all accounts. Supports optional filters for `customerId`,
+        `accountType`, `status`, `currency`, and `branch`.
+
+
+        **To retrieve all accounts for a specific customer**, pass `customerId`
+        as a query parameter:
+
+
+        ```
+
+        GET /accounts?customerId=1001
+
+        GET /accounts?status=ACTIVE
+
+        GET /accounts?accountType=SAVINGS
+
+        ```
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: >
+              Filter accounts by customer ID. Must be a numeric value between
+              1001 and 1020.
+
+              Use this parameter to retrieve all accounts belonging to a
+              specific customer.
+
+              This is the backend-supported way to perform a customer-scoped
+              account lookup.
+
+              Example: GET /accounts?customerId=1001
+            x-parameter-location: query
+            type: integer
+            format: int64
+            minimum: 1001
+          accountType:
+            description: Filter accounts by account type.
+            x-parameter-location: query
+            type: string
+            enum:
+              - SAVINGS
+              - CURRENT
+              - FIXED_DEPOSIT
+              - RECURRING_DEPOSIT
+              - NRI
+          status:
+            description: Filter accounts by status.
+            x-parameter-location: query
+            type: string
+            enum:
+              - ACTIVE
+              - FROZEN
+          currency:
+            description: Filter accounts by ISO 4217 currency code.
+            x-parameter-location: query
+            type: string
+          branch:
+            description: Filter accounts by branch name.
+            x-parameter-location: query
+            type: string
+      title: List all accounts
+      x-api-binding:
+        operationPath: /accounts
+        operationMethod: GET
+        api:
+          $path: ./banking-accounts-management-api-spec.yml
+    - name: getAccount
+      description: Returns the complete account profile for the given accountId. Range
+        2001-2032 for seed data.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (integer, range 2001-2032 for seed data).
+            x-parameter-location: path
+            type: integer
+        required:
+          - accountId
+      title: Get account by ID
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: GET
+        api:
+          $path: ./banking-accounts-management-api-spec.yml
+    - name: updateAccount
+      description: Updates mutable fields of an existing account such as status,
+        branch, and ifsc.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (integer, range 2001-2032 for seed data).
+            x-parameter-location: path
+            type: integer
+          status:
+            type: string
+            description: Updated account status. Allowed values are ACTIVE, FROZEN.
+            enum:
+              - ACTIVE
+              - FROZEN
+            example: FROZEN
+          branch:
+            type: string
+            description: Updated branch name.
+            example: Hyderabad Central Branch
+          ifsc:
+            type: string
+            description: Updated IFSC code.
+            example: HDFC0002345
+          currency:
+            type: string
+            description: Updated ISO 4217 currency code.
+            example: INR
+          balance:
+            type: number
+            format: double
+            description: Updated balance.
+            example: 150000
+          accountType:
+            type: string
+            description: Updated account type.
+            enum:
+              - SAVINGS
+              - CURRENT
+              - FIXED_DEPOSIT
+              - RECURRING_DEPOSIT
+              - NRI
+            example: CURRENT
+        required:
+          - accountId
+      title: Update account details
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: PUT
+        api:
+          $path: ./banking-accounts-management-api-spec.yml
+    - name: deleteAccount
+      description: Deletes the account record from the backend.
+      inputSchema:
+        type: object
+        properties:
+          accountId:
+            description: Unique account identifier (integer, range 2001-2032 for seed data).
+            x-parameter-location: path
+            type: integer
+        required:
+          - accountId
+      title: Delete account
+      x-api-binding:
+        operationPath: /accounts/{accountId}
+        operationMethod: DELETE
+        api:
+          $path: ./banking-accounts-management-api-spec.yml
+    - name: getAccountsByCustomer
+      description: Returns all bank accounts belonging to the given customerId. A
+        customer may have multiple accounts of different types. Consumed by Loan
+        API and Risk API to retrieve the full account portfolio of a customer.
+      inputSchema:
+        type: object
+        properties:
+          customerId:
+            description: Unique numeric customer identifier. Must be between 1001 and 1020.
+            x-parameter-location: path
+            type: integer
+            format: int64
+            minimum: 1001
+        required:
+          - customerId
+      title: Get all accounts for a customer
+      x-api-binding:
+        operationPath: /customers/{customerId}/accounts
+        operationMethod: GET
+        api:
+          $path: ./banking-accounts-management-api-spec.yml

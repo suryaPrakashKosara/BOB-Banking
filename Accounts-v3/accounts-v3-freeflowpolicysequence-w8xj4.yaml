@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: accounts-v3-freeflowpolicysequence-w8xj4
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Accounts-v3:ExtractIdentity-pIeC5:1.0
+    - $ref: Accounts-v3:Authenticate-tfUgC:1.0
+    - $ref: Accounts-v3:Authorize-83O7q:1.0
+    - $ref: Accounts-v3:invoke-w8xj4:1.0
+    - $ref: Accounts-v3:Parse-QTjLW:1.0
+    - $ref: Accounts-v3:Redact-mSEsA:1.0
+  monitoring:
+    $ref: Accounts-v3:telemetry-w8xj4:1.0

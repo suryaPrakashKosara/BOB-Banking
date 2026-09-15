@@ -1,0 +1,16 @@
+kind: Authenticate
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authenticate-tfUgC
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: Accounts-v3
+  operation:
+    oauth2:
+      providers:
+        - verify-joy
