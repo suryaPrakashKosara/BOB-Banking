@@ -1,0 +1,16 @@
+kind: Authenticate
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authenticate-Hc7AE
+  namespace: loan-service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: loan-service
+  operation:
+    oauth2:
+      providers:
+        - verify-joy

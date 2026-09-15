@@ -1,0 +1,16 @@
+kind: ExtractIdentity
+apiVersion: api.ibm.com/v1
+metadata:
+  name: ExtractIdentity-BmEb8
+  namespace: loan-service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: loan-service
+  credentialType:
+    oauth2:
+      httpHeader:
+        name: Authorization

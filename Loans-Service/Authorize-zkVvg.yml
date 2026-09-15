@@ -1,0 +1,23 @@
+kind: Authorize
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authorize-zkVvg
+  namespace: loan-service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: loan-service
+  operation:
+    oauth2:
+      issClaim: sub
+      requiredScopes:
+        - provider: verify-joy
+          scopes:
+            - loanadmin
+        - provider: verify-joy
+          scopes:
+            - bankmanager
+            - loanadmin

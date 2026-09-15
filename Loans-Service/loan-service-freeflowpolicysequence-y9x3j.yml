@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: loan-service-freeflowpolicysequence-y9x3j
+  namespace: loan-service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: loan-service:ExtractIdentity-BmEb8:1.0
+    - $ref: loan-service:Authenticate-Hc7AE:1.0
+    - $ref: loan-service:Authorize-zkVvg:1.0
+    - $ref: loan-service:invoke-y9x3j:1.0
+    - $ref: loan-service:Parse-GLS9g:1.0
+    - $ref: loan-service:Redact-mav8x:1.0
+  monitoring:
+    $ref: loan-service:telemetry-y9x3j:1.0

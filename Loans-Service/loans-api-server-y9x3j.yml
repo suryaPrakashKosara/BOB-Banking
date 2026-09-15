@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: loans-api-server-y9x3j
+  namespace: loan-service
+  version: '1.0'
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Loans API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: loan-service:loan-service-quota-y9x3j:1.0
+  policy-sequence:
+    - $ref: loan-service:loan-service-freeflowpolicysequence-y9x3j:1.0
+  capabilities:
+    tools:
+      - $ref: loan-service:loans-api-tool-y9x3j:1.0
