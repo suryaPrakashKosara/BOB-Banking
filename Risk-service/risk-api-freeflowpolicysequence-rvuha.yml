@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-api-freeflowpolicysequence-rvuha
+  namespace: risk-api
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: risk-api:ExtractIdentity-4064Z:1.0
+    - $ref: risk-api:Authenticate-BvGSH:1.0
+    - $ref: risk-api:Authorize-P3XmK:1.0
+    - $ref: risk-api:invoke-rvuha:1.0
+    - $ref: risk-api:Parse-jyS17:1.0
+    - $ref: risk-api:Redact-meA6K:1.0
+  monitoring:
+    $ref: risk-api:telemetry-rvuha:1.0

@@ -1,0 +1,13 @@
+kind: Redact
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Redact-meA6K
+  namespace: risk-api
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  message:
+    messageName: response

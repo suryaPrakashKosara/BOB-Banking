@@ -1,0 +1,19 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: risk-and-compliance-api-server-rvuha
+  namespace: risk-api
+  version: '1.0'
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Risk and Compliance API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: risk-api:risk-api-quota-rvuha:1.0
+  policy-sequence:
+    - $ref: risk-api:risk-api-freeflowpolicysequence-rvuha:1.0
+  capabilities:
+    tools:
+      - $ref: risk-api:risk-and-compliance-api-tool-rvuha:1.0
