@@ -191,7 +191,7 @@ spec:
           $path: ./payments-api-spec.yml
     - name: getTransaction
       description: >-
-        Returns the payment record for the given transactionId (range 60016040
+        Returns the payment record for the given transactionId (range 60016040
         for seed data).
       inputSchema:
         type: object
