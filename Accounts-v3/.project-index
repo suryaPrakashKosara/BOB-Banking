@@ -187,6 +187,32 @@
       "lastValidated": 1787293295488
     },
     {
+      "id": "16e708f3-13c5-4029-88fd-d45e4dde950c",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/AccountResponse",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/AccountResponse",
+      "createdAt": 1789453495014,
+      "lastValidated": 1789453495014
+    },
+    {
+      "id": "17dca53c-e8e2-438f-97c3-75c020f40adf",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AccountCreateRequestSavingsExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AccountCreateRequestSavingsExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
       "id": "20ab60c1-5e00-4164-b081-79e8cdfdf335",
       "projectId": "tzabVedZ",
       "sourceNodeId": "231b0c00-93a3-42d9-ac42-a6a9291cd1cd:0",
@@ -211,6 +237,32 @@
       "lastValidated": 1787292926144
     },
     {
+      "id": "31187149-b04c-45a4-80c8-0e6a24cf1dcb",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AccountUpdateRequestExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AccountUpdateRequestExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "44e32da5-629b-4f57-b948-d4e22abbc974",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/CustomerNotFoundErrorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/CustomerNotFoundErrorExample",
+      "createdAt": 1789453495014,
+      "lastValidated": 1789453495014
+    },
+    {
       "id": "50c29880-dfcc-4138-902e-95a2bad81ae2",
       "projectId": "tzabVedZ",
       "sourceNodeId": "7c9142ff-1dd0-40d1-a4aa-322d5bd91a80:0",
@@ -221,6 +273,19 @@
       "isValid": true,
       "createdAt": 1787256641871,
       "lastValidated": 1787256641871
+    },
+    {
+      "id": "568f9f33-09f1-4a40-949c-a58281248bb0",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AccountListResponseExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AccountListResponseExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
     },
     {
       "id": "66bf1b36-50ed-4661-b348-7b7e88a4c6d0",
@@ -235,6 +300,84 @@
       "lastValidated": 1787256640443
     },
     {
+      "id": "81e0ebc9-d73b-4ef1-a2f5-e2975601b2da",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AccountCreateRequestFDExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AccountCreateRequestFDExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "8498959b-790a-41c1-80ff-166fa643c939",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/AccountCreateRequest",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/AccountCreateRequest",
+      "createdAt": 1789453495014,
+      "lastValidated": 1789453495014
+    },
+    {
+      "id": "8740c2be-6b49-442b-b391-72b8f77dad65",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AccountResponseExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AccountResponseExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "8e95c1a0-3050-4a54-a6c4-1e46cb59dfd5",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/AccountListResponse",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/AccountListResponse",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "993d265a-53c2-461f-b706-11458a2adc7a",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/ConflictErrorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/ConflictErrorExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "9ab596bf-7090-4baa-a278-721c7c789150",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/AccountUpdateRequest",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/AccountUpdateRequest",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
       "id": "9bb11e9c-a45a-496e-8737-4f3994880774",
       "projectId": "tzabVedZ",
       "sourceNodeId": "231b0c00-93a3-42d9-ac42-a6a9291cd1cd:0",
@@ -245,6 +388,19 @@
       "isValid": true,
       "createdAt": 1787292718688,
       "lastValidated": 1789037301357
+    },
+    {
+      "id": "9fa693fe-ee31-4df0-b2bb-9d62af9bc535",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/NotFoundErrorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/NotFoundErrorExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
     },
     {
       "id": "a7f5071e-9aec-4584-818e-446a1e26f413",
@@ -271,6 +427,58 @@
       "lastValidated": 1787293201764
     },
     {
+      "id": "b62843ad-df63-4628-997a-5aabdcc88422",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/CustomerAccountsResponseExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/CustomerAccountsResponseExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "ba3d3e62-2a61-4d80-b4ce-c68e41d057d5",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/ValidationErrorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/ValidationErrorExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "cd57edea-8f8e-4b44-b141-fa36f28a829c",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/ApiError",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/ApiError",
+      "createdAt": 1789453495014,
+      "lastValidated": 1789453495014
+    },
+    {
+      "id": "d7adbe5b-8a87-45f0-9da5-94d7e8739af2",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/BadRequestErrorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/BadRequestErrorExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
       "id": "d7e0a96d-efa3-4775-bdb6-c85e65a88c6f",
       "projectId": "tzabVedZ",
       "sourceNodeId": "231b0c00-93a3-42d9-ac42-a6a9291cd1cd:0",
@@ -281,6 +489,45 @@
       "isValid": true,
       "createdAt": 1787256640443,
       "lastValidated": 1787256640443
+    },
+    {
+      "id": "e78239e6-96f3-4a80-9245-115970d127c6",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/AccountCreateRequestCurrentExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/AccountCreateRequestCurrentExample",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "ebf6f805-5eb6-4181-8883-66110f1df15e",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/schemas/ValidationError",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/schemas/ValidationError",
+      "createdAt": 1789453495013,
+      "lastValidated": 1789453495013
+    },
+    {
+      "id": "f0bff965-d4a7-4609-a573-5e49570cfb2f",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
+      "targetNodeId": null,
+      "targetRefType": "same-project",
+      "targetRefString": "#/components/examples/ServerErrorExample",
+      "targetRefKind": "support",
+      "isValid": false,
+      "invalidReason": "Target file not found: #/components/examples/ServerErrorExample",
+      "createdAt": 1789453495014,
+      "lastValidated": 1789453495014
     },
     {
       "id": "f20db5c6-9a5e-49bc-9f90-5baeaa3f6622",

@@ -1,8 +1,9 @@
 openapi: 3.0.3
 info:
   title: Banking Accounts Management API
-  description: Accounts Management API for the Agentic Banking Platform. Manages
-    the full lifecycle of bank accounts including creation, balance enquiry,
+  description: >-
+    Accounts Management API for the Agentic Banking Platform. Manages the full
+    lifecycle of bank accounts including creation, balance enquiry,
     transactions, and closure. Every account belongs to an existing customer
     identified by customerId. Integrates with Customer API, Payments API, Loan
     API, and Risk API. All services use customerId as the common identifier.
@@ -58,7 +59,9 @@ x-ibm-configuration:
                   value: 503
                   type: number
                 - set: message.body
-                  value: '{"error":"Accounts service temporarily unavailable.","status":503}'
+                  value: >-
+                    {"error":"Accounts service temporarily
+                    unavailable.","status":503}
                   type: string
       - errors:
           - OperationError
@@ -71,86 +74,93 @@ x-ibm-configuration:
                   value: 502
                   type: number
                 - set: message.body
-                  value: '{"error":"Bad gateway. Upstream returned an invalid
-                    response.","status":502}'
+                  value: >-
+                    {"error":"Bad gateway. Upstream returned an invalid
+                    response.","status":502}
                   type: string
 servers:
   - url: https://accounts-service.2cdce5chee35.au-syd.codeengine.appdomain.cloud
     description: Accounts microservice backend - IBM Code Engine
 tags:
   - name: Accounts
-    description: Account lifecycle management operations. Create, retrieve, update,
-      and close bank accounts. Every account is linked to a customer via
-      customerId.
+    description: >-
+      Account lifecycle management operations. Create, retrieve, update, and
+      close bank accounts. Every account is linked to a customer via customerId.
 paths:
   /accounts:
     post:
       tags:
         - Accounts
       summary: Create a new account
-      description: Creates a new bank account for an existing customer. The
-        accountNumber is auto-generated as a string in format ACCT{accountId}
-        (e.g. ACCT2033). Every account must belong to a valid customerId between
-        1001 and 1020. Account types supported are SAVINGS, CURRENT,
-        FIXED_DEPOSIT, RECURRING_DEPOSIT, and NRI. Default currency is INR.
-        Default status is ACTIVE.
+      description: >-
+        Creates a new bank account for an existing customer. The accountNumber
+        is auto-generated as a string in format ACCT{accountId} (e.g. ACCT2033).
+        Every account must belong to a valid customerId between 1001 and 1020.
+        Account types supported are SAVINGS, CURRENT, FIXED_DEPOSIT,
+        RECURRING_DEPOSIT, and NRI. Default currency is INR. Default status is
+        ACTIVE.
       operationId: createAccount
       requestBody:
         required: true
-        description: Account creation payload. customerId, accountType, and branch are
+        description: >-
+          Account creation payload. customerId, accountType, and branch are
           required. currency defaults to INR.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AccountCreateRequest"
+              $ref: '#/components/schemas/AccountCreateRequest'
             examples:
               SavingsAccountRequest:
-                $ref: "#/components/examples/AccountCreateRequestSavingsExample"
+                $ref: '#/components/examples/AccountCreateRequestSavingsExample'
               CurrentAccountRequest:
-                $ref: "#/components/examples/AccountCreateRequestCurrentExample"
+                $ref: '#/components/examples/AccountCreateRequestCurrentExample'
               FixedDepositRequest:
-                $ref: "#/components/examples/AccountCreateRequestFDExample"
+                $ref: '#/components/examples/AccountCreateRequestFDExample'
       responses:
-        "201":
-          description: Account created successfully. Returns the full account profile with
+        '201':
+          description: >-
+            Account created successfully. Returns the full account profile with
             auto-generated accountNumber.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountResponse"
+                $ref: '#/components/schemas/AccountResponse'
               examples:
                 CreatedAccount:
-                  $ref: "#/components/examples/AccountResponseExample"
-        "400":
-          description: Validation failed. One or more required fields are missing or
+                  $ref: '#/components/examples/AccountResponseExample'
+        '400':
+          description: >-
+            Validation failed. One or more required fields are missing or
             invalid.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/ValidationError'
               examples:
                 ValidationFailed:
-                  $ref: "#/components/examples/ValidationErrorExample"
-        "409":
-          description: Conflict. An active account of the same type already exists for
-            this customer.
+                  $ref: '#/components/examples/ValidationErrorExample'
+        '409':
+          description: >-
+            Conflict. An active account of the same type already exists for this
+            customer.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 DuplicateAccount:
-                  $ref: "#/components/examples/ConflictErrorExample"
-        "500":
-          description: Internal server error. An unexpected condition was encountered on
+                  $ref: '#/components/examples/ConflictErrorExample'
+        '500':
+          description: >-
+            Internal server error. An unexpected condition was encountered on
             the backend.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 ServerError:
-                  $ref: "#/components/examples/ServerErrorExample"
+                  $ref: '#/components/examples/ServerErrorExample'
     get:
       tags:
         - Accounts
@@ -232,33 +242,33 @@ paths:
             type: string
           example: Mumbai Main Branch
       responses:
-        "200":
+        '200':
           description: Paginated list of account summaries returned successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountListResponse"
+                $ref: '#/components/schemas/AccountListResponse'
               examples:
                 AccountList:
-                  $ref: "#/components/examples/AccountListResponseExample"
-        "400":
+                  $ref: '#/components/examples/AccountListResponseExample'
+        '400':
           description: Invalid query parameter value supplied.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 BadRequest:
-                  $ref: "#/components/examples/BadRequestErrorExample"
-        "500":
+                  $ref: '#/components/examples/BadRequestErrorExample'
+        '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 ServerError:
-                  $ref: "#/components/examples/ServerErrorExample"
+                  $ref: '#/components/examples/ServerErrorExample'
   /accounts/{accountId}:
     parameters:
       - name: accountId
@@ -272,92 +282,95 @@ paths:
       tags:
         - Accounts
       summary: Get account by ID
-      description: Returns the complete account profile for the given accountId. Range
+      description: >-
+        Returns the complete account profile for the given accountId. Range
         2001-2032 for seed data.
       operationId: getAccount
       responses:
-        "200":
+        '200':
           description: Account details returned successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountResponse"
+                $ref: '#/components/schemas/AccountResponse'
               examples:
                 AccountDetails:
-                  $ref: "#/components/examples/AccountResponseExample"
-        "404":
+                  $ref: '#/components/examples/AccountResponseExample'
+        '404':
           description: No account found with the given accountNumber.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 NotFound:
-                  $ref: "#/components/examples/NotFoundErrorExample"
-        "500":
+                  $ref: '#/components/examples/NotFoundErrorExample'
+        '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 ServerError:
-                  $ref: "#/components/examples/ServerErrorExample"
+                  $ref: '#/components/examples/ServerErrorExample'
     put:
       tags:
         - Accounts
       summary: Update account details
-      description: Updates mutable fields of an existing account such as status,
-        branch, and ifsc.
+      description: >-
+        Updates mutable fields of an existing account such as status, branch,
+        and ifsc.
       operationId: updateAccount
       requestBody:
         required: true
-        description: Account update payload. All fields are optional. Provide only the
+        description: >-
+          Account update payload. All fields are optional. Provide only the
           fields to update.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AccountUpdateRequest"
+              $ref: '#/components/schemas/AccountUpdateRequest'
             examples:
               UpdateNickname:
-                $ref: "#/components/examples/AccountUpdateRequestExample"
+                $ref: '#/components/examples/AccountUpdateRequestExample'
       responses:
-        "200":
+        '200':
           description: Account updated successfully. Returns the updated account profile.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountResponse"
+                $ref: '#/components/schemas/AccountResponse'
               examples:
                 UpdatedAccount:
-                  $ref: "#/components/examples/AccountResponseExample"
-        "400":
+                  $ref: '#/components/examples/AccountResponseExample'
+        '400':
           description: Validation failed. One or more fields contain invalid values.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: '#/components/schemas/ValidationError'
               examples:
                 ValidationFailed:
-                  $ref: "#/components/examples/ValidationErrorExample"
-        "404":
+                  $ref: '#/components/examples/ValidationErrorExample'
+        '404':
           description: No account found with the given accountNumber.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 NotFound:
-                  $ref: "#/components/examples/NotFoundErrorExample"
-        "500":
+                  $ref: '#/components/examples/NotFoundErrorExample'
+        '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 ServerError:
-                  $ref: "#/components/examples/ServerErrorExample"
+                  $ref: '#/components/examples/ServerErrorExample'
     delete:
       tags:
         - Accounts
@@ -365,7 +378,7 @@ paths:
       description: Deletes the account record from the backend.
       operationId: deleteAccount
       responses:
-        "200":
+        '200':
           description: Account deleted successfully.
           content:
             application/json:
@@ -374,24 +387,24 @@ paths:
                 properties:
                   message:
                     type: string
-        "404":
+        '404':
           description: No account found with the given accountId.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 NotFound:
-                  $ref: "#/components/examples/NotFoundErrorExample"
-        "500":
+                  $ref: '#/components/examples/NotFoundErrorExample'
+        '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 ServerError:
-                  $ref: "#/components/examples/ServerErrorExample"
+                  $ref: '#/components/examples/ServerErrorExample'
   /customers/{customerId}/accounts:
     parameters:
       - name: customerId
@@ -407,9 +420,10 @@ paths:
       tags:
         - Accounts
       summary: Get all accounts for a customer
-      description: Returns all bank accounts belonging to the given customerId. A
-        customer may have multiple accounts of different types. Consumed by Loan
-        API and Risk API to retrieve the full account portfolio of a customer.
+      description: >-
+        Returns all bank accounts belonging to the given customerId. A customer
+        may have multiple accounts of different types. Consumed by Loan API and
+        Risk API to retrieve the full account portfolio of a customer.
       operationId: getAccountsByCustomer
       x-ibm-configuration:
         assembly:
@@ -417,7 +431,8 @@ paths:
             - invoke:
                 version: 2.0.0
                 title: Invoke Accounts Backend - By Customer
-                target-url: $(target-url)/accounts?customerId=$(request.parameters.customerId)
+                target-url: >-
+                  $(target-url)/accounts?customerId=$(request.parameters.customerId)
                 verb: GET
                 timeout: 60
                 follow-redirects: false
@@ -427,39 +442,40 @@ paths:
                   - ConnectionError
                   - OperationError
       responses:
-        "200":
+        '200':
           description: List of accounts for the customer returned successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AccountListResponse"
+                $ref: '#/components/schemas/AccountListResponse'
               examples:
                 CustomerAccounts:
-                  $ref: "#/components/examples/CustomerAccountsResponseExample"
-        "404":
+                  $ref: '#/components/examples/CustomerAccountsResponseExample'
+        '404':
           description: No customer found with the given customerId.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 NotFound:
-                  $ref: "#/components/examples/CustomerNotFoundErrorExample"
-        "500":
+                  $ref: '#/components/examples/CustomerNotFoundErrorExample'
+        '500':
           description: Internal server error.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiError"
+                $ref: '#/components/schemas/ApiError'
               examples:
                 ServerError:
-                  $ref: "#/components/examples/ServerErrorExample"
+                  $ref: '#/components/examples/ServerErrorExample'
 components:
   schemas:
     AccountCreateRequest:
       type: object
-      description: Payload for creating a new bank account. customerId must reference
-        an existing customer. accountType must be SAVINGS, CURRENT, or
+      description: >-
+        Payload for creating a new bank account. customerId must reference an
+        existing customer. accountType must be SAVINGS, CURRENT, or
         FIXED_DEPOSIT. currency defaults to INR.
       required:
         - customerId
@@ -470,7 +486,8 @@ components:
         customerId:
           type: integer
           format: int64
-          description: Customer ID of the account owner. Must be a valid existing customer
+          description: >-
+            Customer ID of the account owner. Must be a valid existing customer
             between 1001 and 1020.
           minimum: 1001
           example: 1001
@@ -499,8 +516,9 @@ components:
           example: HDFC0001001
     AccountUpdateRequest:
       type: object
-      description: Payload for updating mutable fields of an existing account. All
-        fields are optional. Provide only the fields to update.
+      description: >-
+        Payload for updating mutable fields of an existing account. All fields
+        are optional. Provide only the fields to update.
       properties:
         status:
           type: string
@@ -538,12 +556,14 @@ components:
           example: CURRENT
     AccountResponse:
       type: object
-      description: Complete account profile returned by the backend after creation or
+      description: >-
+        Complete account profile returned by the backend after creation or
         retrieval.
       properties:
         accountId:
           type: integer
-          description: Auto-generated unique account identifier. Range 2001-2032 for seed
+          description: >-
+            Auto-generated unique account identifier. Range 2001-2032 for seed
             data.
           example: 2001
         accountNumber:
@@ -585,7 +605,7 @@ components:
         createdDate:
           type: string
           format: date
-          example: 2019-06-01
+          example: 2019-06-01T00:00:00.000Z
     AccountListResponse:
       type: object
       description: >
@@ -594,12 +614,12 @@ components:
 
         The backend always returns { "accounts": [...], "total": N }.
 
-        There is no pagination object  total is a plain integer.
+        There is no pagination object total is a plain integer.
       properties:
         accounts:
           type: array
           items:
-            $ref: "#/components/schemas/AccountResponse"
+            $ref: '#/components/schemas/AccountResponse'
         total:
           type: integer
           description: Total number of accounts returned.
@@ -666,8 +686,9 @@ components:
         branch: Hyderabad Banjara Hills
     AccountResponseExample:
       summary: Account profile response for accountId 2001
-      description: Full account object returned after creation or GET by accountId.
-        Fields match the actual backend response.
+      description: >-
+        Full account object returned after creation or GET by accountId. Fields
+        match the actual backend response.
       value:
         accountId: 2001
         accountNumber: ACCT2001
@@ -678,11 +699,12 @@ components:
         currency: INR
         branch: Mumbai Main Branch
         ifsc: HDFC0001001
-        createdDate: 2019-06-01
+        createdDate: 2019-06-01T00:00:00.000Z
     AccountListResponseExample:
       summary: Paginated account list (first 5 of 32 seed accounts)
-      description: Example of the list response shape returned by GET /accounts.
-        Fields match the actual backend response.
+      description: >-
+        Example of the list response shape returned by GET /accounts. Fields
+        match the actual backend response.
       value:
         accounts:
           - accountId: 2001
@@ -694,7 +716,7 @@ components:
             currency: INR
             branch: Mumbai Main Branch
             ifsc: HDFC0001001
-            createdDate: 2019-06-01
+            createdDate: 2019-06-01T00:00:00.000Z
           - accountId: 2002
             accountNumber: ACCT2002
             customerId: 1001
@@ -704,7 +726,7 @@ components:
             currency: INR
             branch: Mumbai Main Branch
             ifsc: HDFC0001001
-            createdDate: 2020-03-15
+            createdDate: 2020-03-15T00:00:00.000Z
           - accountId: 2003
             accountNumber: ACCT2003
             customerId: 1002
@@ -714,7 +736,7 @@ components:
             currency: INR
             branch: Ahmedabad Central
             ifsc: ICIC0000101
-            createdDate: 2019-07-15
+            createdDate: 2019-07-15T00:00:00.000Z
           - accountId: 2004
             accountNumber: ACCT2004
             customerId: 1002
@@ -724,7 +746,7 @@ components:
             currency: INR
             branch: Ahmedabad Central
             ifsc: ICIC0000101
-            createdDate: 2021-01-10
+            createdDate: 2021-01-10T00:00:00.000Z
           - accountId: 2005
             accountNumber: ACCT2005
             customerId: 1003
@@ -734,11 +756,12 @@ components:
             currency: INR
             branch: Bangalore Koramangala
             ifsc: SBIN0040001
-            createdDate: 2019-08-20
+            createdDate: 2019-08-20T00:00:00.000Z
         total: 32
     CustomerAccountsResponseExample:
       summary: All accounts for customer 1001
-      description: Example response for GET /customers/1001/accounts. Backend returns
+      description: >-
+        Example response for GET /customers/1001/accounts. Backend returns
         {"accounts":[...],"total":N}.
       value:
         accounts:
@@ -751,7 +774,7 @@ components:
             currency: INR
             branch: Mumbai Main Branch
             ifsc: HDFC0001001
-            createdDate: 2019-06-01
+            createdDate: 2019-06-01T00:00:00.000Z
           - accountId: 2002
             accountNumber: ACCT2002
             customerId: 1001
@@ -761,7 +784,7 @@ components:
             currency: INR
             branch: Mumbai Main Branch
             ifsc: HDFC0001001
-            createdDate: 2020-03-15
+            createdDate: 2020-03-15T00:00:00.000Z
         total: 2
     ValidationErrorExample:
       summary: 400 Validation error
@@ -777,7 +800,9 @@ components:
         status: 409
     NotFoundErrorExample:
       summary: 404 Account not found
-      description: Error returned when no account record exists for the requested accountId.
+      description: >-
+        Error returned when no account record exists for the requested
+        accountId.
       value:
         error: Account 9999 not found.
         status: 404
@@ -804,13 +829,16 @@ components:
       type: apiKey
       in: header
       name: X-IBM-Client-Id
-      description: IBM API Connect Client ID header. Required for all requests through
-        the IBM API Connect gateway.
+      description: >-
+        IBM API Connect Client ID header. Required for all requests through the
+        IBM API Connect gateway.
     ApiSecretAuth:
       type: apiKey
       in: header
       name: X-IBM-Client-Secret
-      description: IBM API Connect Client Secret header. Required alongside X-IBM-Client-Id.
+      description: >-
+        IBM API Connect Client Secret header. Required alongside
+        X-IBM-Client-Id.
 security:
   - ApiKeyAuth: []
     ApiSecretAuth: []
