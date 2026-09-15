@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: customer-authentication-freeflowpolicysequence-rojeg
+  namespace: customer-authentication
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: customer-authentication:ExtractIdentity-iDExZ:1.0
+    - $ref: customer-authentication:Authenticate-pk4zA:1.0
+    - $ref: customer-authentication:Authorize-Cdtl3:1.0
+    - $ref: customer-authentication:invoke-rojeg:1.0
+    - $ref: customer-authentication:Parse-9hyzn:1.0
+    - $ref: customer-authentication:Redact-S2BZc:1.0
+  monitoring:
+    $ref: customer-authentication:telemetry-rojeg:1.0

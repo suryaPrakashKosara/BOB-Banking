@@ -1,0 +1,16 @@
+kind: SetAuthorization
+apiVersion: api.ibm.com/v1
+metadata:
+  name: SetAuthorization-Qm972
+  namespace: customer-authentication
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  basic:
+    static:
+      password: ''
+      username: ''
+  message: ''

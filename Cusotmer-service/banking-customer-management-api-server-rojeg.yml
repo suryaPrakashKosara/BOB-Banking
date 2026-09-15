@@ -1,0 +1,20 @@
+kind: MCPServer
+apiVersion: api.ibm.com/v1
+metadata:
+  name: banking-customer-management-api-server-rojeg
+  namespace: customer-authentication
+  version: '1.0'
+  tags: []
+  labels:
+    origin: mcp-rest
+spec:
+  title: Banking Customer Management API MCP Server
+  protocolVersion: V2025_11_25
+  quota:
+    $ref: customer-authentication:customer-authentication-quota-rojeg:1.0
+  policy-sequence:
+    - $ref: >-
+        customer-authentication:customer-authentication-freeflowpolicysequence-rojeg:1.0
+  capabilities:
+    tools:
+      - $ref: customer-authentication:banking-customer-management-api-tool-rojeg:1.0

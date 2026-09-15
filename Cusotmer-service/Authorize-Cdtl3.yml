@@ -1,0 +1,22 @@
+kind: Authorize
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authorize-Cdtl3
+  namespace: customer-authentication
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  operation:
+    oauth2:
+      issClaim: sub
+      requiredScopes:
+        - provider: verify-joy
+          scopes:
+            - customer
+        - provider: verify-joy
+          scopes:
+            - bankmanager
+  namespace: customer-authentication
