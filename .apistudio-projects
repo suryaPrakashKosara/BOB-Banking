@@ -3,24 +3,29 @@ projects:
     id: tzabVedZ
     description: ''
     tags: []
-    lastUpdated: 1789453536549
+    lastUpdated: 1790330476343
   Loans-Service:
     id: Z0gCMGAm
     description: ''
     tags: []
-    lastUpdated: 1789451821235
+    lastUpdated: 1790328840037
   Risk-service:
     id: CqBjLddd
     description: ''
     tags: []
-    lastUpdated: 1789453661666
+    lastUpdated: 1790579082986
   payments-service:
     id: ZDTWHaww
     description: ''
     tags: []
-    lastUpdated: 1789456445059
+    lastUpdated: 1789728508613
   Cusotmer-service:
     id: kNl6S6BO
     description: ''
     tags: []
     lastUpdated: 1789452291315
+  Finance-LLM:
+    id: LDAj3EW7
+    description: Creating this project to test LLM
+    tags: []
+    lastUpdated: 1790592067078
