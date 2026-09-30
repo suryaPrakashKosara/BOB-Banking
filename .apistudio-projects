@@ -8,7 +8,7 @@ projects:
     id: Z0gCMGAm
     description: ''
     tags: []
-    lastUpdated: 1790328840037
+    lastUpdated: 1790669309321
   Risk-service:
     id: CqBjLddd
     description: ''
@@ -28,4 +28,9 @@ projects:
     id: LDAj3EW7
     description: Creating this project to test LLM
     tags: []
-    lastUpdated: 1790592067078
+    lastUpdated: 1790669416825
+  Finance-OAuth-LLM:
+    id: d9A7gJav
+    description: creating this project for LLM config along with Oauth
+    tags: []
+    lastUpdated: 1790745786663
