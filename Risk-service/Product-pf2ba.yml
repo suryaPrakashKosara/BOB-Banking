@@ -1,0 +1,14 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: product-watsonx-risk-llm-pf2ba
+  namespace: Risk-service
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  description: ''
+spec:
+  apis:
+    - $ref: Risk-service:api-watsonx-risk-llm-pf2ba:1.0
+  plans:
+    - $ref: Risk-service:plan-watsonx-risk-llm-pf2ba:1.0

@@ -1,6 +1,34 @@
 {
   "nodes": [
     {
+      "id": "1111a639-e670-45ad-9fd2-e8a6b65e28ea:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Throw-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957933451,
+      "schemaVersion": 1,
+      "kind": "Throw",
+      "name": "Throw-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "edf189cca3197bd7"
+    },
+    {
+      "id": "17e65c4b-96e7-4025-9f1a-854e47d40427:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Authorize-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957929749,
+      "schemaVersion": 1,
+      "kind": "Authorize",
+      "name": "Authorize-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "e46151ea860067bd"
+    },
+    {
       "id": "19802855-9873-444f-8506-56f19cebf394:0",
       "projectId": "CqBjLddd",
       "filePath": "Risk-service/telemetry-rvuha.yml",
@@ -13,6 +41,34 @@
       "namespace": "risk-api",
       "version": "1.0",
       "contentHash": "b1cc3038a555bda8"
+    },
+    {
+      "id": "20916e3b-7cee-403b-b2d5-2141d91fb334:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Telemetry-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957934413,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "Telemetry-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "7cd0ae35aadcdc8c"
+    },
+    {
+      "id": "33bf9085-22a1-43a2-b70e-fb5b5afaf735:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Parse-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957931730,
+      "schemaVersion": 1,
+      "kind": "Parse",
+      "name": "Parse-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "ee5d013b93187ff5"
     },
     {
       "id": "360ad9f1-1190-4371-9f61-8e122dd52e12:0",
@@ -52,6 +108,48 @@
       "schemaVersion": 1
     },
     {
+      "id": "444c9317-cfee-4500-baa1-94eade238665:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/InvokeWatsonxModels-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957923865,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxModels",
+      "name": "InvokeWatsonxModels-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "dcebebaf4bd46ee3"
+    },
+    {
+      "id": "57a5b2d7-0842-49d4-872a-83f86f1ca189:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Product-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957939909,
+      "schemaVersion": 1,
+      "kind": "Product",
+      "name": "product-watsonx-risk-llm-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "285a720935de66e6"
+    },
+    {
+      "id": "593a5c37-ef88-4ee0-a311-56d767f7d284:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Plan-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957937981,
+      "schemaVersion": 1,
+      "kind": "Plan",
+      "name": "plan-watsonx-risk-llm-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "171bd537fb677ae2"
+    },
+    {
       "id": "5b73a6e3-b7f4-4b6c-b00e-628c25211b9b:0",
       "projectId": "CqBjLddd",
       "filePath": "Risk-service/Authorize-P3XmK.yml",
@@ -64,6 +162,20 @@
       "namespace": "risk-api",
       "version": "1.0",
       "contentHash": "5894667cc670a43b"
+    },
+    {
+      "id": "67f16753-48b4-48b0-8989-8a45a823d6c6:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/API-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957939152,
+      "schemaVersion": 1,
+      "kind": "API",
+      "name": "api-watsonx-risk-llm-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "e20c40d33c93550d"
     },
     {
       "id": "69a812ca-ca33-49dd-9b06-8c10aeb87cb9:0",
@@ -94,6 +206,34 @@
       "contentHash": "d2be009cbd128097"
     },
     {
+      "id": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/FreeFlowPolicySequence-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957935155,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "freeflowpolicysequence-watsonx-risk-llm-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "6c183a8cd66b6909"
+    },
+    {
+      "id": "7aba00a9-f709-4b2f-a6df-dcff85454313:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/api-spec-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957936042,
+      "schemaVersion": 1,
+      "kind": "OpenAPISpec",
+      "name": "api-spec-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "1b06855eb7f369ee"
+    },
+    {
       "id": "7b04ba1c-c522-4fe6-9071-e6b6daf70fe9:0",
       "projectId": "CqBjLddd",
       "filePath": "Risk-service/risk-and-compliance-api-tool-rvuha.yml",
@@ -108,6 +248,34 @@
       "contentHash": "74bf57f9992b477a"
     },
     {
+      "id": "8166219f-46a9-4aec-ac93-1195ce613056:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/watsonx-risk-llm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789958002242,
+      "schemaVersion": 1,
+      "kind": "LLMProvider",
+      "name": "watsonx-risk-llm",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "35533b089177f392"
+    },
+    {
+      "id": "93e522d3-ae5c-43ec-bbae-bef346dd2adb:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/InvokeWatsonxTextGen-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957926283,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxTextGen",
+      "name": "InvokeWatsonxTextGen-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "203b9c4941710156"
+    },
+    {
       "id": "aa62c49d-3be1-4f4e-be74-64af138e76c1:0",
       "projectId": "CqBjLddd",
       "filePath": "Risk-service/ExtractIdentity-4064Z.yml",
@@ -120,6 +288,20 @@
       "namespace": "risk-api",
       "version": "1.0",
       "contentHash": "a36d2632f0cb2632"
+    },
+    {
+      "id": "af346b9a-5c54-43ee-b520-87dba2f5906c:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Quota-pf2ba-1.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957937074,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "watsonx-token-weighted-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "b449efe199028acf"
     },
     {
       "id": "b699b74f-a5fb-455a-af43-8de5c2f9802b:0",
@@ -150,6 +332,34 @@
       "contentHash": "45b1724bf06f7374"
     },
     {
+      "id": "c6f1f6ea-9b64-4214-a511-3484048d9ede:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/ExtractIdentity-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957928004,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "841edbbe9e12322f"
+    },
+    {
+      "id": "cbbd14d1-1f0b-479c-864c-f69dbd6875e3:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/Authenticate-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957928722,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "4a53bb0767900ab8"
+    },
+    {
       "id": "d1ac3cd5-4312-46ad-8dab-8360938dc3e9:0",
       "projectId": "CqBjLddd",
       "filePath": "Risk-service/risk-and-compliance-api-spec.yml",
@@ -157,6 +367,20 @@
       "assetType": "support",
       "lastIndexed": 1789451995030,
       "schemaVersion": 1
+    },
+    {
+      "id": "db7be87f-104b-42e3-8089-87e587f85bf7:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/InvokeWatsonxTokenize-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957927047,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxTokenize",
+      "name": "InvokeWatsonxTokenize-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "71d2bf80b33a72b6"
     },
     {
       "id": "db99e66e-d81f-424e-92d6-bc7a01a191d5:0",
@@ -171,6 +395,34 @@
       "namespace": "risk-api",
       "version": "1.0",
       "contentHash": "59dc87e790107e93"
+    },
+    {
+      "id": "dbc5dd21-770f-481a-a7f2-c506b58e3127:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/IBMCloudLogin-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957930489,
+      "schemaVersion": 1,
+      "kind": "IBMCloudLogin",
+      "name": "IBMCloudLogin-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "36d0fe13360edbca"
+    },
+    {
+      "id": "ef2fc2b2-f165-490a-97a2-550e1d56733f:0",
+      "projectId": "CqBjLddd",
+      "filePath": "Risk-service/OperationSwitch-pf2ba.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789957932649,
+      "schemaVersion": 1,
+      "kind": "OperationSwitch",
+      "name": "OperationSwitch-pf2ba",
+      "namespace": "Risk-service",
+      "version": "1.0",
+      "contentHash": "dad688ef3c99f26f"
     }
   ],
   "edges": [
@@ -201,6 +453,18 @@
       "lastValidated": 1789453636326
     },
     {
+      "id": "2103bd41-25ef-4cd7-838e-f426a8e8bdd4",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "17e65c4b-96e7-4025-9f1a-854e47d40427:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:Authorize-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
+    },
+    {
       "id": "240980ef-d1e6-42ce-a9a9-88af6f5cff38",
       "projectId": "CqBjLddd",
       "sourceNodeId": "d1ac3cd5-4312-46ad-8dab-8360938dc3e9:0",
@@ -212,6 +476,30 @@
       "invalidReason": "Target file not found: #/components/examples/AmlClearExample",
       "createdAt": 1789453636327,
       "lastValidated": 1789453636327
+    },
+    {
+      "id": "2d92525b-7450-4bae-b736-4ae8fac5ef28",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "33bf9085-22a1-43a2-b70e-fb5b5afaf735:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:Parse-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
+    },
+    {
+      "id": "2e7e04aa-8b7c-43a3-899c-2c4eb5c749d5",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "ef2fc2b2-f165-490a-97a2-550e1d56733f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:OperationSwitch-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
     },
     {
       "id": "32de7a02-9639-495b-8740-4809cc4552c8",
@@ -236,6 +524,18 @@
       "isValid": true,
       "createdAt": 1789451994330,
       "lastValidated": 1789451999996
+    },
+    {
+      "id": "3499b70f-4112-4dce-a6b1-5407a48345e0",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "8166219f-46a9-4aec-ac93-1195ce613056:0",
+      "targetNodeId": "57a5b2d7-0842-49d4-872a-83f86f1ca189:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:product-watsonx-risk-llm-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957940765,
+      "lastValidated": 1789957940765
     },
     {
       "id": "46df60ac-4e7a-44a6-8749-58c7e5e06c80",
@@ -264,6 +564,18 @@
       "lastValidated": 1789453636326
     },
     {
+      "id": "4cb1779a-9c5e-4267-9749-c2d5de6ed6b1",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "67f16753-48b4-48b0-8989-8a45a823d6c6:0",
+      "targetNodeId": "7aba00a9-f709-4b2f-a6df-dcff85454313:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./api-spec-pf2ba.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1789957939154,
+      "lastValidated": 1789957939154
+    },
+    {
       "id": "4cc1c0c4-9958-45da-96f0-c1d6bef3612e",
       "projectId": "CqBjLddd",
       "sourceNodeId": "d1ac3cd5-4312-46ad-8dab-8360938dc3e9:0",
@@ -275,6 +587,18 @@
       "invalidReason": "Target file not found: #/components/schemas/RiskEvaluationList",
       "createdAt": 1789453636327,
       "lastValidated": 1789453636327
+    },
+    {
+      "id": "4e1f877b-c9db-42f6-b6fb-ecbd92151aeb",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "ef2fc2b2-f165-490a-97a2-550e1d56733f:0",
+      "targetNodeId": "93e522d3-ae5c-43ec-bbae-bef346dd2adb:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:InvokeWatsonxTextGen-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957932651,
+      "lastValidated": 1789957932651
     },
     {
       "id": "5334352d-d031-4f73-b7bb-ee07469d1272",
@@ -367,6 +691,18 @@
       "lastValidated": 1789453636327
     },
     {
+      "id": "751e26fe-52dd-4c21-ac9b-31f2f6e2a98d",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "ef2fc2b2-f165-490a-97a2-550e1d56733f:0",
+      "targetNodeId": "444c9317-cfee-4500-baa1-94eade238665:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:InvokeWatsonxModels-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957932656,
+      "lastValidated": 1789957932656
+    },
+    {
       "id": "7956fcf7-4dce-4531-b8f9-43ef1e9f9016",
       "projectId": "CqBjLddd",
       "sourceNodeId": "6da09cd6-5772-4bb6-834b-fe921b534e5c:0",
@@ -377,6 +713,18 @@
       "isValid": true,
       "createdAt": 1789451996537,
       "lastValidated": 1789451996537
+    },
+    {
+      "id": "7baa4cb5-a8c1-4855-9cbf-9af3980ae235",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "dbc5dd21-770f-481a-a7f2-c506b58e3127:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:IBMCloudLogin-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
     },
     {
       "id": "7cf1bdcc-4650-480a-8398-1534f75f51cf",
@@ -415,6 +763,18 @@
       "invalidReason": "Target file not found: #/components/responses/InternalServerError",
       "createdAt": 1789453636327,
       "lastValidated": 1789453636327
+    },
+    {
+      "id": "886c8129-f84f-4404-b0f2-529f3d4c2bca",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "57a5b2d7-0842-49d4-872a-83f86f1ca189:0",
+      "targetNodeId": "593a5c37-ef88-4ee0-a311-56d767f7d284:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:plan-watsonx-risk-llm-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957939910,
+      "lastValidated": 1789957939910
     },
     {
       "id": "899d8f90-586b-46d4-8a10-59bf3b944a96",
@@ -467,6 +827,18 @@
       "lastValidated": 1789451999997
     },
     {
+      "id": "a3bd65c7-7042-4519-a804-966a27b231da",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "67f16753-48b4-48b0-8989-8a45a823d6c6:0",
+      "targetNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:freeflowpolicysequence-watsonx-risk-llm-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957939154,
+      "lastValidated": 1789957939154
+    },
+    {
       "id": "aaac56c7-d458-4741-b3bd-86b81ff6dd7c",
       "projectId": "CqBjLddd",
       "sourceNodeId": "d1ac3cd5-4312-46ad-8dab-8360938dc3e9:0",
@@ -478,6 +850,18 @@
       "invalidReason": "Target file not found: #/components/examples/RiskLowExample",
       "createdAt": 1789453636326,
       "lastValidated": 1789453636326
+    },
+    {
+      "id": "ab38798e-c3af-4469-9072-4aad529844d2",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "20916e3b-7cee-403b-b2d5-2141d91fb334:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:Telemetry-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
     },
     {
       "id": "b9697538-69af-47b9-9a8e-29a394211b76",
@@ -506,6 +890,30 @@
       "lastValidated": 1789453636327
     },
     {
+      "id": "bcc659ac-138f-4a32-af24-bdb6bbd9f1ce",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "593a5c37-ef88-4ee0-a311-56d767f7d284:0",
+      "targetNodeId": "af346b9a-5c54-43ee-b520-87dba2f5906c:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:watsonx-token-weighted-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957937990,
+      "lastValidated": 1789957937990
+    },
+    {
+      "id": "be26b26a-af1b-4721-a454-23589db90c6f",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "ef2fc2b2-f165-490a-97a2-550e1d56733f:0",
+      "targetNodeId": "db7be87f-104b-42e3-8089-87e587f85bf7:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:InvokeWatsonxTokenize-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957932656,
+      "lastValidated": 1789957932656
+    },
+    {
       "id": "c06571c4-1ebd-4e15-83a2-5b700fc6e575",
       "projectId": "CqBjLddd",
       "sourceNodeId": "d1ac3cd5-4312-46ad-8dab-8360938dc3e9:0",
@@ -517,6 +925,18 @@
       "invalidReason": "Target file not found: #/components/schemas/ErrorResponse",
       "createdAt": 1789453636327,
       "lastValidated": 1789453636327
+    },
+    {
+      "id": "c9d051fc-f71f-4884-b4e7-a307a6652fe0",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "cbbd14d1-1f0b-479c-864c-f69dbd6875e3:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:Authenticate-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
     },
     {
       "id": "d4395383-cdcc-4318-9099-81cd2f94589f",
@@ -592,6 +1012,42 @@
       "invalidReason": "Target file not found: #/components/examples/KycVerifiedExample",
       "createdAt": 1789453636326,
       "lastValidated": 1789453636326
+    },
+    {
+      "id": "f1ce3aa9-b42b-4ed5-b289-863f82b051dd",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "7a8053ec-03c8-49c6-ba0d-8b6a95dc85dd:0",
+      "targetNodeId": "c6f1f6ea-9b64-4214-a511-3484048d9ede:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:ExtractIdentity-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957935162,
+      "lastValidated": 1789957935162
+    },
+    {
+      "id": "f595edc8-48ce-4cf5-8b05-660c5e5ae896",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "593a5c37-ef88-4ee0-a311-56d767f7d284:0",
+      "targetNodeId": "67f16753-48b4-48b0-8989-8a45a823d6c6:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:api-watsonx-risk-llm-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957937990,
+      "lastValidated": 1789958002254
+    },
+    {
+      "id": "f861cfdd-a14d-4f7e-9d33-8667660b511c",
+      "projectId": "CqBjLddd",
+      "sourceNodeId": "57a5b2d7-0842-49d4-872a-83f86f1ca189:0",
+      "targetNodeId": "67f16753-48b4-48b0-8989-8a45a823d6c6:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Risk-service:api-watsonx-risk-llm-pf2ba:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789957939910,
+      "lastValidated": 1789957939910
     },
     {
       "id": "f996c5d4-a5bf-4ded-b5ea-88da09c5388e",

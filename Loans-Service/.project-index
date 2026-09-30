@@ -1,6 +1,20 @@
 {
   "nodes": [
     {
+      "id": "04356dad-63b7-44b4-8c4d-ffee30808a3b:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/IBMCloudLogin-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790315938846,
+      "schemaVersion": 1,
+      "kind": "IBMCloudLogin",
+      "name": "IBMCloudLogin-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "520959d27a557656"
+    },
+    {
       "id": "157e8d96-8fc5-4048-86cc-1e64f3a5c8f0:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/invoke-y9x3j.yml",
@@ -29,18 +43,46 @@
       "contentHash": "ee6bfc853ca40638"
     },
     {
-      "id": "4062a777-4b75-4771-9214-89f5f54e3709:0",
+      "id": "17034e5f-cec7-498b-beb7-aa626024c080:0",
       "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/loans-api-server-y9x3j.yml",
+      "filePath": "Loans-Service/InvokeWatsonxModels-d40hv.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1789451797347,
+      "lastIndexed": 1790233010803,
       "schemaVersion": 1,
-      "kind": "MCPServer",
-      "name": "loans-api-server-y9x3j",
-      "namespace": "loan-service",
+      "kind": "InvokeWatsonxModels",
+      "name": "InvokeWatsonxModels-d40hv",
+      "namespace": "Loans-Service",
       "version": "1.0",
-      "contentHash": "ca9a8d37f4dcc471"
+      "contentHash": "a8475ce74616a221"
+    },
+    {
+      "id": "18eddfe4-94c6-46e3-9077-0fa08f463dc9:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Product-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233025491,
+      "schemaVersion": 1,
+      "kind": "Product",
+      "name": "product-watsonx-loan-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "8bceddc300f6ee1f"
+    },
+    {
+      "id": "1ffbc8c4-d6e1-49d4-b4a7-540b706fd652:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/InvokeWatsonxTextGen-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233013312,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxTextGen",
+      "name": "InvokeWatsonxTextGen-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "f3030e52f366925d"
     },
     {
       "id": "505ce5b2-ca85-4f99-b121-4496bb0806b7:0",
@@ -48,13 +90,27 @@
       "filePath": "Loans-Service/loan-service-freeflowpolicysequence-y9x3j.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1789451795912,
+      "lastIndexed": 1790669308241,
       "schemaVersion": 1,
       "kind": "FreeFlowPolicySequence",
       "name": "loan-service-freeflowpolicysequence-y9x3j",
       "namespace": "loan-service",
       "version": "1.0",
-      "contentHash": "a485831880b1538d"
+      "contentHash": "628adbdd3e093143"
+    },
+    {
+      "id": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/FreeFlowPolicySequence-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790247518070,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "freeflowpolicysequence-watsonx-loan-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "430de4b8eab3a83a"
     },
     {
       "id": "66f5d293-8a44-4baa-84b6-a60acbecefa3:0",
@@ -99,6 +155,76 @@
       "contentHash": "03cfa4abcbd8be87"
     },
     {
+      "id": "6e09fa40-d60e-49fe-966f-96000c6a8889:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/API-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233024630,
+      "schemaVersion": 1,
+      "kind": "API",
+      "name": "api-watsonx-loan-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "8c2b5ccaa003bdb0"
+    },
+    {
+      "id": "7b0c50a6-e1e6-48a3-b9f8-3e65759115c8:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Authenticate-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233015680,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "c58303f1567ddab7"
+    },
+    {
+      "id": "7e8265e5-5241-4a6a-b8fd-82441160ffb4:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Parse-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233018114,
+      "schemaVersion": 1,
+      "kind": "Parse",
+      "name": "Parse-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "234c062a64e8a9e1"
+    },
+    {
+      "id": "86eae850-e00b-40b2-a18a-7e7e6bb3ace0:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/InvokeWatsonxTokenize-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233014091,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxTokenize",
+      "name": "InvokeWatsonxTokenize-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "0e4901ae9a90659b"
+    },
+    {
+      "id": "8bcf1c0b-7ef5-40fb-b9cf-fe0f3adfca88:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Quota-d40hv-1.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233023056,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "watsonx-token-weighted-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "fcd9347d505c4cae"
+    },
+    {
       "id": "97e683cc-0724-4cb2-8391-3b9e6c54e671:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/telemetry-y9x3j.yml",
@@ -111,6 +237,34 @@
       "namespace": "loan-service",
       "version": "1.0",
       "contentHash": "ef6d3994fa0e95ed"
+    },
+    {
+      "id": "b06d99c8-f76d-424c-954f-6089487d22c0:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/OperationSwitch-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233018880,
+      "schemaVersion": 1,
+      "kind": "OperationSwitch",
+      "name": "OperationSwitch-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "10be33702a88c2e2"
+    },
+    {
+      "id": "b5129c22-2714-4124-9b1f-2d27fc98c90f:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/ExtractIdentity-blD73.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790669300043,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-blD73",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "bf1c8d7a4affc111"
     },
     {
       "id": "b68c1742-ae78-4f1a-907a-13b085af6adb:0",
@@ -136,6 +290,62 @@
       "contentHash": "bf0938dfe7da3b00"
     },
     {
+      "id": "c29f2c9f-39c2-41c1-9731-f7687d631020:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Authenticate-pO9Nv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790669307277,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-pO9Nv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "2582df64dd26263b"
+    },
+    {
+      "id": "c6291abd-a5ea-4e50-bca8-c226a60448a8:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Throw-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233019625,
+      "schemaVersion": 1,
+      "kind": "Throw",
+      "name": "Throw-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "cd3fe041e16de74f"
+    },
+    {
+      "id": "d2ce3d61-2f76-44b5-8640-ffae6b6ae968:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/watsonx-loan.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790328840000,
+      "schemaVersion": 1,
+      "kind": "LLMProvider",
+      "name": "watsonx-loan",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "fa17f2df30205455"
+    },
+    {
+      "id": "e6e0cc1f-1bed-403a-acb8-f93641f36783:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Telemetry-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233020531,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "Telemetry-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "013c2021cbff6692"
+    },
+    {
       "id": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/loans-api-spec.yml",
@@ -159,6 +369,20 @@
       "contentHash": "8de057d5ccb9d605"
     },
     {
+      "id": "f3b151b4-b9c6-45e8-8d29-5f7db76b7e25:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/ExtractIdentity-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233014930,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "93df5d9492cf43c6"
+    },
+    {
       "id": "f704d60f-0fe9-45d7-8f57-531f45ac8d2e:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/Authenticate-Hc7AE.yml",
@@ -171,9 +395,63 @@
       "namespace": "loan-service",
       "version": "1.0",
       "contentHash": "f1a6fc9c7768ffa4"
+    },
+    {
+      "id": "f76c05a8-817f-4995-a029-8a169875a4dc:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/api-spec-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233022317,
+      "schemaVersion": 1,
+      "kind": "OpenAPISpec",
+      "name": "api-spec-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "72c4996b7f96194c"
+    },
+    {
+      "id": "fb62c7a8-5287-4982-96e1-158ad03b5b15:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Authorize-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233016570,
+      "schemaVersion": 1,
+      "kind": "Authorize",
+      "name": "Authorize-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "d0d57d390d1f0c52"
+    },
+    {
+      "id": "fb90ae96-ed83-4ba6-8b7e-cd20dab57b73:0",
+      "projectId": "Z0gCMGAm",
+      "filePath": "Loans-Service/Plan-d40hv.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790233023881,
+      "schemaVersion": 1,
+      "kind": "Plan",
+      "name": "plan-watsonx-loan-d40hv",
+      "namespace": "Loans-Service",
+      "version": "1.0",
+      "contentHash": "e6a06f76e364e6cd"
     }
   ],
   "edges": [
+    {
+      "id": "075c8beb-2519-4c5e-b035-d76483ab480e",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "d2ce3d61-2f76-44b5-8640-ffae6b6ae968:0",
+      "targetNodeId": "18eddfe4-94c6-46e3-9077-0fa08f463dc9:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:product-watsonx-loan-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233026412,
+      "lastValidated": 1790233026412
+    },
     {
       "id": "0d002b51-1e20-4300-ac25-77240a1a6661",
       "projectId": "Z0gCMGAm",
@@ -186,6 +464,18 @@
       "invalidReason": "Target file not found: #/components/schemas/LoanEligibilityRequest",
       "createdAt": 1789451798138,
       "lastValidated": 1789451798138
+    },
+    {
+      "id": "0e7a8ad5-502c-4479-8649-66e3ae02d034",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
+      "targetNodeId": "04356dad-63b7-44b4-8c4d-ffee30808a3b:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:IBMCloudLogin-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233021487,
+      "lastValidated": 1790315938850
     },
     {
       "id": "0f0dedab-6304-4e6d-81fe-af31ba663254",
@@ -253,16 +543,16 @@
       "lastValidated": 1789451798137
     },
     {
-      "id": "396edfae-f1f7-4a68-ab90-7504fac1d939",
+      "id": "38530883-7c54-4847-97e2-aef05fb8b2a7",
       "projectId": "Z0gCMGAm",
-      "sourceNodeId": "4062a777-4b75-4771-9214-89f5f54e3709:0",
-      "targetNodeId": "687b2bc2-72cf-4a98-a8f0-c623f1cf3ec7:0",
+      "sourceNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
+      "targetNodeId": "b06d99c8-f76d-424c-954f-6089487d22c0:0",
       "targetRefType": "same-project",
-      "targetRefString": "loan-service:loan-service-quota-y9x3j:1.0",
+      "targetRefString": "Loans-Service:OperationSwitch-d40hv:1.0",
       "targetRefKind": "resource",
       "isValid": true,
-      "createdAt": 1789451797349,
-      "lastValidated": 1789451797349
+      "createdAt": 1790233021487,
+      "lastValidated": 1790233021487
     },
     {
       "id": "3fbfc189-7cc8-4c00-80e5-22d78a03b4db",
@@ -275,6 +565,30 @@
       "isValid": true,
       "createdAt": 1789451795915,
       "lastValidated": 1789451795915
+    },
+    {
+      "id": "3fcd951b-bfb0-4493-ada5-2eea0cb5d8f2",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "b06d99c8-f76d-424c-954f-6089487d22c0:0",
+      "targetNodeId": "17034e5f-cec7-498b-beb7-aa626024c080:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:InvokeWatsonxModels-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233018882,
+      "lastValidated": 1790233018882
+    },
+    {
+      "id": "403b7018-d890-498b-b837-e56529d1ac5f",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "fb90ae96-ed83-4ba6-8b7e-cd20dab57b73:0",
+      "targetNodeId": "8bcf1c0b-7ef5-40fb-b9cf-fe0f3adfca88:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:watsonx-token-weighted-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233023882,
+      "lastValidated": 1790233023882
     },
     {
       "id": "52ea42e2-24a2-454d-b817-6b5dc611d93d",
@@ -313,6 +627,18 @@
       "isValid": true,
       "createdAt": 1789451795914,
       "lastValidated": 1789451795914
+    },
+    {
+      "id": "58f9db90-868a-4bac-bbc5-649a66057955",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "fb90ae96-ed83-4ba6-8b7e-cd20dab57b73:0",
+      "targetNodeId": "6e09fa40-d60e-49fe-966f-96000c6a8889:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:api-watsonx-loan-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233023882,
+      "lastValidated": 1790233825226
     },
     {
       "id": "62a5a404-a8dc-400a-a6d2-799175309dbe",
@@ -379,16 +705,16 @@
       "lastValidated": 1789451798138
     },
     {
-      "id": "75af2a67-7f25-4d1c-873f-5a337aa2b07c",
+      "id": "7788a99c-fea3-43c3-92c5-3299eb6c5e1e",
       "projectId": "Z0gCMGAm",
-      "sourceNodeId": "4062a777-4b75-4771-9214-89f5f54e3709:0",
-      "targetNodeId": "505ce5b2-ca85-4f99-b121-4496bb0806b7:0",
+      "sourceNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
+      "targetNodeId": "7e8265e5-5241-4a6a-b8fd-82441160ffb4:0",
       "targetRefType": "same-project",
-      "targetRefString": "loan-service:loan-service-freeflowpolicysequence-y9x3j:1.0",
+      "targetRefString": "Loans-Service:Parse-d40hv:1.0",
       "targetRefKind": "resource",
       "isValid": true,
-      "createdAt": 1789451797348,
-      "lastValidated": 1789451797348
+      "createdAt": 1790233021487,
+      "lastValidated": 1790233021487
     },
     {
       "id": "7a301341-7184-4365-9089-5092bef18ef2",
@@ -443,6 +769,18 @@
       "lastValidated": 1789451798138
     },
     {
+      "id": "877cf2ae-13fe-466a-abb8-c9985a2b82cc",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "505ce5b2-ca85-4f99-b121-4496bb0806b7:0",
+      "targetNodeId": "b5129c22-2714-4124-9b1f-2d27fc98c90f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:ExtractIdentity-blD73:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790669300965,
+      "lastValidated": 1790669300965
+    },
+    {
       "id": "87c54f56-6574-4297-aa21-48006e0d5732",
       "projectId": "Z0gCMGAm",
       "sourceNodeId": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
@@ -469,6 +807,18 @@
       "lastValidated": 1789451798139
     },
     {
+      "id": "8d473821-bc8f-4a21-bd7f-c2e111762819",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
+      "targetNodeId": "e6e0cc1f-1bed-403a-acb8-f93641f36783:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:Telemetry-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233021487,
+      "lastValidated": 1790233021487
+    },
+    {
       "id": "8fe32bab-fe9a-40d9-a167-a0e2e2e04624",
       "projectId": "Z0gCMGAm",
       "sourceNodeId": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
@@ -480,6 +830,30 @@
       "invalidReason": "Target file not found: #/components/schemas/LoanApplication",
       "createdAt": 1789451798138,
       "lastValidated": 1789451798138
+    },
+    {
+      "id": "915f1c69-6df3-4bc6-bf42-460a2124e983",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "505ce5b2-ca85-4f99-b121-4496bb0806b7:0",
+      "targetNodeId": "c29f2c9f-39c2-41c1-9731-f7687d631020:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:Authenticate-pO9Nv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790669308243,
+      "lastValidated": 1790669308243
+    },
+    {
+      "id": "91e7b058-eded-410e-ac3f-757382a3a94f",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "6e09fa40-d60e-49fe-966f-96000c6a8889:0",
+      "targetNodeId": "f76c05a8-817f-4995-a029-8a169875a4dc:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./api-spec-d40hv.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1790233024631,
+      "lastValidated": 1790233024631
     },
     {
       "id": "920c36d1-6649-4aed-b110-63f4168a4dda",
@@ -495,6 +869,30 @@
       "lastValidated": 1789451798138
     },
     {
+      "id": "929d6225-8938-40a9-9fef-e4bdd64eb3be",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "6e09fa40-d60e-49fe-966f-96000c6a8889:0",
+      "targetNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:freeflowpolicysequence-watsonx-loan-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233024630,
+      "lastValidated": 1790247518837
+    },
+    {
+      "id": "93a14ad3-4eff-4062-902a-49f06ef21d5f",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "18eddfe4-94c6-46e3-9077-0fa08f463dc9:0",
+      "targetNodeId": "6e09fa40-d60e-49fe-966f-96000c6a8889:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:api-watsonx-loan-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233025492,
+      "lastValidated": 1790233025492
+    },
+    {
       "id": "943410b5-9e3f-490d-8c93-529b3a823e05",
       "projectId": "Z0gCMGAm",
       "sourceNodeId": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
@@ -506,18 +904,6 @@
       "invalidReason": "Target file not found: #/components/schemas/LoanStatus",
       "createdAt": 1789451798139,
       "lastValidated": 1789451798139
-    },
-    {
-      "id": "979003ae-d11b-484a-9968-b5ba1e1a9664",
-      "projectId": "Z0gCMGAm",
-      "sourceNodeId": "505ce5b2-ca85-4f99-b121-4496bb0806b7:0",
-      "targetNodeId": "f704d60f-0fe9-45d7-8f57-531f45ac8d2e:0",
-      "targetRefType": "same-project",
-      "targetRefString": "loan-service:Authenticate-Hc7AE:1.0",
-      "targetRefKind": "resource",
-      "isValid": true,
-      "createdAt": 1789451795914,
-      "lastValidated": 1789451795914
     },
     {
       "id": "98578f37-5407-4712-b4df-d20b36f41a1a",
@@ -533,16 +919,16 @@
       "lastValidated": 1789451798139
     },
     {
-      "id": "a0738c0b-2260-4632-a27d-f920ad6632be",
+      "id": "9f8a40be-c400-40c2-8b6f-916017c50aca",
       "projectId": "Z0gCMGAm",
-      "sourceNodeId": "505ce5b2-ca85-4f99-b121-4496bb0806b7:0",
-      "targetNodeId": "bbc70054-c0c6-4213-925d-e66341904bb7:0",
+      "sourceNodeId": "b06d99c8-f76d-424c-954f-6089487d22c0:0",
+      "targetNodeId": "1ffbc8c4-d6e1-49d4-b4a7-540b706fd652:0",
       "targetRefType": "same-project",
-      "targetRefString": "loan-service:ExtractIdentity-BmEb8:1.0",
+      "targetRefString": "Loans-Service:InvokeWatsonxTextGen-d40hv:1.0",
       "targetRefKind": "resource",
       "isValid": true,
-      "createdAt": 1789451795915,
-      "lastValidated": 1789451795915
+      "createdAt": 1790233018882,
+      "lastValidated": 1790233018882
     },
     {
       "id": "aa4f1bd5-4be1-453b-95ed-dce75167554e",
@@ -606,6 +992,18 @@
       "isValid": true,
       "createdAt": 1789451798931,
       "lastValidated": 1789451798931
+    },
+    {
+      "id": "d177651d-095c-48f2-a0fc-6af6bbac0ac4",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "b06d99c8-f76d-424c-954f-6089487d22c0:0",
+      "targetNodeId": "86eae850-e00b-40b2-a18a-7e7e6bb3ace0:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:InvokeWatsonxTokenize-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233018882,
+      "lastValidated": 1790233018882
     },
     {
       "id": "d41bf147-9f68-43a4-b678-f64e55418aff",
@@ -711,6 +1109,18 @@
       "lastValidated": 1789451798138
     },
     {
+      "id": "f18191c5-a2d9-4d88-877a-67e596eed434",
+      "projectId": "Z0gCMGAm",
+      "sourceNodeId": "18eddfe4-94c6-46e3-9077-0fa08f463dc9:0",
+      "targetNodeId": "fb90ae96-ed83-4ba6-8b7e-cd20dab57b73:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Loans-Service:plan-watsonx-loan-d40hv:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790233025492,
+      "lastValidated": 1790233025492
+    },
+    {
       "id": "f57af49e-367c-4ff7-8c88-871c3552c99b",
       "projectId": "Z0gCMGAm",
       "sourceNodeId": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
@@ -722,18 +1132,6 @@
       "invalidReason": "Target file not found: #/components/examples/HomeLoanApplicationExample",
       "createdAt": 1789451798138,
       "lastValidated": 1789451798138
-    },
-    {
-      "id": "ff2b16af-d8be-4059-bccb-0fb0fa8d5b7f",
-      "projectId": "Z0gCMGAm",
-      "sourceNodeId": "4062a777-4b75-4771-9214-89f5f54e3709:0",
-      "targetNodeId": "66f5d293-8a44-4baa-84b6-a60acbecefa3:0",
-      "targetRefType": "same-project",
-      "targetRefString": "loan-service:loans-api-tool-y9x3j:1.0",
-      "targetRefKind": "resource",
-      "isValid": true,
-      "createdAt": 1789451797349,
-      "lastValidated": 1789451802431
     }
   ]
 }

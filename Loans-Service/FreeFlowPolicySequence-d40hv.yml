@@ -1,0 +1,18 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: freeflowpolicysequence-watsonx-loan-d40hv
+  namespace: Loans-Service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+  domain: ai-platform
+spec:
+  main:
+    - $ref: Loans-Service:IBMCloudLogin-d40hv:1.0
+    - $ref: Loans-Service:Parse-d40hv:1.0
+    - $ref: Loans-Service:OperationSwitch-d40hv:1.0
+  monitoring:
+    $ref: Loans-Service:Telemetry-d40hv:1.0

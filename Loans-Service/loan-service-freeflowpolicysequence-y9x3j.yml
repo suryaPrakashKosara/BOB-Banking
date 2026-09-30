@@ -10,8 +10,8 @@ metadata:
       - nano
 spec:
   main:
-    - $ref: loan-service:ExtractIdentity-BmEb8:1.0
-    - $ref: loan-service:Authenticate-Hc7AE:1.0
+    - $ref: Loans-Service:ExtractIdentity-blD73:1.0
+    - $ref: Loans-Service:Authenticate-pO9Nv:1.0
     - $ref: loan-service:Authorize-zkVvg:1.0
     - $ref: loan-service:invoke-y9x3j:1.0
     - $ref: loan-service:Parse-GLS9g:1.0

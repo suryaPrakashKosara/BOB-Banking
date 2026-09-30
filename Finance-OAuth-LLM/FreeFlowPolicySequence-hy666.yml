@@ -1,0 +1,22 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: freeflowpolicysequence-finance-oauth-hy666
+  namespace: Finance-OAuth-LLM
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+  domain: ai-platform
+spec:
+  main:
+    - $ref: Finance-OAuth-LLM:ExtractIdentity-hy666:1.0
+    - $ref: Finance-OAuth-LLM:Authenticate-rV2e6:1.0
+    - $ref: Finance-OAuth-LLM:Authorize-18dRV:1.0
+    - $ref: Finance-OAuth-LLM:Authorize-IMaWV:1.0
+    - $ref: Finance-OAuth-LLM:IBMCloudLogin-hy666:1.0
+    - $ref: Finance-OAuth-LLM:Parse-hy666:1.0
+    - $ref: Finance-OAuth-LLM:OperationSwitch-hy666:1.0
+  monitoring:
+    $ref: Finance-OAuth-LLM:Telemetry-hy666:1.0

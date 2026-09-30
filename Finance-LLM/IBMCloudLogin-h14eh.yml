@@ -1,0 +1,13 @@
+kind: IBMCloudLogin
+apiVersion: api.ibm.com/v1
+metadata:
+  name: IBMCloudLogin-h14eh
+  namespace: Finance-LLM
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  apiKeySecret: watsonx-api-key
+  tlsClientProfile: tls-client-profile-default:1.0.0

@@ -1,0 +1,14 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: product-finance-llm0config-h14eh
+  namespace: Finance-LLM
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  description: ''
+spec:
+  apis:
+    - $ref: Finance-LLM:api-finance-llm0config-h14eh:1.0
+  plans:
+    - $ref: Finance-LLM:plan-finance-llm0config-h14eh:1.0

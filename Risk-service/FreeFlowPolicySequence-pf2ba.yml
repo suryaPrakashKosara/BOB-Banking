@@ -1,0 +1,21 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: freeflowpolicysequence-watsonx-risk-llm-pf2ba
+  namespace: Risk-service
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: Risk-service:ExtractIdentity-pf2ba:1.0
+    - $ref: Risk-service:Authenticate-pf2ba:1.0
+    - $ref: Risk-service:Authorize-pf2ba:1.0
+    - $ref: Risk-service:IBMCloudLogin-pf2ba:1.0
+    - $ref: Risk-service:Parse-pf2ba:1.0
+    - $ref: Risk-service:OperationSwitch-pf2ba:1.0
+  monitoring:
+    $ref: Risk-service:Telemetry-pf2ba:1.0

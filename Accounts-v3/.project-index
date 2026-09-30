@@ -1,6 +1,34 @@
 {
   "nodes": [
     {
+      "id": "00f8b3c5-11e3-49e4-bfcf-a0bb3cc91348:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/API-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151631167,
+      "schemaVersion": 1,
+      "kind": "API",
+      "name": "api-openai-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "f81a3f1ee1d96152"
+    },
+    {
+      "id": "03b567da-204a-45e1-89ee-02ccff338e09:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Telemetry-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790330404069,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "Telemetry-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "d2d58ab41c162785"
+    },
+    {
       "id": "09b41ebc-2fb6-4079-8f8c-31f685abe2dd:0",
       "projectId": "tzabVedZ",
       "filePath": "Accounts-v3/Redact-mSEsA.yml",
@@ -52,6 +80,62 @@
       "contentHash": "13c8a63ab9df1d34"
     },
     {
+      "id": "293a90bb-830a-40be-9e14-ab69a27951c7:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/If-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151624941,
+      "schemaVersion": 1,
+      "kind": "If",
+      "name": "If-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "b616c96c20138621"
+    },
+    {
+      "id": "32d4cf0f-0e61-412a-bc57-a974a9e36cc7:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/InvokeOpenAiEmbeddings-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151619793,
+      "schemaVersion": 1,
+      "kind": "InvokeOpenAiEmbeddings",
+      "name": "InvokeOpenAiEmbeddings-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "844b588e9e87c282"
+    },
+    {
+      "id": "3a0dae2e-6eb0-44d3-98f9-159e366aed43:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Plan-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790330406930,
+      "schemaVersion": 1,
+      "kind": "Plan",
+      "name": "plan-openai-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "e83db530bfb69bf1"
+    },
+    {
+      "id": "46e43faf-33ba-4851-a2a2-a5b127a32b88:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/openai.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790330400587,
+      "schemaVersion": 1,
+      "kind": "LLMProvider",
+      "name": "openai",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "b71f6c6532ad9031"
+    },
+    {
       "id": "4cf000a1-d081-4191-ae00-78af81c2ecc2:0",
       "projectId": "tzabVedZ",
       "filePath": "Accounts-v3/Authorize-83O7q.yml",
@@ -94,6 +178,48 @@
       "contentHash": "bddaff6c7f6abf2d"
     },
     {
+      "id": "6d4c20be-de45-490b-abe1-82fc43f13502:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/OperationSwitch-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790330402246,
+      "schemaVersion": 1,
+      "kind": "OperationSwitch",
+      "name": "OperationSwitch-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "83ef150690e8c3ff"
+    },
+    {
+      "id": "739b40e5-7b3f-498c-a0aa-9ec32fdef1b6:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Quota-fvk1n-1.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151629612,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "openai-token-weighted-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "36d7028dbcc56adc"
+    },
+    {
+      "id": "7bb861ce-ac4a-437f-a3fc-dd55394a6cc8:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/InvokeOpenAiChatCompletions-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151619056,
+      "schemaVersion": 1,
+      "kind": "InvokeOpenAiChatCompletions",
+      "name": "InvokeOpenAiChatCompletions-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "317c9768aafdb982"
+    },
+    {
       "id": "7c9142ff-1dd0-40d1-a4aa-322d5bd91a80:0",
       "projectId": "tzabVedZ",
       "filePath": "Accounts-v3/banking-accounts-management-api-tool-w8xj4.yaml",
@@ -108,6 +234,71 @@
       "contentHash": "02c0dd781b801966"
     },
     {
+      "id": "a0a103a6-ae39-4842-9d69-297bfc03ecb0:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/FreeFlowPolicySequence-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790330475367,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "freeflowpolicysequence-openai-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "55f36e0fb92147b4"
+    },
+    {
+      "id": "a498bebb-cb71-48c6-a343-e4de6aee8551:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/ExtractIdentity-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151622217,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "eba7be669e51296f"
+    },
+    {
+      "id": "ab779b41-9506-409c-99af-a5d787007766:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Product-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151631934,
+      "schemaVersion": 1,
+      "kind": "Product",
+      "name": "product-openai-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "2e23f7e1f8013064"
+    },
+    {
+      "id": "ad561880-ed7f-4e12-9dfd-d0f4c3273f93:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Throw-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151626456,
+      "schemaVersion": 1,
+      "kind": "Throw",
+      "name": "Throw-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "55606561917c7a60"
+    },
+    {
+      "id": "b8d5965c-6ccd-4b77-bf22-e472316f52a3:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/api-spec-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "support",
+      "lastIndexed": 1790330341980,
+      "schemaVersion": 1
+    },
+    {
       "id": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
       "projectId": "tzabVedZ",
       "filePath": "Accounts-v3/banking-accounts-management-api-spec.yml",
@@ -115,6 +306,20 @@
       "assetType": "support",
       "lastIndexed": 1787256636878,
       "schemaVersion": 1
+    },
+    {
+      "id": "c6111950-0929-4288-a475-a1750a250bca:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Authorize-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151624007,
+      "schemaVersion": 1,
+      "kind": "Authorize",
+      "name": "Authorize-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "6689584328f18d7d"
     },
     {
       "id": "cd32c42a-14da-4a3e-9e8a-d0b334d5e2ef:0",
@@ -129,6 +334,34 @@
       "namespace": "Accounts-v3",
       "version": "1.0",
       "contentHash": "98bf8210a2468919"
+    },
+    {
+      "id": "dbd41821-6163-45fe-8304-295cfd0f4d1f:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/InvokeOpenAiModels-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151620596,
+      "schemaVersion": 1,
+      "kind": "InvokeOpenAiModels",
+      "name": "InvokeOpenAiModels-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "948ca216187bc228"
+    },
+    {
+      "id": "e15d5520-e5a1-4584-bfba-1118cb43fe18:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/InvokeOpenAiModelsId-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151621447,
+      "schemaVersion": 1,
+      "kind": "InvokeOpenAiModelsId",
+      "name": "InvokeOpenAiModelsId-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "f397b886006bf6ce"
     },
     {
       "id": "e242b4bb-73ea-46bb-a7c2-30ccb2d058f6:0",
@@ -159,6 +392,34 @@
       "contentHash": "a75474040fe6c555"
     },
     {
+      "id": "e38fe91a-3819-40d3-b73e-1d4b20012b31:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Set-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151617139,
+      "schemaVersion": 1,
+      "kind": "Set",
+      "name": "Set-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "88cf7bee05cdcaab"
+    },
+    {
+      "id": "e8a78b08-830d-4255-a805-ee97a12ed82e:0",
+      "projectId": "tzabVedZ",
+      "filePath": "Accounts-v3/Authenticate-fvk1n.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790151623079,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-fvk1n",
+      "namespace": "Accounts-v3",
+      "version": "1.0",
+      "contentHash": "16da4dd52f7903e7"
+    },
+    {
       "id": "fa34f10f-fb38-40c6-8a34-ef812b4d6165:0",
       "projectId": "tzabVedZ",
       "filePath": "Accounts-v3/accounts-v3-quota-w8xj4.yaml",
@@ -187,6 +448,18 @@
       "lastValidated": 1787293295488
     },
     {
+      "id": "0ba002a5-894f-4c8d-82a2-86d5a2cfee46",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "293a90bb-830a-40be-9e14-ab69a27951c7:0",
+      "targetNodeId": "e38fe91a-3819-40d3-b73e-1d4b20012b31:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:Set-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151624943,
+      "lastValidated": 1790151624943
+    },
+    {
       "id": "16e708f3-13c5-4029-88fd-d45e4dde950c",
       "projectId": "tzabVedZ",
       "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
@@ -211,6 +484,18 @@
       "invalidReason": "Target file not found: #/components/examples/AccountCreateRequestSavingsExample",
       "createdAt": 1789453495013,
       "lastValidated": 1789453495013
+    },
+    {
+      "id": "1b9f4016-5446-4b7b-932b-3c19014f6ff4",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "a0a103a6-ae39-4842-9d69-297bfc03ecb0:0",
+      "targetNodeId": "293a90bb-830a-40be-9e14-ab69a27951c7:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:If-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151628098,
+      "lastValidated": 1790151628098
     },
     {
       "id": "20ab60c1-5e00-4164-b081-79e8cdfdf335",
@@ -248,6 +533,30 @@
       "invalidReason": "Target file not found: #/components/examples/AccountUpdateRequestExample",
       "createdAt": 1789453495013,
       "lastValidated": 1789453495013
+    },
+    {
+      "id": "3cc0d344-9f19-46d8-9a88-be6e30537900",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "00f8b3c5-11e3-49e4-bfcf-a0bb3cc91348:0",
+      "targetNodeId": "a0a103a6-ae39-4842-9d69-297bfc03ecb0:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:freeflowpolicysequence-openai-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151631169,
+      "lastValidated": 1790330475373
+    },
+    {
+      "id": "41c5e989-e635-40a6-a5d4-3c9a4a0baba8",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "3a0dae2e-6eb0-44d3-98f9-159e366aed43:0",
+      "targetNodeId": "739b40e5-7b3f-498c-a0aa-9ec32fdef1b6:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:openai-token-weighted-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151630370,
+      "lastValidated": 1790151630370
     },
     {
       "id": "44e32da5-629b-4f57-b948-d4e22abbc974",
@@ -298,6 +607,30 @@
       "isValid": true,
       "createdAt": 1787256640443,
       "lastValidated": 1787256640443
+    },
+    {
+      "id": "6f5edd0b-90b5-4e66-baa7-aac033efd822",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "00f8b3c5-11e3-49e4-bfcf-a0bb3cc91348:0",
+      "targetNodeId": "b8d5965c-6ccd-4b77-bf22-e472316f52a3:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./api-spec-fvk1n.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1790151631169,
+      "lastValidated": 1790330341987
+    },
+    {
+      "id": "76524b36-f668-4467-a54d-fa97ab3d4609",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "46e43faf-33ba-4851-a2a2-a5b127a32b88:0",
+      "targetNodeId": "ab779b41-9506-409c-99af-a5d787007766:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:product-openai-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151632727,
+      "lastValidated": 1790151632727
     },
     {
       "id": "81e0ebc9-d73b-4ef1-a2f5-e2975601b2da",
@@ -415,6 +748,18 @@
       "lastValidated": 1787256642575
     },
     {
+      "id": "a9bee2a8-3b67-47dd-a0c9-1b91ad0537ad",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "a0a103a6-ae39-4842-9d69-297bfc03ecb0:0",
+      "targetNodeId": "03b567da-204a-45e1-89ee-02ccff338e09:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:Telemetry-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151628098,
+      "lastValidated": 1790330404755
+    },
+    {
       "id": "b029ca80-d43f-4ef0-85a1-0ccbe456bf89",
       "projectId": "tzabVedZ",
       "sourceNodeId": "231b0c00-93a3-42d9-ac42-a6a9291cd1cd:0",
@@ -425,6 +770,18 @@
       "isValid": true,
       "createdAt": 1787293189921,
       "lastValidated": 1787293201764
+    },
+    {
+      "id": "b1ffad3e-967f-4197-87d5-4001accf3396",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "6d4c20be-de45-490b-abe1-82fc43f13502:0",
+      "targetNodeId": "7bb861ce-ac4a-437f-a3fc-dd55394a6cc8:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:InvokeOpenAiChatCompletions-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151625705,
+      "lastValidated": 1790151625705
     },
     {
       "id": "b62843ad-df63-4628-997a-5aabdcc88422",
@@ -451,6 +808,54 @@
       "invalidReason": "Target file not found: #/components/examples/ValidationErrorExample",
       "createdAt": 1789453495013,
       "lastValidated": 1789453495013
+    },
+    {
+      "id": "bab03133-bc97-4bf7-b804-f2efa7d57118",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "6d4c20be-de45-490b-abe1-82fc43f13502:0",
+      "targetNodeId": "e15d5520-e5a1-4584-bfba-1118cb43fe18:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:InvokeOpenAiModelsId-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790330343165,
+      "lastValidated": 1790330343165
+    },
+    {
+      "id": "bc69ccc7-ae35-4f09-a6ed-7f7ba461feae",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "ab779b41-9506-409c-99af-a5d787007766:0",
+      "targetNodeId": "00f8b3c5-11e3-49e4-bfcf-a0bb3cc91348:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:api-openai-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151631936,
+      "lastValidated": 1790151631936
+    },
+    {
+      "id": "c24acca8-d5ee-4795-84d6-30f0bb0e97d6",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "ab779b41-9506-409c-99af-a5d787007766:0",
+      "targetNodeId": "3a0dae2e-6eb0-44d3-98f9-159e366aed43:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:plan-openai-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151631935,
+      "lastValidated": 1790330407445
+    },
+    {
+      "id": "c3229e47-94c8-4f9e-8a3d-a011f2e92671",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "6d4c20be-de45-490b-abe1-82fc43f13502:0",
+      "targetNodeId": "dbd41821-6163-45fe-8304-295cfd0f4d1f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:InvokeOpenAiModels-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790330402248,
+      "lastValidated": 1790330402248
     },
     {
       "id": "cd57edea-8f8e-4b44-b141-fa36f28a829c",
@@ -491,6 +896,18 @@
       "lastValidated": 1787256640443
     },
     {
+      "id": "e0895716-922b-4d26-82ef-6e005ddc3900",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "6d4c20be-de45-490b-abe1-82fc43f13502:0",
+      "targetNodeId": "32d4cf0f-0e61-412a-bc57-a974a9e36cc7:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:InvokeOpenAiEmbeddings-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151625705,
+      "lastValidated": 1790151625705
+    },
+    {
       "id": "e78239e6-96f3-4a80-9245-115970d127c6",
       "projectId": "tzabVedZ",
       "sourceNodeId": "c372c7ed-c8b3-4f7c-9d57-14856a587c5e:0",
@@ -502,6 +919,18 @@
       "invalidReason": "Target file not found: #/components/examples/AccountCreateRequestCurrentExample",
       "createdAt": 1789453495013,
       "lastValidated": 1789453495013
+    },
+    {
+      "id": "e80e6228-acf3-46d3-8b65-520ec983a827",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "a0a103a6-ae39-4842-9d69-297bfc03ecb0:0",
+      "targetNodeId": "6d4c20be-de45-490b-abe1-82fc43f13502:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:OperationSwitch-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151628098,
+      "lastValidated": 1790330402316
     },
     {
       "id": "ebf6f805-5eb6-4181-8883-66110f1df15e",
@@ -552,6 +981,18 @@
       "isValid": true,
       "createdAt": 1787293295470,
       "lastValidated": 1787293401920
+    },
+    {
+      "id": "f6afa8f7-472a-4dcd-aea7-f9d0c9577464",
+      "projectId": "tzabVedZ",
+      "sourceNodeId": "3a0dae2e-6eb0-44d3-98f9-159e366aed43:0",
+      "targetNodeId": "00f8b3c5-11e3-49e4-bfcf-a0bb3cc91348:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Accounts-v3:api-openai-fvk1n:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1790151630369,
+      "lastValidated": 1790328570509
     }
   ]
 }

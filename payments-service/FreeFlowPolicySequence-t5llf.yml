@@ -1,0 +1,21 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: freeflowpolicysequence-watsonx-payments-llm-t5llf
+  namespace: payments-service
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: payments-service:ExtractIdentity-t5llf:1.0
+    - $ref: payments-service:Authenticate-t5llf:1.0
+    - $ref: payments-service:Authorize-t5llf:1.0
+    - $ref: payments-service:IBMCloudLogin-t5llf:1.0
+    - $ref: payments-service:Parse-t5llf:1.0
+    - $ref: payments-service:OperationSwitch-t5llf:1.0
+  monitoring:
+    $ref: payments-service:Telemetry-t5llf:1.0

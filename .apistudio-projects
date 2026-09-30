@@ -28,9 +28,9 @@ projects:
     id: LDAj3EW7
     description: Creating this project to test LLM
     tags: []
-    lastUpdated: 1790669416825
+    lastUpdated: 1790753901201
   Finance-OAuth-LLM:
     id: d9A7gJav
     description: creating this project for LLM config along with Oauth
     tags: []
-    lastUpdated: 1790745786663
+    lastUpdated: 1790763268108

@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: api-finance-oauth-hy666
+  namespace: Finance-OAuth-LLM
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+spec:
+  api-spec:
+    $path: ./api-spec-hy666.yml
+  policy-sequence:
+    - $ref: Finance-OAuth-LLM:freeflowpolicysequence-finance-oauth-hy666:1.0

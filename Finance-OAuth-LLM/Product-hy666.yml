@@ -1,0 +1,14 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: product-finance-oauth-hy666
+  namespace: Finance-OAuth-LLM
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  description: ''
+spec:
+  apis:
+    - $ref: Finance-OAuth-LLM:api-finance-oauth-hy666:1.0
+  plans:
+    - $ref: Finance-OAuth-LLM:plan-finance-oauth-hy666:1.0

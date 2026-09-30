@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: api-watsonx-risk-llm-pf2ba
+  namespace: Risk-service
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+spec:
+  api-spec:
+    $path: ./api-spec-pf2ba.yml
+  policy-sequence:
+    - $ref: Risk-service:freeflowpolicysequence-watsonx-risk-llm-pf2ba:1.0

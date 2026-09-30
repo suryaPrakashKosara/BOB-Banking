@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: api-finance-llm0config-h14eh
+  namespace: Finance-LLM
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+spec:
+  api-spec:
+    $path: ./api-spec-h14eh.yml
+  policy-sequence:
+    - $ref: Finance-LLM:freeflowpolicysequence-finance-llm0config-h14eh:1.0

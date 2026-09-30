@@ -1,0 +1,17 @@
+kind: Authenticate
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authenticate-rV2e6
+  namespace: Finance-OAuth-LLM
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  namespace: client
+  operation:
+    oauth2:
+      providers:
+        - verify-joy
+      audClaim: []

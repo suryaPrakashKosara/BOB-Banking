@@ -1,0 +1,14 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: product-watsonx-payments-llm-t5llf
+  namespace: payments-service
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  description: ''
+spec:
+  apis:
+    - $ref: payments-service:api-watsonx-payments-llm-t5llf:1.0
+  plans:
+    - $ref: payments-service:plan-watsonx-payments-llm-t5llf:1.0

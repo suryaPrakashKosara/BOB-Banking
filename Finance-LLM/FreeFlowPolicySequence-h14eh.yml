@@ -1,0 +1,18 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: freeflowpolicysequence-finance-llm0config-h14eh
+  namespace: Finance-LLM
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+  domain: ai-platform
+spec:
+  main:
+    - $ref: Finance-LLM:IBMCloudLogin-h14eh:1.0
+    - $ref: Finance-LLM:Parse-h14eh:1.0
+    - $ref: Finance-LLM:OperationSwitch-h14eh:1.0
+  monitoring:
+    $ref: Finance-LLM:Telemetry-h14eh:1.0

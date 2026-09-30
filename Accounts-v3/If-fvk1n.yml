@@ -1,0 +1,14 @@
+kind: If
+apiVersion: api.ibm.com/v1
+metadata:
+  name: If-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  condition: ($pathParameter('a_model_id'))
+  execute:
+    - $ref: Accounts-v3:Set-fvk1n:1.0

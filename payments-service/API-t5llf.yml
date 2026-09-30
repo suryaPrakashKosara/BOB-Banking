@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: api-watsonx-payments-llm-t5llf
+  namespace: payments-service
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+spec:
+  api-spec:
+    $path: ./api-spec-t5llf.yml
+  policy-sequence:
+    - $ref: payments-service:freeflowpolicysequence-watsonx-payments-llm-t5llf:1.0

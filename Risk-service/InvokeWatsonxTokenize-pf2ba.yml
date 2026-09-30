@@ -1,0 +1,18 @@
+kind: InvokeWatsonxTokenize
+apiVersion: api.ibm.com/v1
+metadata:
+  name: InvokeWatsonxTokenize-pf2ba
+  namespace: Risk-service
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  region: us-south
+  opVersion: placeholder-op-version
+  tlsClientProfile: tls-client-profile-default:1.0.0
+  projectId: 3e55b663-335e-4f81-b47f-0ec0b272249f
+  inputMessage: request
+  outputMessage: response
+  cachePolicy: disabled

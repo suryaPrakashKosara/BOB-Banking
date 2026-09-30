@@ -1,6 +1,48 @@
 {
   "nodes": [
     {
+      "id": "0328d342-bd5e-42b5-85a2-e5617f784289:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/watsonx-payments-llm.yaml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728508547,
+      "schemaVersion": 1,
+      "kind": "LLMProvider",
+      "name": "watsonx-payments-llm",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "f0279a8206f58c9d"
+    },
+    {
+      "id": "0820d126-7178-4da3-b630-0959c3d8f731:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/InvokeWatsonxTextGen-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728495994,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxTextGen",
+      "name": "InvokeWatsonxTextGen-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "da98694b5b5f2e42"
+    },
+    {
+      "id": "1324ca89-e8ea-4772-b58f-17f01dd87d93:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Parse-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728500211,
+      "schemaVersion": 1,
+      "kind": "Parse",
+      "name": "Parse-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "3677e4f030b73ac2"
+    },
+    {
       "id": "1584d832-e375-419b-a7c8-d08e2ce0a336:0",
       "projectId": "ZDTWHaww",
       "filePath": "payments-service/Parse-ohwWi.yml",
@@ -13,6 +55,20 @@
       "namespace": "payment-service",
       "version": "1.0",
       "contentHash": "28474edde93b9b4c"
+    },
+    {
+      "id": "16e80b1d-6e52-4e8f-9001-fd6c79364374:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Authorize-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728498844,
+      "schemaVersion": 1,
+      "kind": "Authorize",
+      "name": "Authorize-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "29f6e2cf6d5f241a"
     },
     {
       "id": "1ed1037f-844a-44db-bcce-305b2bd8448d:0",
@@ -29,6 +85,20 @@
       "contentHash": "4782a3e5651af9d8"
     },
     {
+      "id": "23e9f295-5656-4353-9a0b-f1b6bf212906:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Plan-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728505857,
+      "schemaVersion": 1,
+      "kind": "Plan",
+      "name": "plan-watsonx-payments-llm-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "5686598e4c38494b"
+    },
+    {
       "id": "27054984-db36-4875-bf7c-ce368dc647de:0",
       "projectId": "ZDTWHaww",
       "filePath": "payments-service/.project-index",
@@ -36,6 +106,20 @@
       "assetType": "support",
       "lastIndexed": 1789452131907,
       "schemaVersion": 1
+    },
+    {
+      "id": "34a05deb-2220-49e5-93a1-ce9e4d94c9c5:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/IBMCloudLogin-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728499532,
+      "schemaVersion": 1,
+      "kind": "IBMCloudLogin",
+      "name": "IBMCloudLogin-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "5770df28916aa087"
     },
     {
       "id": "3a26ad74-547f-44a1-be1c-f9072114f310:0",
@@ -50,6 +134,20 @@
       "namespace": "payment-service",
       "version": "1.0",
       "contentHash": "bcf2a51d10f4cfcf"
+    },
+    {
+      "id": "450e3623-d59c-4f73-aadf-b7d05df33035:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/InvokeWatsonxModels-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728493686,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxModels",
+      "name": "InvokeWatsonxModels-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "8df4b142a791eadb"
     },
     {
       "id": "54a75773-6c78-41ee-ade0-17ada47de89c:0",
@@ -80,6 +178,34 @@
       "contentHash": "00f99c5723aa7621"
     },
     {
+      "id": "6d8277d2-f3b8-4cee-ba71-59dd3bc6e4c5:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Throw-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728501623,
+      "schemaVersion": 1,
+      "kind": "Throw",
+      "name": "Throw-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "764725997695e931"
+    },
+    {
+      "id": "78be6465-beb1-4a3d-a772-f88537f1fd12:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Authenticate-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728498098,
+      "schemaVersion": 1,
+      "kind": "Authenticate",
+      "name": "Authenticate-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "af813fc280cb297a"
+    },
+    {
       "id": "8120b931-7f41-460b-aea1-3e1ee73a69f0:0",
       "projectId": "ZDTWHaww",
       "filePath": "payments-service/payments-api-server-vq9t5.yml",
@@ -92,6 +218,20 @@
       "namespace": "payment-service",
       "version": "1.0",
       "contentHash": "b1d3efbd86f958b8"
+    },
+    {
+      "id": "8962eaaa-91d1-4294-a327-6e15dad49481:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/API-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728506764,
+      "schemaVersion": 1,
+      "kind": "API",
+      "name": "api-watsonx-payments-llm-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "5fac31faa550c7df"
     },
     {
       "id": "8a59e45a-973e-4df2-99f6-e2826b817d22:0",
@@ -129,6 +269,48 @@
       "assetType": "support",
       "lastIndexed": 1789452123603,
       "schemaVersion": 1
+    },
+    {
+      "id": "b0c3bd0e-2f24-4669-b1c0-d6b100921f6f:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Quota-t5llf-1.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728504932,
+      "schemaVersion": 1,
+      "kind": "Quota",
+      "name": "watsonx-token-weighted-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "21dea200f3714ac1"
+    },
+    {
+      "id": "c29610a2-148e-4c03-9e5b-8f971cf9516a:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/api-spec-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728504020,
+      "schemaVersion": 1,
+      "kind": "OpenAPISpec",
+      "name": "api-spec-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "ad75606294330b13"
+    },
+    {
+      "id": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/FreeFlowPolicySequence-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728503211,
+      "schemaVersion": 1,
+      "kind": "FreeFlowPolicySequence",
+      "name": "freeflowpolicysequence-watsonx-payments-llm-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "0581acb0c23b04de"
     },
     {
       "id": "cdcf89d1-6fdf-4b31-9788-f2b73bbc764d:0",
@@ -173,6 +355,20 @@
       "contentHash": "b57b9a9fdd2c64f8"
     },
     {
+      "id": "d8538376-ced9-4bec-abe6-aed555e5ae30:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/OperationSwitch-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728500930,
+      "schemaVersion": 1,
+      "kind": "OperationSwitch",
+      "name": "OperationSwitch-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "846b765780060b19"
+    },
+    {
       "id": "d895d5c5-2824-4f37-9425-55198f687764:0",
       "projectId": "ZDTWHaww",
       "filePath": "payments-service/invoke-vq9t5.yml",
@@ -187,6 +383,20 @@
       "contentHash": "dbba4f65b1999e94"
     },
     {
+      "id": "dda3461d-b485-445c-bc62-8e1016fa17e1:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Telemetry-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728502419,
+      "schemaVersion": 1,
+      "kind": "Telemetry",
+      "name": "Telemetry-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "f544828c4420591c"
+    },
+    {
       "id": "e1f653c9-e9f9-49c7-9ce8-7b047d85c515:0",
       "projectId": "ZDTWHaww",
       "filePath": "payments-service/telemetry-vq9t5.yml",
@@ -199,6 +409,20 @@
       "namespace": "payment-service",
       "version": "1.0",
       "contentHash": "4e0c80ade5ed0016"
+    },
+    {
+      "id": "e6c0c9dd-aad3-4cfa-9360-51a521ca7876:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/ExtractIdentity-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728497395,
+      "schemaVersion": 1,
+      "kind": "ExtractIdentity",
+      "name": "ExtractIdentity-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "9b33f8a74ba5ba0e"
     },
     {
       "id": "ec9ae08c-37b7-4ce8-ac22-46dacfc361ae:0",
@@ -227,6 +451,34 @@
       "namespace": "payment-service",
       "version": "1.0",
       "contentHash": "78ccaa0562c75981"
+    },
+    {
+      "id": "f8b3f1c8-2bfa-4c53-a1c2-574ede16721c:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/InvokeWatsonxTokenize-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728496687,
+      "schemaVersion": 1,
+      "kind": "InvokeWatsonxTokenize",
+      "name": "InvokeWatsonxTokenize-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "e1ef80152cb8f408"
+    },
+    {
+      "id": "fd5dbfd2-3739-4db5-ace4-151d2c01b31f:0",
+      "projectId": "ZDTWHaww",
+      "filePath": "payments-service/Product-t5llf.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1789728507600,
+      "schemaVersion": 1,
+      "kind": "Product",
+      "name": "product-watsonx-payments-llm-t5llf",
+      "namespace": "payments-service",
+      "version": "1.0",
+      "contentHash": "67a954ff8e2869e1"
     }
   ],
   "edges": [
@@ -266,6 +518,30 @@
       "invalidReason": "Target file not found: #/components/examples/LoanPaymentListExample",
       "createdAt": 1789456016076,
       "lastValidated": 1789456016076
+    },
+    {
+      "id": "127bfcc8-cb98-46e6-a576-527778c8f108",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "d8538376-ced9-4bec-abe6-aed555e5ae30:0",
+      "targetNodeId": "450e3623-d59c-4f73-aadf-b7d05df33035:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:InvokeWatsonxModels-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728500934,
+      "lastValidated": 1789728500934
+    },
+    {
+      "id": "1504dfbb-a3a2-43fa-9300-659d821909fa",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "1324ca89-e8ea-4772-b58f-17f01dd87d93:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:Parse-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503228,
+      "lastValidated": 1789728503228
     },
     {
       "id": "1b30c8f5-6e03-4a0b-ac98-6ff49c972a33",
@@ -331,6 +607,18 @@
       "lastValidated": 1789456016076
     },
     {
+      "id": "2eff459e-da1f-462e-bdce-8b64e12dbd0c",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "dda3461d-b485-445c-bc62-8e1016fa17e1:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:Telemetry-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503228,
+      "lastValidated": 1789728503228
+    },
+    {
       "id": "399d46eb-b2da-4b84-b42c-51c7f5fdec4d",
       "projectId": "ZDTWHaww",
       "sourceNodeId": "a68a0201-0ef0-4c1f-b365-bbf798f3b046:0",
@@ -355,6 +643,30 @@
       "invalidReason": "Target file not found: #/components/responses/BadRequest",
       "createdAt": 1789456016075,
       "lastValidated": 1789456016075
+    },
+    {
+      "id": "3c48d724-d9b3-4db1-bdf9-870304f31a9f",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "e6c0c9dd-aad3-4cfa-9360-51a521ca7876:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:ExtractIdentity-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503229,
+      "lastValidated": 1789728503229
+    },
+    {
+      "id": "3c68ea6c-b641-440f-843d-a90ba82279c5",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "16e80b1d-6e52-4e8f-9001-fd6c79364374:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:Authorize-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503227,
+      "lastValidated": 1789728503227
     },
     {
       "id": "48fdb8bc-0863-4df3-81ec-c245f03ca164",
@@ -395,6 +707,42 @@
       "lastValidated": 1789456016076
     },
     {
+      "id": "58280e41-a778-45a6-84a9-0bac308be4a9",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "23e9f295-5656-4353-9a0b-f1b6bf212906:0",
+      "targetNodeId": "8962eaaa-91d1-4294-a327-6e15dad49481:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:api-watsonx-payments-llm-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728505872,
+      "lastValidated": 1789729444939
+    },
+    {
+      "id": "5b36fd1d-b046-4e35-bf07-1de3a764df25",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "34a05deb-2220-49e5-93a1-ce9e4d94c9c5:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:IBMCloudLogin-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503228,
+      "lastValidated": 1789728503228
+    },
+    {
+      "id": "6323d603-bc31-47fd-a7aa-0cb8ef5edbab",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "fd5dbfd2-3739-4db5-ace4-151d2c01b31f:0",
+      "targetNodeId": "8962eaaa-91d1-4294-a327-6e15dad49481:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:api-watsonx-payments-llm-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728507612,
+      "lastValidated": 1789728507612
+    },
+    {
       "id": "6687f9c0-35ee-4c29-b497-080f78dfa2a4",
       "projectId": "ZDTWHaww",
       "sourceNodeId": "a68a0201-0ef0-4c1f-b365-bbf798f3b046:0",
@@ -406,6 +754,18 @@
       "invalidReason": "Target file not found: #/components/examples/PaymentListExample",
       "createdAt": 1789456016075,
       "lastValidated": 1789456016075
+    },
+    {
+      "id": "74487d7a-9997-40c2-a983-2e1493876dc6",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "d8538376-ced9-4bec-abe6-aed555e5ae30:0",
+      "targetNodeId": "f8b3f1c8-2bfa-4c53-a1c2-574ede16721c:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:InvokeWatsonxTokenize-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728500934,
+      "lastValidated": 1789728500934
     },
     {
       "id": "767d092e-17db-449d-ac68-fa9c9e3ce2df",
@@ -447,6 +807,18 @@
       "lastValidated": 1789456016076
     },
     {
+      "id": "8196c5b6-28b7-4bf0-be78-876560d3e92a",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "fd5dbfd2-3739-4db5-ace4-151d2c01b31f:0",
+      "targetNodeId": "23e9f295-5656-4353-9a0b-f1b6bf212906:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:plan-watsonx-payments-llm-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728507612,
+      "lastValidated": 1789728507612
+    },
+    {
       "id": "84013025-db7d-4089-bcb3-d2c9b27779cc",
       "projectId": "ZDTWHaww",
       "sourceNodeId": "8a59e45a-973e-4df2-99f6-e2826b817d22:0",
@@ -470,6 +842,18 @@
       "invalidReason": "Target file not found: #/components/examples/AccountTransactionSummaryExample",
       "createdAt": 1789456016076,
       "lastValidated": 1789456016076
+    },
+    {
+      "id": "8862eb02-d0d6-4fdf-9c0a-099b34423882",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "78be6465-beb1-4a3d-a772-f88537f1fd12:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:Authenticate-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503227,
+      "lastValidated": 1789728503227
     },
     {
       "id": "8cc997b4-4873-43f2-ac12-6ea77c00cf12",
@@ -546,6 +930,42 @@
       "lastValidated": 1789452124305
     },
     {
+      "id": "bedc81d4-a641-43dd-b5d6-dfc4c59ec357",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "8962eaaa-91d1-4294-a327-6e15dad49481:0",
+      "targetNodeId": "c29610a2-148e-4c03-9e5b-8f971cf9516a:0",
+      "targetRefType": "same-project",
+      "targetRefString": "./api-spec-t5llf.yml",
+      "targetRefKind": "support",
+      "isValid": true,
+      "createdAt": 1789728506785,
+      "lastValidated": 1789728506785
+    },
+    {
+      "id": "c0f65c88-6b97-41ce-846e-1c70080ce8b6",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "0328d342-bd5e-42b5-85a2-e5617f784289:0",
+      "targetNodeId": "fd5dbfd2-3739-4db5-ace4-151d2c01b31f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:product-watsonx-payments-llm-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728508571,
+      "lastValidated": 1789728508571
+    },
+    {
+      "id": "c5828cd0-c471-4427-9ba1-56af2553c5b2",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetNodeId": "d8538376-ced9-4bec-abe6-aed555e5ae30:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:OperationSwitch-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728503228,
+      "lastValidated": 1789728503228
+    },
+    {
       "id": "c99433eb-4e4f-42b3-b910-e55c4fbdbf45",
       "projectId": "ZDTWHaww",
       "sourceNodeId": "8a59e45a-973e-4df2-99f6-e2826b817d22:0",
@@ -569,6 +989,18 @@
       "invalidReason": "Target file not found: #/components/schemas/PaymentCreate",
       "createdAt": 1789456016075,
       "lastValidated": 1789456016075
+    },
+    {
+      "id": "db9cb3b9-3c6d-4227-93d9-3e08c112042e",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "d8538376-ced9-4bec-abe6-aed555e5ae30:0",
+      "targetNodeId": "0820d126-7178-4da3-b630-0959c3d8f731:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:InvokeWatsonxTextGen-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728500934,
+      "lastValidated": 1789728500934
     },
     {
       "id": "e2e55e49-4e3f-4485-8336-a5aaadf3628d",
@@ -595,6 +1027,30 @@
       "invalidReason": "Target file not found: #/components/schemas/PaymentList",
       "createdAt": 1789456016076,
       "lastValidated": 1789456016076
+    },
+    {
+      "id": "f3660b52-91d4-43b0-b044-2e5434b9ef65",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "23e9f295-5656-4353-9a0b-f1b6bf212906:0",
+      "targetNodeId": "b0c3bd0e-2f24-4669-b1c0-d6b100921f6f:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:watsonx-token-weighted-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728505872,
+      "lastValidated": 1789728505872
+    },
+    {
+      "id": "fc074959-7620-408f-a013-958dab26b90f",
+      "projectId": "ZDTWHaww",
+      "sourceNodeId": "8962eaaa-91d1-4294-a327-6e15dad49481:0",
+      "targetNodeId": "c38ccaf1-eea3-45f2-afb9-e02f22d2c13c:0",
+      "targetRefType": "same-project",
+      "targetRefString": "payments-service:freeflowpolicysequence-watsonx-payments-llm-t5llf:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1789728506785,
+      "lastValidated": 1789728506785
     },
     {
       "id": "fcc2a8f1-4528-4466-b12e-a96de6671053",

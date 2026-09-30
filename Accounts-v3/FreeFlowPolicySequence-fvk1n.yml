@@ -1,0 +1,17 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: freeflowpolicysequence-openai-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+  domain: ai-platform
+spec:
+  main:
+    - $ref: Accounts-v3:If-fvk1n:1.0
+    - $ref: Accounts-v3:OperationSwitch-fvk1n:1.0
+  monitoring:
+    $ref: Accounts-v3:Telemetry-fvk1n:1.0
