@@ -13,7 +13,6 @@ spec:
   main:
     - $ref: Finance-OAuth-LLM:ExtractIdentity-hy666:1.0
     - $ref: Finance-OAuth-LLM:Authenticate-rV2e6:1.0
-    - $ref: Finance-OAuth-LLM:Authorize-18dRV:1.0
     - $ref: Finance-OAuth-LLM:Authorize-IMaWV:1.0
     - $ref: Finance-OAuth-LLM:IBMCloudLogin-hy666:1.0
     - $ref: Finance-OAuth-LLM:Parse-hy666:1.0
