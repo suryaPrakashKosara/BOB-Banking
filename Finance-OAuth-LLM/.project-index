@@ -164,6 +164,20 @@
       "contentHash": "245d771ba0c2650b"
     },
     {
+      "id": "97d700ea-b1c0-406f-a4fa-07c4c395cc87:0",
+      "projectId": "d9A7gJav",
+      "filePath": "Finance-OAuth-LLM/Invoke-9Ak6M.yml",
+      "docIndex": 0,
+      "assetType": "resource",
+      "lastIndexed": 1790764922370,
+      "schemaVersion": 1,
+      "kind": "Invoke",
+      "name": "Invoke-9Ak6M",
+      "namespace": "Finance-OAuth-LLM",
+      "version": "1.0",
+      "contentHash": "b49addd8f611f45e"
+    },
+    {
       "id": "987e7e8d-4912-4d28-8995-07f2de743f87:0",
       "projectId": "d9A7gJav",
       "filePath": "Finance-OAuth-LLM/Authenticate-rV2e6.yml",
@@ -183,7 +197,7 @@
       "filePath": "Finance-OAuth-LLM/FreeFlowPolicySequence-hy666.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790764292956,
+      "lastIndexed": 1791193336226,
       "schemaVersion": 1,
       "kind": "FreeFlowPolicySequence",
       "name": "freeflowpolicysequence-finance-oauth-hy666",
@@ -441,7 +455,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790745895286,
-      "lastValidated": 1790764292963
+      "lastValidated": 1791193336232
     },
     {
       "id": "e2a05714-3d9c-4cda-b6ab-265e24535b28",

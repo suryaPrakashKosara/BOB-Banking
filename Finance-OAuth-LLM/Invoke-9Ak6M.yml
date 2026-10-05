@@ -1,0 +1,26 @@
+kind: Invoke
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Invoke-9Ak6M
+  namespace: Finance-OAuth-LLM
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  endpoint:
+    http:
+      target:
+        persistentConnections: false
+        timeout: 30
+        url: ''
+        decompressResponse: false
+        followRedirects: false
+        chunkedUpload: false
+  cache:
+    expire:
+      static:
+        seconds: 0
+    scope:
+      narrowScope: {}
