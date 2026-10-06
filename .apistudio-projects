@@ -18,7 +18,7 @@ projects:
     id: kNl6S6BO
     description: ''
     tags: []
-    lastUpdated: 1789452291315
+    lastUpdated: 1791277297271
   Finance-LLM:
     id: LDAj3EW7
     description: Creating this project to test LLM
@@ -29,8 +29,3 @@ projects:
     description: creating this project for LLM config along with Oauth
     tags: []
     lastUpdated: 1791199673794
-  loan-service:
-    id: qvWlqdmr
-    description: ''
-    tags: []
-    lastUpdated: 1791267100834
