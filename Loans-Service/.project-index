@@ -253,13 +253,13 @@
       "filePath": "Loans-Service/Authenticate-pO9Nv.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1791265440742,
+      "lastIndexed": 1791265656911,
       "schemaVersion": 1,
       "kind": "Authenticate",
       "name": "Authenticate-pO9Nv",
       "namespace": "Loans-Service",
       "version": "1.0",
-      "contentHash": "a68660bd0b465864"
+      "contentHash": "4a1e5cd64b3f3d22"
     },
     {
       "id": "c6291abd-a5ea-4e50-bca8-c226a60448a8:0",
@@ -719,7 +719,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790669308243,
-      "lastValidated": 1791265440755
+      "lastValidated": 1791265656938
     },
     {
       "id": "91e7b058-eded-410e-ac3f-757382a3a94f",

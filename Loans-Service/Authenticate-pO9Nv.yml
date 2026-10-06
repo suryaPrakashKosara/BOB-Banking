@@ -15,6 +15,3 @@ spec:
       providers:
         - verify-joy
       audClaim: []
-      introspectionCredential:
-        idHeader: ''
-        secretHeader: ''
