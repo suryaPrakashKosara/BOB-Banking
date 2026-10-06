@@ -10,10 +10,10 @@ metadata:
       - nano
 spec:
   verbosity:
-    - level: basic
-      onSuccessTrimTo: normal
-      inboundLevel: basic
-      outboundLevel: basic
+    - level: detailed
+      onSuccessTrimTo: detailed
+      inboundLevel: detailed
+      outboundLevel: detailed
       operations:
         - path: /deployment-models
           method: GET

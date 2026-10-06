@@ -99,13 +99,13 @@
       "filePath": "Cusotmer-service/Redact-S2BZc.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1789452270486,
+      "lastIndexed": 1791277296138,
       "schemaVersion": 1,
       "kind": "Redact",
       "name": "Redact-S2BZc",
       "namespace": "customer-authentication",
       "version": "1.0",
-      "contentHash": "5c2ebf742cd3afeb"
+      "contentHash": "370bf3e8c2fb818d"
     },
     {
       "id": "6e82611b-f19d-498b-8c25-b8d12d097f2d:0",
@@ -450,7 +450,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1789452266065,
-      "lastValidated": 1789452276610
+      "lastValidated": 1791277296148
     }
   ]
 }

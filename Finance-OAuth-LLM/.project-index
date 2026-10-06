@@ -62,13 +62,13 @@
       "filePath": "Finance-OAuth-LLM/Quota-hy666-1.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1791199673781,
+      "lastIndexed": 1791283114986,
       "schemaVersion": 1,
       "kind": "Quota",
       "name": "watsonx-token-weighted-hy666",
       "namespace": "Finance-OAuth-LLM",
       "version": "1.0",
-      "contentHash": "78814993cc9c9d2a"
+      "contentHash": "a51618ca7f0f62be"
     },
     {
       "id": "5aa51d21-abd0-4dfa-87de-948d05a8ed4e:0",
@@ -90,13 +90,13 @@
       "filePath": "Finance-OAuth-LLM/Telemetry-hy666.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790745889573,
+      "lastIndexed": 1791283174318,
       "schemaVersion": 1,
       "kind": "Telemetry",
       "name": "Telemetry-hy666",
       "namespace": "Finance-OAuth-LLM",
       "version": "1.0",
-      "contentHash": "dc0a734babc09af8"
+      "contentHash": "5db3c26a594c2845"
     },
     {
       "id": "7b92eb44-86da-4a2d-a401-5646a1008f44:0",
@@ -197,13 +197,13 @@
       "filePath": "Finance-OAuth-LLM/FreeFlowPolicySequence-hy666.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1791193336226,
+      "lastIndexed": 1791283115973,
       "schemaVersion": 1,
       "kind": "FreeFlowPolicySequence",
       "name": "freeflowpolicysequence-finance-oauth-hy666",
       "namespace": "Finance-OAuth-LLM",
       "version": "1.0",
-      "contentHash": "5ae9919a281e3871"
+      "contentHash": "b6c07456a89da6be"
     },
     {
       "id": "bf8f5a12-356b-443f-a4cc-e8c121c353cc:0",
@@ -253,13 +253,13 @@
       "filePath": "Finance-OAuth-LLM/Throw-hy666.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790745886187,
+      "lastIndexed": 1791283144549,
       "schemaVersion": 1,
       "kind": "Throw",
       "name": "Throw-hy666",
       "namespace": "Finance-OAuth-LLM",
       "version": "1.0",
-      "contentHash": "198592922762d8dd"
+      "contentHash": "ac698caa1c87279f"
     },
     {
       "id": "fab7e829-4a64-4323-9709-05f7c6d9a350:0",
@@ -299,7 +299,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790745894137,
-      "lastValidated": 1791199673787
+      "lastValidated": 1791283114993
     },
     {
       "id": "2d217e57-337c-4ed5-8b69-d3d782634176",
@@ -324,6 +324,18 @@
       "isValid": true,
       "createdAt": 1790745896104,
       "lastValidated": 1790745896104
+    },
+    {
+      "id": "722b093f-615d-40e1-9a28-3682d07495a0",
+      "projectId": "d9A7gJav",
+      "sourceNodeId": "9bb8b614-c6ff-4e57-b9ce-23f36d0fab74:0",
+      "targetNodeId": "f9787e62-e7c1-43b6-b87e-3a7124877ad0:0",
+      "targetRefType": "same-project",
+      "targetRefString": "Finance-OAuth-LLM:Throw-hy666:1.0",
+      "targetRefKind": "resource",
+      "isValid": true,
+      "createdAt": 1791283115987,
+      "lastValidated": 1791283144554
     },
     {
       "id": "734b3d5f-fd14-4bea-a3c1-a2f3c7553026",
@@ -407,7 +419,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790745890810,
-      "lastValidated": 1790745890810
+      "lastValidated": 1791283174324
     },
     {
       "id": "bf311bf9-fa9a-4227-a440-f98f65b798ad",
@@ -455,7 +467,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790745895286,
-      "lastValidated": 1791193336232
+      "lastValidated": 1791283115991
     },
     {
       "id": "e2a05714-3d9c-4cda-b6ab-265e24535b28",

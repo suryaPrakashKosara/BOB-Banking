@@ -15,10 +15,10 @@ spec:
       captures:
         jsonata:
           - $.aadhaar
-          - $.email
           - $.pan
+          - $.email
           - $.mobileNumber
-          - customers.email
           - customers.mobileNumber
+          - customers.email
           - customers.pan
           - customers.aadhaar

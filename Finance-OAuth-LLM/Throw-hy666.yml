@@ -11,6 +11,6 @@ metadata:
 spec:
   error:
     CustomError:
-      message: An error occurred while processing your request.
+      message: Token limit exceeded
       messageType: plain
-      status: 400
+      status: 429

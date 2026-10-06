@@ -17,6 +17,6 @@ spec:
       apiVersion: api.ibm.com/v1
       spec:
         weightExpr: $variable('aiGeneratedTokenCount')
-        exceedAction: return429
+        exceedAction: continue
         intervalOffset: 0
         dynamicValue: ''

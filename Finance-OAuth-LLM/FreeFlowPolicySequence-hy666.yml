@@ -19,3 +19,7 @@ spec:
     - $ref: Finance-OAuth-LLM:OperationSwitch-hy666:1.0
   monitoring:
     $ref: Finance-OAuth-LLM:Telemetry-hy666:1.0
+  error:
+    - errorType: []
+      execute:
+        - $ref: Finance-OAuth-LLM:Throw-hy666:1.0
