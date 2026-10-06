@@ -4,11 +4,6 @@ projects:
     description: ''
     tags: []
     lastUpdated: 1790330476343
-  Loans-Service:
-    id: Z0gCMGAm
-    description: ''
-    tags: []
-    lastUpdated: 1791265665843
   Risk-service:
     id: CqBjLddd
     description: ''
