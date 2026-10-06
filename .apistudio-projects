@@ -29,3 +29,8 @@ projects:
     description: creating this project for LLM config along with Oauth
     tags: []
     lastUpdated: 1791199673794
+  loan-service:
+    id: qvWlqdmr
+    description: ''
+    tags: []
+    lastUpdated: 1791267100834
