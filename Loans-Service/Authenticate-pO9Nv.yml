@@ -8,4 +8,13 @@ metadata:
   labels:
     gatewayTypes:
       - nano
-spec: {}
+spec:
+  namespace: loan-service
+  operation:
+    oauth2:
+      providers:
+        - verify-joy
+      audClaim: []
+      introspectionCredential:
+        idHeader: ''
+        secretHeader: ''

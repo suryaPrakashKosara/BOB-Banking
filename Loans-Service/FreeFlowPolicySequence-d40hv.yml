@@ -12,7 +12,4 @@ metadata:
 spec:
   main:
     - $ref: Loans-Service:IBMCloudLogin-d40hv:1.0
-    - $ref: Loans-Service:Parse-d40hv:1.0
     - $ref: Loans-Service:OperationSwitch-d40hv:1.0
-  monitoring:
-    $ref: Loans-Service:Telemetry-d40hv:1.0

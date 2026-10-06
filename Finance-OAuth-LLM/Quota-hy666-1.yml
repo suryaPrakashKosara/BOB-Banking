@@ -4,16 +4,19 @@ metadata:
   name: watsonx-token-weighted-hy666
   namespace: Finance-OAuth-LLM
   version: '1.0'
-  tags: []
   description: ''
+  tags:
+    - env:production
+    - platform:watsonx
+  domain: ai-platform
 spec:
-  maxRequest: 1000
-  interval: 1s
+  maxRequest: 1500
+  interval: 10s
   extensions:
     dp-nano-gateway:
       apiVersion: api.ibm.com/v1
       spec:
         weightExpr: $variable('aiGeneratedTokenCount')
-        exceedAction: continue
+        exceedAction: return429
         intervalOffset: 0
         dynamicValue: ''

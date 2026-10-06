@@ -62,13 +62,13 @@
       "filePath": "Finance-OAuth-LLM/Quota-hy666-1.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790745893294,
+      "lastIndexed": 1791199673781,
       "schemaVersion": 1,
       "kind": "Quota",
       "name": "watsonx-token-weighted-hy666",
       "namespace": "Finance-OAuth-LLM",
       "version": "1.0",
-      "contentHash": "6ad1d01a34877a75"
+      "contentHash": "78814993cc9c9d2a"
     },
     {
       "id": "5aa51d21-abd0-4dfa-87de-948d05a8ed4e:0",
@@ -299,7 +299,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790745894137,
-      "lastValidated": 1790745894137
+      "lastValidated": 1791199673787
     },
     {
       "id": "2d217e57-337c-4ed5-8b69-d3d782634176",

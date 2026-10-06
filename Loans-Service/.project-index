@@ -104,13 +104,13 @@
       "filePath": "Loans-Service/FreeFlowPolicySequence-d40hv.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790247518070,
+      "lastIndexed": 1791265586640,
       "schemaVersion": 1,
       "kind": "FreeFlowPolicySequence",
       "name": "freeflowpolicysequence-watsonx-loan-d40hv",
       "namespace": "Loans-Service",
       "version": "1.0",
-      "contentHash": "430de4b8eab3a83a"
+      "contentHash": "74bdee9fed970064"
     },
     {
       "id": "66f5d293-8a44-4baa-84b6-a60acbecefa3:0",
@@ -167,34 +167,6 @@
       "namespace": "Loans-Service",
       "version": "1.0",
       "contentHash": "8c2b5ccaa003bdb0"
-    },
-    {
-      "id": "7b0c50a6-e1e6-48a3-b9f8-3e65759115c8:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/Authenticate-d40hv.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1790233015680,
-      "schemaVersion": 1,
-      "kind": "Authenticate",
-      "name": "Authenticate-d40hv",
-      "namespace": "Loans-Service",
-      "version": "1.0",
-      "contentHash": "c58303f1567ddab7"
-    },
-    {
-      "id": "7e8265e5-5241-4a6a-b8fd-82441160ffb4:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/Parse-d40hv.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1790233018114,
-      "schemaVersion": 1,
-      "kind": "Parse",
-      "name": "Parse-d40hv",
-      "namespace": "Loans-Service",
-      "version": "1.0",
-      "contentHash": "234c062a64e8a9e1"
     },
     {
       "id": "86eae850-e00b-40b2-a18a-7e7e6bb3ace0:0",
@@ -258,13 +230,13 @@
       "filePath": "Loans-Service/ExtractIdentity-blD73.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790669300043,
+      "lastIndexed": 1791265424773,
       "schemaVersion": 1,
       "kind": "ExtractIdentity",
       "name": "ExtractIdentity-blD73",
       "namespace": "Loans-Service",
       "version": "1.0",
-      "contentHash": "bf1c8d7a4affc111"
+      "contentHash": "61d7ecb20ef75551"
     },
     {
       "id": "b68c1742-ae78-4f1a-907a-13b085af6adb:0",
@@ -276,32 +248,18 @@
       "schemaVersion": 1
     },
     {
-      "id": "bbc70054-c0c6-4213-925d-e66341904bb7:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/ExtractIdentity-BmEb8.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1789451794314,
-      "schemaVersion": 1,
-      "kind": "ExtractIdentity",
-      "name": "ExtractIdentity-BmEb8",
-      "namespace": "loan-service",
-      "version": "1.0",
-      "contentHash": "bf0938dfe7da3b00"
-    },
-    {
       "id": "c29f2c9f-39c2-41c1-9731-f7687d631020:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/Authenticate-pO9Nv.yml",
       "docIndex": 0,
       "assetType": "resource",
-      "lastIndexed": 1790669307277,
+      "lastIndexed": 1791265440742,
       "schemaVersion": 1,
       "kind": "Authenticate",
       "name": "Authenticate-pO9Nv",
       "namespace": "Loans-Service",
       "version": "1.0",
-      "contentHash": "2582df64dd26263b"
+      "contentHash": "a68660bd0b465864"
     },
     {
       "id": "c6291abd-a5ea-4e50-bca8-c226a60448a8:0",
@@ -332,20 +290,6 @@
       "contentHash": "fa17f2df30205455"
     },
     {
-      "id": "e6e0cc1f-1bed-403a-acb8-f93641f36783:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/Telemetry-d40hv.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1790233020531,
-      "schemaVersion": 1,
-      "kind": "Telemetry",
-      "name": "Telemetry-d40hv",
-      "namespace": "Loans-Service",
-      "version": "1.0",
-      "contentHash": "013c2021cbff6692"
-    },
-    {
       "id": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/loans-api-spec.yml",
@@ -369,34 +313,6 @@
       "contentHash": "8de057d5ccb9d605"
     },
     {
-      "id": "f3b151b4-b9c6-45e8-8d29-5f7db76b7e25:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/ExtractIdentity-d40hv.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1790233014930,
-      "schemaVersion": 1,
-      "kind": "ExtractIdentity",
-      "name": "ExtractIdentity-d40hv",
-      "namespace": "Loans-Service",
-      "version": "1.0",
-      "contentHash": "93df5d9492cf43c6"
-    },
-    {
-      "id": "f704d60f-0fe9-45d7-8f57-531f45ac8d2e:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/Authenticate-Hc7AE.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1789451792157,
-      "schemaVersion": 1,
-      "kind": "Authenticate",
-      "name": "Authenticate-Hc7AE",
-      "namespace": "loan-service",
-      "version": "1.0",
-      "contentHash": "f1a6fc9c7768ffa4"
-    },
-    {
       "id": "f76c05a8-817f-4995-a029-8a169875a4dc:0",
       "projectId": "Z0gCMGAm",
       "filePath": "Loans-Service/api-spec-d40hv.yml",
@@ -409,20 +325,6 @@
       "namespace": "Loans-Service",
       "version": "1.0",
       "contentHash": "72c4996b7f96194c"
-    },
-    {
-      "id": "fb62c7a8-5287-4982-96e1-158ad03b5b15:0",
-      "projectId": "Z0gCMGAm",
-      "filePath": "Loans-Service/Authorize-d40hv.yml",
-      "docIndex": 0,
-      "assetType": "resource",
-      "lastIndexed": 1790233016570,
-      "schemaVersion": 1,
-      "kind": "Authorize",
-      "name": "Authorize-d40hv",
-      "namespace": "Loans-Service",
-      "version": "1.0",
-      "contentHash": "d0d57d390d1f0c52"
     },
     {
       "id": "fb90ae96-ed83-4ba6-8b7e-cd20dab57b73:0",
@@ -705,18 +607,6 @@
       "lastValidated": 1789451798138
     },
     {
-      "id": "7788a99c-fea3-43c3-92c5-3299eb6c5e1e",
-      "projectId": "Z0gCMGAm",
-      "sourceNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
-      "targetNodeId": "7e8265e5-5241-4a6a-b8fd-82441160ffb4:0",
-      "targetRefType": "same-project",
-      "targetRefString": "Loans-Service:Parse-d40hv:1.0",
-      "targetRefKind": "resource",
-      "isValid": true,
-      "createdAt": 1790233021487,
-      "lastValidated": 1790233021487
-    },
-    {
       "id": "7a301341-7184-4365-9089-5092bef18ef2",
       "projectId": "Z0gCMGAm",
       "sourceNodeId": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
@@ -778,7 +668,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790669300965,
-      "lastValidated": 1790669300965
+      "lastValidated": 1791265424785
     },
     {
       "id": "87c54f56-6574-4297-aa21-48006e0d5732",
@@ -807,18 +697,6 @@
       "lastValidated": 1789451798139
     },
     {
-      "id": "8d473821-bc8f-4a21-bd7f-c2e111762819",
-      "projectId": "Z0gCMGAm",
-      "sourceNodeId": "66c9fd72-e25c-4b94-9a8e-dc4c7dc5f60d:0",
-      "targetNodeId": "e6e0cc1f-1bed-403a-acb8-f93641f36783:0",
-      "targetRefType": "same-project",
-      "targetRefString": "Loans-Service:Telemetry-d40hv:1.0",
-      "targetRefKind": "resource",
-      "isValid": true,
-      "createdAt": 1790233021487,
-      "lastValidated": 1790233021487
-    },
-    {
       "id": "8fe32bab-fe9a-40d9-a167-a0e2e2e04624",
       "projectId": "Z0gCMGAm",
       "sourceNodeId": "ed5a68dc-0f1d-4580-a727-c910b864eb99:0",
@@ -841,7 +719,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790669308243,
-      "lastValidated": 1790669308243
+      "lastValidated": 1791265440755
     },
     {
       "id": "91e7b058-eded-410e-ac3f-757382a3a94f",
@@ -878,7 +756,7 @@
       "targetRefKind": "resource",
       "isValid": true,
       "createdAt": 1790233024630,
-      "lastValidated": 1790247518837
+      "lastValidated": 1791265586664
     },
     {
       "id": "93a14ad3-4eff-4062-902a-49f06ef21d5f",
