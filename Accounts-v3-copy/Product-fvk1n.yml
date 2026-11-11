@@ -1,0 +1,14 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: product-openai-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+  description: ''
+spec:
+  apis:
+    - $ref: Accounts-v3:api-openai-fvk1n:1.0
+  plans:
+    - $ref: Accounts-v3:plan-openai-fvk1n:1.0
