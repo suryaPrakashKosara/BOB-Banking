@@ -1,0 +1,14 @@
+kind: Authorize
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Authorize-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  operation:
+    subscription: {}
+  namespace: client
