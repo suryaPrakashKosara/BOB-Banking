@@ -1,0 +1,15 @@
+kind: InvokeOpenAiChatCompletions
+apiVersion: api.ibm.com/v1
+metadata:
+  name: InvokeOpenAiChatCompletions-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  apiKeySecret: placeholder-api-key
+  tlsClientProfile: tls-client-profile-default:1.0.0
+  cachePolicy: disabled
+  projectId: proj_8JMF7sdaFR7JZ59Tr7IhDYjk
