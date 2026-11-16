@@ -3,7 +3,7 @@ projects:
     id: tzabVedZ
     description: ''
     tags: []
-    lastUpdated: 1794468180681
+    lastUpdated: 1794814379499
   Risk-service:
     id: CqBjLddd
     description: ''
@@ -39,8 +39,3 @@ projects:
     description: ''
     tags: []
     lastUpdated: 1794468113671
-  Accounts-v3-copy-1:
-    id: YfErHzbW
-    description: ''
-    tags: []
-    lastUpdated: 1794814325325
