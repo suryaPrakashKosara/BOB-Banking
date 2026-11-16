@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: api-openai-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  domain: ai-platform
+spec:
+  api-spec:
+    $path: ./api-spec-fvk1n.yml
+  policy-sequence:
+    - $ref: Accounts-v3:freeflowpolicysequence-openai-fvk1n:1.0

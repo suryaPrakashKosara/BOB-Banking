@@ -1,0 +1,36 @@
+kind: OperationSwitch
+apiVersion: api.ibm.com/v1
+metadata:
+  name: OperationSwitch-fvk1n
+  namespace: Accounts-v3
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  cases:
+    - conditions:
+        - verbPath:
+            path: /chat/completions
+            verb: POST
+      execute:
+        - $ref: Accounts-v3:InvokeOpenAiChatCompletions-fvk1n:1.0
+    - conditions:
+        - verbPath:
+            path: /embeddings
+            verb: POST
+      execute:
+        - $ref: Accounts-v3:InvokeOpenAiEmbeddings-fvk1n:1.0
+    - conditions:
+        - verbPath:
+            path: /models
+            verb: GET
+      execute:
+        - $ref: Accounts-v3:InvokeOpenAiModelsId-fvk1n:1.0
+    - conditions:
+        - verbPath:
+            path: /models/{a_model_id}
+            verb: GET
+      execute:
+        - $ref: Accounts-v3:InvokeOpenAiModels-fvk1n:1.0
